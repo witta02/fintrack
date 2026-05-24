@@ -1,0 +1,144 @@
+const dictionary = {
+  th: {
+    navDashboard: 'หน้าหลัก',
+    navTransactions: 'รายการ',
+    navAdd: 'เพิ่ม',
+    navRecurring: 'ประจำ',
+    navSettings: 'ตั้งค่า',
+    dashboardToday: 'วันนี้',
+    dashboardMonth: 'เดือนนี้',
+    dashboardYear: 'ปีนี้',
+    dashboardAll: 'ทั้งหมด',
+    balanceToday: 'ยอดวันนี้',
+    balanceMonth: 'ยอดเดือนนี้',
+    balanceYear: 'ยอดปีนี้',
+    balanceAll: 'ยอดทั้งหมด',
+    income: 'รายรับ',
+    expense: 'รายจ่าย',
+    analysis: 'วิเคราะห์การเงิน',
+    chartExpense: 'จ่าย',
+    chartIncome: 'รับ',
+    recentTransactions: 'รายการล่าสุด',
+    viewAll: 'ดูทั้งหมด',
+    starterEyebrow: 'เริ่มต้นใช้งาน',
+    starterTitle: 'สร้างภาพรวมการเงินของคุณเอง',
+    starterIncomeTitle: 'เพิ่มรายรับหรือเงินที่มี',
+    starterIncomeDesc: 'เริ่มจากยอดเงินจริงของคุณ ไม่ใช้ข้อมูลตัวอย่าง',
+    starterExpenseTitle: 'บันทึกรายจ่ายแรก',
+    starterExpenseDesc: 'จดรายการจริง แล้วกราฟและสรุปจะอัปเดตทันที',
+    starterAiTitle: 'ให้ Finny ช่วยวางแผน',
+    starterAiDesc: 'บอกจำนวนเงิน เป้าหมาย และระยะเวลาที่ต้องการ',
+    emptyTransactions: 'ยังไม่มีรายการใดๆ',
+    emptyTransactionsHint: 'เพิ่มรายการแรกเพื่อเริ่มติดตามเงินของคุณ',
+    addFirst: 'เพิ่มรายการแรก',
+    settingsTitle: 'ตั้งค่าระบบ',
+    language: 'ภาษา',
+    languageHint: 'เลือกภาษาแสดงผลของแอป',
+    thai: 'TH',
+    english: 'ENG',
+    currency: 'สกุลเงินหลัก',
+    darkMode: 'โหมดมืด',
+    addTransactionTitle: 'เพิ่มรายการใหม่',
+    editTransactionTitle: 'แก้ไขรายการ',
+    amount: 'จำนวนเงิน',
+    title: 'รายละเอียด / ชื่อรายการ',
+    dateTime: 'วันที่และเวลา',
+    category: 'หมวดหมู่',
+    saveTransaction: 'บันทึกรายการ',
+    cancel: 'ยกเลิก',
+    deleteThis: 'ลบรายการนี้',
+    transactionsTitle: 'รายการทั้งหมด',
+    searchPlaceholder: 'ค้นหาชื่อรายการ...',
+    allCategories: 'ทุกหมวดหมู่',
+    foundItems: 'พบทั้งหมด {count} รายการ',
+    noSearchResults: 'ไม่พบรายการที่ตรงกับเงื่อนไขการค้นหา',
+    deleteConfirm: 'คุณต้องการลบรายการนี้ใช่หรือไม่?',
+    recurringTitle: 'รายการประจำ',
+    aiReady: 'พร้อมช่วยเหลือ',
+    aiTyping: 'กำลังพิมพ์...',
+    aiPlaceholder: 'พิมพ์ข้อความคุยกับ Finny...',
+    quickSummary: 'สรุปการเงิน'
+  },
+  en: {
+    navDashboard: 'Home',
+    navTransactions: 'Records',
+    navAdd: 'Add',
+    navRecurring: 'Recurring',
+    navSettings: 'Settings',
+    dashboardToday: 'Today',
+    dashboardMonth: 'This Month',
+    dashboardYear: 'This Year',
+    dashboardAll: 'All',
+    balanceToday: 'Today',
+    balanceMonth: 'This Month',
+    balanceYear: 'This Year',
+    balanceAll: 'All Time',
+    income: 'Income',
+    expense: 'Expense',
+    analysis: 'Financial Analysis',
+    chartExpense: 'Expense',
+    chartIncome: 'Income',
+    recentTransactions: 'Recent Transactions',
+    viewAll: 'View All',
+    starterEyebrow: 'First steps',
+    starterTitle: 'Build your own financial picture',
+    starterIncomeTitle: 'Add income or current cash',
+    starterIncomeDesc: 'Start with your real numbers. No sample data is used.',
+    starterExpenseTitle: 'Record the first expense',
+    starterExpenseDesc: 'Add real spending and the charts update automatically.',
+    starterAiTitle: 'Ask Finny to plan',
+    starterAiDesc: 'Tell Finny your amount, goal, and timeline.',
+    emptyTransactions: 'No transactions yet',
+    emptyTransactionsHint: 'Add your first record to start tracking your money.',
+    addFirst: 'Add First Record',
+    settingsTitle: 'Settings',
+    language: 'Language',
+    languageHint: 'Choose the app display language',
+    thai: 'TH',
+    english: 'ENG',
+    currency: 'Main Currency',
+    darkMode: 'Dark Mode',
+    addTransactionTitle: 'Add Transaction',
+    editTransactionTitle: 'Edit Transaction',
+    amount: 'Amount',
+    title: 'Description / Name',
+    dateTime: 'Date and Time',
+    category: 'Category',
+    saveTransaction: 'Save Transaction',
+    cancel: 'Cancel',
+    deleteThis: 'Delete This Record',
+    transactionsTitle: 'All Transactions',
+    searchPlaceholder: 'Search transactions...',
+    allCategories: 'All Categories',
+    foundItems: '{count} records found',
+    noSearchResults: 'No transactions match your filters',
+    deleteConfirm: 'Do you want to delete this transaction?',
+    recurringTitle: 'Recurring',
+    aiReady: 'Ready',
+    aiTyping: 'Typing...',
+    aiPlaceholder: 'Message Finny...',
+    quickSummary: 'Financial Summary'
+  }
+};
+
+export function getLanguage() {
+  try {
+    const savedSettings = JSON.parse(localStorage.getItem('fintrack_settings') || '{}');
+    return savedSettings.language === 'en' ? 'en' : 'th';
+  } catch {
+    return 'th';
+  }
+}
+
+export function t(key, vars = {}) {
+  const lang = getLanguage();
+  let text = dictionary[lang][key] || dictionary.th[key] || key;
+  Object.entries(vars).forEach(([name, value]) => {
+    text = text.replace(`{${name}}`, value);
+  });
+  return text;
+}
+
+export function locale() {
+  return getLanguage() === 'en' ? 'en-US' : 'th-TH';
+}

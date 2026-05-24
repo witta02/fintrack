@@ -1,7 +1,8 @@
 import { store } from '../store.js';
 import { router } from '../router.js';
 import { createTransactionTile } from '../components/transactionTile.js';
-import { expenseCategories, incomeCategories } from '../categories.js';
+import { expenseCategories, incomeCategories, getCategoryInfo } from '../categories.js';
+import { t } from '../i18n.js';
 
 let searchQuery = '';
 let activeFilterType = 'all'; // 'all', 'income', 'expense'
@@ -22,7 +23,7 @@ export function renderTransactions(container) {
 
   container.innerHTML = `
     <div class="screen-header" style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px;">
-      <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -1px; color: var(--text-primary);">รายการทั้งหมด</h1>
+      <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -1px; color: var(--text-primary);">${t('transactionsTitle')}</h1>
       <button id="add-trans-btn" class="icon-btn" style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--gold), var(--amber)); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--shadow-gold); transition: all var(--transition);">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
@@ -32,7 +33,7 @@ export function renderTransactions(container) {
     <div class="search-container" style="margin-bottom: 20px; position: relative;">
       <div class="search-input-wrapper" style="position: relative;">
         <svg class="search-icon" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="search-input" placeholder="ค้นหาชื่อรายการ..." value="${escapeHTML(searchQuery)}" style="padding-left: 48px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); width: 100%; height: 50px; font-size: 15px;" />
+        <input type="text" id="search-input" placeholder="${t('searchPlaceholder')}" value="${escapeHTML(searchQuery)}" style="padding-left: 48px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); width: 100%; height: 50px; font-size: 15px;" />
         ${searchQuery ? '<button id="clear-search-btn" class="clear-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--border); color: var(--text-primary); border: none; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;">&times;</button>' : ''}
       </div>
     </div>
@@ -41,10 +42,10 @@ export function renderTransactions(container) {
     <div class="filter-row" style="margin-bottom: 20px; display: flex; gap: 12px;">
       <div class="select-wrapper" style="flex: 1;">
         <select id="category-filter-select" class="form-control" style="padding: 12px 16px; font-size: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); width: 100%;">
-          <option value="all">ทุกหมวดหมู่</option>
+          <option value="all">${t('allCategories')}</option>
           ${uniqueCategories.map(cat => `
             <option value="${cat.name}" ${selectedCategoryFilter === cat.name ? 'selected' : ''}>
-              ${cat.label}
+              ${getCategoryInfo(cat.name).label}
             </option>
           `).join('')}
         </select>
@@ -53,13 +54,13 @@ export function renderTransactions(container) {
 
     <!-- Type Tabs (All, Income, Expense) -->
     <div class="period-selector" style="margin-bottom: 16px;">
-      <button class="period-tab ${activeFilterType === 'all' ? 'active' : ''}" data-type="all">ทั้งหมด</button>
-      <button class="period-tab ${activeFilterType === 'income' ? 'active' : ''}" data-type="income">รายรับ</button>
-      <button class="period-tab ${activeFilterType === 'expense' ? 'active' : ''}" data-type="expense">รายจ่าย</button>
+      <button class="period-tab ${activeFilterType === 'all' ? 'active' : ''}" data-type="all">${t('dashboardAll')}</button>
+      <button class="period-tab ${activeFilterType === 'income' ? 'active' : ''}" data-type="income">${t('income')}</button>
+      <button class="period-tab ${activeFilterType === 'expense' ? 'active' : ''}" data-type="expense">${t('expense')}</button>
     </div>
 
     <div class="results-meta" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; padding: 0 4px;" id="results-count">
-      พบ 0 รายการ
+      ${t('foundItems', { count: 0 })}
     </div>
 
     <div id="transactions-full-list" class="transactions-list-container">
@@ -163,7 +164,7 @@ function updateUI(container) {
   }
 
   // Update Count Meta
-  container.querySelector('#results-count').textContent = `พบทั้งหมด ${list.length} รายการ`;
+  container.querySelector('#results-count').textContent = t('foundItems', { count: list.length });
 
   if (list.length === 0) {
     listContainer.innerHTML = `
@@ -171,7 +172,7 @@ function updateUI(container) {
         <div class="empty-icon">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
-        <p class="empty-text">ไม่พบรายการที่ตรงกับเงื่อนไขการค้นหา</p>
+        <p class="empty-text">${t('noSearchResults')}</p>
       </div>
     `;
   } else {
@@ -186,7 +187,7 @@ function updateUI(container) {
         },
         // onDelete
         (id) => {
-          if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+          if (confirm(t('deleteConfirm'))) {
             store.deleteTransaction(id);
           }
         }

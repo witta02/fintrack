@@ -2,6 +2,7 @@ import { store } from '../store.js';
 import { router } from '../router.js';
 import { renderSpendingChart } from '../components/spendingChart.js';
 import { createTransactionTile } from '../components/transactionTile.js';
+import { t } from '../i18n.js';
 
 let activePeriod = 'monthly'; // 'daily', 'monthly', 'yearly', 'all'
 
@@ -22,15 +23,15 @@ export function renderDashboard(container) {
 
     <!-- Period Selector -->
     <div class="period-selector">
-      <button class="period-tab ${activePeriod === 'daily' ? 'active' : ''}" data-period="daily">วันนี้</button>
-      <button class="period-tab ${activePeriod === 'monthly' ? 'active' : ''}" data-period="monthly">เดือนนี้</button>
-      <button class="period-tab ${activePeriod === 'yearly' ? 'active' : ''}" data-period="yearly">ปีนี้</button>
-      <button class="period-tab ${activePeriod === 'all' ? 'active' : ''}" data-period="all">ทั้งหมด</button>
+      <button class="period-tab ${activePeriod === 'daily' ? 'active' : ''}" data-period="daily">${t('dashboardToday')}</button>
+      <button class="period-tab ${activePeriod === 'monthly' ? 'active' : ''}" data-period="monthly">${t('dashboardMonth')}</button>
+      <button class="period-tab ${activePeriod === 'yearly' ? 'active' : ''}" data-period="yearly">${t('dashboardYear')}</button>
+      <button class="period-tab ${activePeriod === 'all' ? 'active' : ''}" data-period="all">${t('dashboardAll')}</button>
     </div>
 
     <!-- Balance Card -->
     <div class="balance-card">
-      <div class="period-label">${activePeriod === 'daily' ? 'ยอดวันนี้' : activePeriod === 'monthly' ? 'ยอดเดือนนี้' : activePeriod === 'yearly' ? 'ยอดปีนี้' : 'ยอดทั้งหมด'}</div>
+      <div class="period-label">${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}</div>
       <div class="balance-amount" id="card-balance">฿0.00</div>
       <div class="balance-row">
         <div class="balance-item income">
@@ -38,7 +39,7 @@ export function renderDashboard(container) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
           </div>
           <div>
-            <div class="balance-item-label">รายรับ</div>
+            <div class="balance-item-label">${t('income')}</div>
             <div class="balance-item-value" id="card-income">฿0.00</div>
           </div>
         </div>
@@ -47,20 +48,55 @@ export function renderDashboard(container) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
           </div>
           <div>
-            <div class="balance-item-label">รายจ่าย</div>
+            <div class="balance-item-label">${t('expense')}</div>
             <div class="balance-item-value" id="card-expense">฿0.00</div>
           </div>
         </div>
       </div>
     </div>
 
+    <div id="starter-guide" class="starter-guide hidden">
+      <div class="starter-guide-header">
+        <div>
+          <div class="eyebrow">${t('starterEyebrow')}</div>
+          <h2>${t('starterTitle')}</h2>
+        </div>
+        <button id="dismiss-starter-btn" class="icon-btn" title="ซ่อนคำแนะนำ">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="starter-steps">
+        <button class="starter-step" data-screen-target="addTransaction">
+          <span class="step-icon income-bg">+</span>
+          <span>
+            <strong>${t('starterIncomeTitle')}</strong>
+            <small>${t('starterIncomeDesc')}</small>
+          </span>
+        </button>
+        <button class="starter-step" data-screen-target="addTransaction">
+          <span class="step-icon expense-bg">-</span>
+          <span>
+            <strong>${t('starterExpenseTitle')}</strong>
+            <small>${t('starterExpenseDesc')}</small>
+          </span>
+        </button>
+        <button class="starter-step" data-screen-target="ai">
+          <span class="step-icon ai-bg">AI</span>
+          <span>
+            <strong>${t('starterAiTitle')}</strong>
+            <small>${t('starterAiDesc')}</small>
+          </span>
+        </button>
+      </div>
+    </div>
+
     <!-- Chart Section -->
     <div class="chart-card">
       <div class="chart-header">
-        <h3 class="card-title">วิเคราะห์การเงิน</h3>
+        <h3 class="card-title">${t('analysis')}</h3>
         <div class="chart-legends">
-          <span class="legend"><span class="dot dot-expense"></span>จ่าย</span>
-          <span class="legend"><span class="dot dot-income"></span>รับ</span>
+          <span class="legend"><span class="dot dot-expense"></span>${t('chartExpense')}</span>
+          <span class="legend"><span class="dot dot-income"></span>${t('chartIncome')}</span>
         </div>
       </div>
       <div class="chart-container" style="height: 180px;">
@@ -70,8 +106,8 @@ export function renderDashboard(container) {
 
     <!-- Recent Transactions -->
     <div class="section-header" style="margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
-      <h3 class="section-title" style="font-size: 16px; font-weight: 800; color: var(--text-primary);">รายการล่าสุด</h3>
-      <button id="view-all-transactions-btn" class="text-link-btn" style="color: var(--gold); font-size: 13px; font-weight: 600;">ดูทั้งหมด</button>
+      <h3 class="section-title" style="font-size: 16px; font-weight: 800; color: var(--text-primary);">${t('recentTransactions')}</h3>
+      <button id="view-all-transactions-btn" class="text-link-btn" style="color: var(--gold); font-size: 13px; font-weight: 600;">${t('viewAll')}</button>
     </div>
     <div id="recent-transactions-list" class="transactions-list-container" style="margin-top: 12px;">
       <!-- Loaded dynamically -->
@@ -116,6 +152,18 @@ function setupEventListeners(container) {
   // View All button
   container.querySelector('#view-all-transactions-btn').addEventListener('click', () => {
     router.navigate('transactions');
+  });
+
+  container.querySelectorAll('[data-screen-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      router.navigate(btn.getAttribute('data-screen-target'));
+    });
+  });
+
+  container.querySelector('#dismiss-starter-btn').addEventListener('click', () => {
+    store.completeOnboarding();
+    const guide = container.querySelector('#starter-guide');
+    if (guide) guide.classList.add('hidden');
   });
 }
 
@@ -172,6 +220,12 @@ function updateUI(container) {
   listContainer.innerHTML = '';
   
   const transactions = store.getAllTransactions().slice(0, 5);
+  const allTransactions = store.getAllTransactions();
+  const starterGuide = container.querySelector('#starter-guide');
+
+  if (starterGuide) {
+    starterGuide.classList.toggle('hidden', allTransactions.length > 0 || store.settings.hasCompletedOnboarding);
+  }
 
   if (transactions.length === 0) {
     listContainer.innerHTML = `
@@ -179,8 +233,9 @@ function updateUI(container) {
         <div class="empty-icon">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
         </div>
-        <p class="empty-text">ยังไม่มีการบันทึกรายการใดๆ</p>
-        <button id="dashboard-add-first-btn" class="btn btn-primary" style="margin-top: 12px; font-size: 13px; padding: 8px 16px;">เพิ่มรายการแรก</button>
+        <p class="empty-text">${t('emptyTransactions')}</p>
+        <p class="empty-subtext">${t('emptyTransactionsHint')}</p>
+        <button id="dashboard-add-first-btn" class="btn btn-primary" style="margin-top: 12px; font-size: 13px; padding: 8px 16px;">${t('addFirst')}</button>
       </div>
     `;
     const addBtn = listContainer.querySelector('#dashboard-add-first-btn');

@@ -1,6 +1,7 @@
 import { store } from '../store.js';
 import { router } from '../router.js';
 import { expenseCategories, incomeCategories, getCategoryInfo } from '../categories.js';
+import { t } from '../i18n.js';
 
 let isIncome = false; // default to Expense
 let selectedCategory = 'Food';
@@ -22,7 +23,7 @@ export function renderAddTransaction(container, params) {
     selectedCategory = 'Food';
   }
 
-  const titleText = editingTransactionId ? 'แก้ไขรายการ' : 'เพิ่มรายการใหม่';
+  const titleText = editingTransactionId ? t('editTransactionTitle') : t('addTransactionTitle');
   const displayAmount = transaction ? store.toDisplay(transaction.amount).toFixed(2) : '';
   const displayTitle = transaction ? transaction.title : '';
   
@@ -41,7 +42,7 @@ export function renderAddTransaction(container, params) {
   container.innerHTML = `
     <div class="screen-header">
       <h1 class="brand-title">${titleText}</h1>
-      <button id="cancel-btn" class="icon-btn" title="ยกเลิก">
+      <button id="cancel-btn" class="icon-btn" title="${t('cancel')}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
@@ -50,14 +51,14 @@ export function renderAddTransaction(container, params) {
       <!-- Income/Expense Selector -->
       <div class="form-group" style="margin-bottom: 20px;">
         <div class="type-switcher">
-          <button type="button" class="type-btn expense-btn ${!isIncome ? 'active' : ''}" id="switch-expense">รายจ่าย</button>
-          <button type="button" class="type-btn income-btn ${isIncome ? 'active' : ''}" id="switch-income">รายรับ</button>
+          <button type="button" class="type-btn expense-btn ${!isIncome ? 'active' : ''}" id="switch-expense">${t('expense')}</button>
+          <button type="button" class="type-btn income-btn ${isIncome ? 'active' : ''}" id="switch-income">${t('income')}</button>
         </div>
       </div>
 
       <!-- Amount Input -->
       <div class="form-group">
-        <label class="form-label" for="amount">จำนวนเงิน (${store.getCurrencySymbol()})</label>
+        <label class="form-label" for="amount">${t('amount')} (${store.getCurrencySymbol()})</label>
         <input 
           type="number" 
           step="0.01" 
@@ -72,7 +73,7 @@ export function renderAddTransaction(container, params) {
 
       <!-- Title Input -->
       <div class="form-group">
-        <label class="form-label" for="title">รายละเอียด / ชื่อรายการ</label>
+        <label class="form-label" for="title">${t('title')}</label>
         <input 
           type="text" 
           id="title" 
@@ -85,7 +86,7 @@ export function renderAddTransaction(container, params) {
 
       <!-- Date Input -->
       <div class="form-group">
-        <label class="form-label" for="date">วันที่และเวลา</label>
+        <label class="form-label" for="date">${t('dateTime')}</label>
         <input 
           type="datetime-local" 
           id="date" 
@@ -97,7 +98,7 @@ export function renderAddTransaction(container, params) {
 
       <!-- Category Selector -->
       <div class="form-group">
-        <label class="form-label">หมวดหมู่</label>
+        <label class="form-label">${t('category')}</label>
         <div id="category-selector-container" class="category-grid-selector">
           <!-- Rendered dynamically -->
         </div>
@@ -107,13 +108,13 @@ export function renderAddTransaction(container, params) {
       <div style="margin-top: 32px; display: flex; flex-direction: column; gap: 12px;">
         <button type="submit" class="btn-primary" style="padding: 14px;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          บันทึกรายการ
+          ${t('saveTransaction')}
         </button>
         
         ${editingTransactionId ? `
           <button type="button" id="delete-trans-btn" class="btn" style="background: rgba(248, 81, 73, 0.1); color: #F85149; border: 1px solid rgba(248, 81, 73, 0.2); padding: 12px; border-radius: var(--radius-lg); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-            ลบรายการนี้
+            ${t('deleteThis')}
           </button>
         ` : ''}
       </div>
@@ -204,7 +205,7 @@ function setupFormListeners(container) {
   const delBtn = container.querySelector('#delete-trans-btn');
   if (delBtn) {
     delBtn.addEventListener('click', () => {
-      if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+      if (confirm(t('deleteConfirm'))) {
         store.deleteTransaction(editingTransactionId);
         router.navigate('dashboard');
       }
@@ -220,7 +221,7 @@ function setupFormListeners(container) {
     const dateVal = new Date(container.querySelector('#date').value);
 
     if (isNaN(amountVal) || amountVal <= 0) {
-      alert('กรุณากรอกจำนวนเงินให้ถูกต้อง');
+      alert(store.settings.language === 'en' ? 'Please enter a valid amount' : 'กรุณากรอกจำนวนเงินให้ถูกต้อง');
       return;
     }
 

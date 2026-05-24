@@ -1,9 +1,11 @@
 import { store } from '../store.js';
 import { currencies } from '../currency.js';
+import { t } from '../i18n.js';
 
 export function renderSettings(container) {
   const selectedCurrency = store.getSelectedCurrency();
   const isDarkMode = store.settings.isDarkMode;
+  const language = store.settings.language === 'en' ? 'en' : 'th';
 
   // Build the list of currencies for the select option
   const currencyOptions = Object.values(currencies).map(curr => `
@@ -14,7 +16,7 @@ export function renderSettings(container) {
 
   container.innerHTML = `
     <div class="screen-header">
-      <h1 class="brand-title">ตั้งค่าระบบ</h1>
+      <h1 class="brand-title">${t('settingsTitle')}</h1>
     </div>
 
     <!-- Premium Card Display -->
@@ -41,7 +43,7 @@ export function renderSettings(container) {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>
           </div>
           <div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">โหมดมืด (Dark Mode)</div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('darkMode')}</div>
             <div style="font-size: 11px; color: var(--text-secondary);">สลับหน้าจอเป็นโหมดกลางคืนเพื่อถนอมสายตา</div>
           </div>
         </div>
@@ -58,7 +60,7 @@ export function renderSettings(container) {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">สกุลเงินหลัก (Currency)</div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('currency')}</div>
             <div style="font-size: 11px; color: var(--text-secondary);">แปลงยอดรวมอัตโนมัติตามอัตราแลกเปลี่ยน</div>
           </div>
         </div>
@@ -66,6 +68,22 @@ export function renderSettings(container) {
           <select id="setting-currency-select" class="form-control">
             ${currencyOptions}
           </select>
+        </div>
+      </div>
+
+      <div class="setting-item" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 6px; border-top: 1px solid var(--border);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="color: var(--gold); font-size: 18px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+          </div>
+          <div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('language')}</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">${t('languageHint')}</div>
+          </div>
+        </div>
+        <div class="type-switcher" style="margin-bottom: 0;">
+          <button type="button" class="type-btn ${language === 'th' ? 'active income-btn' : ''}" id="language-th-btn">${t('thai')}</button>
+          <button type="button" class="type-btn ${language === 'en' ? 'active income-btn' : ''}" id="language-en-btn">${t('english')}</button>
         </div>
       </div>
     </div>
@@ -118,6 +136,18 @@ function setupEventListeners(container) {
     store.setCurrency(e.target.value);
   });
 
+  container.querySelector('#language-th-btn').addEventListener('click', () => {
+    store.setLanguage('th');
+    updateNavLabels();
+    renderSettings(container);
+  });
+
+  container.querySelector('#language-en-btn').addEventListener('click', () => {
+    store.setLanguage('en');
+    updateNavLabels();
+    renderSettings(container);
+  });
+
   // PWA Install handler
   const installBtn = container.querySelector('#install-app-btn');
   installBtn.addEventListener('click', () => {
@@ -162,5 +192,22 @@ function setupEventListeners(container) {
       localStorage.clear();
       window.location.reload();
     }
+  });
+}
+
+function updateNavLabels() {
+  const labels = {
+    dashboard: t('navDashboard'),
+    transactions: t('navTransactions'),
+    addTransaction: t('navAdd'),
+    ai: 'AI',
+    recurring: t('navRecurring'),
+    settings: t('navSettings')
+  };
+
+  document.querySelectorAll('[data-screen]').forEach(btn => {
+    const screen = btn.getAttribute('data-screen');
+    const label = btn.querySelector('span');
+    if (label && labels[screen]) label.textContent = labels[screen];
   });
 }

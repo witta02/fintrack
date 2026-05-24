@@ -1,19 +1,17 @@
 import { store } from '../store.js';
 import { getCategoryInfo } from '../categories.js';
-
-const API_KEY = 'AIzaSyD_HbW4n63iEyyESfw2Uux877SHmBCoP-g';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+import { t } from '../i18n.js';
 
 let messages = [
   {
     isUser: false,
-    text: `สวัสดีค่ะ! 👋 ฉันคือ Finny ของ FinTrack
+    text: `สวัสดีค่ะ! ฉันคือ Finny ของ FinTrack
 
 ฉันช่วยคุณได้หลายเรื่อง:
-• 📝 บันทึกรายการ — พิมพ์ เช่น "กินข้าว 150 บาท"
-• 📊 วิเคราะห์การเงิน — พิมพ์ "วิเคราะห์"
-• 💡 ขอคำแนะนำ — พิมพ์ "แนะนำ"
-• 📋 ดูสรุป — พิมพ์ "สรุป"
+• บันทึกรายการ เช่น "กินข้าว 150 บาท"
+• สรุปและวิเคราะห์เงินของคุณ
+• วางแผนใช้เงิน เช่น "มี 5000 ใช้ 20 วัน"
+• ช่วยแบ่งงบเพื่อเป้าหมาย เช่น "เก็บ 30000 ใน 6 เดือน"
 
 ลองพิมพ์ข้อความคุยกับ Finny ได้เลยค่ะ!`
   }
@@ -31,10 +29,10 @@ export function renderAI(container) {
           <h1 class="brand-title" style="font-size: 17px; margin: 0; font-weight: 800; letter-spacing: -0.3px;">Finny Assistant</h1>
           <span id="ai-status" style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
             <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span>
-            พร้อมช่วยเหลือ
+            ${t('aiReady')}
           </span>
         </div>
-        <button id="quick-sum-btn" class="quick-action" title="สรุปการเงิน" style="padding: 8px; border-radius: 10px; background: var(--card);">
+        <button id="quick-sum-btn" class="quick-action" title="${t('quickSummary')}" style="padding: 8px; border-radius: 10px; background: var(--card);">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
       </div>
@@ -47,8 +45,8 @@ export function renderAI(container) {
       <!-- Input area with suggestions inside -->
       <div class="chat-input-area">
         <div id="suggestion-chips-container" class="chat-suggestions">
-          <button class="chat-suggestion" data-val="กินข้าว 150 บาท">กินข้าว 150 บาท</button>
-          <button class="chat-suggestion" data-val="สรุปเดือนนี้">สรุปเดือนนี้</button>
+          <button class="chat-suggestion" data-val="มีเงิน 5000 ใช้ 20 วัน">มีเงิน 5000 ใช้ 20 วัน</button>
+          <button class="chat-suggestion" data-val="อยากเก็บ 30000 ใน 6 เดือน">เก็บ 30000 ใน 6 เดือน</button>
           <button class="chat-suggestion" data-val="วิเคราะห์การเงิน">วิเคราะห์การเงิน</button>
         </div>
         
@@ -56,7 +54,7 @@ export function renderAI(container) {
           <input 
             type="text" 
             id="chat-input" 
-            placeholder="พิมพ์ข้อความคุยกับ Finny..." 
+            placeholder="${t('aiPlaceholder')}" 
             autocomplete="off"
             required 
           />
@@ -188,7 +186,7 @@ async function handleUserSendMessage(container, text) {
 
   // Set loading status
   const statusEl = container.querySelector('#ai-status');
-  statusEl.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span> กำลังพิมพ์...';
+  statusEl.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span> ${t('aiTyping')}`;
   statusEl.style.color = 'var(--gold)';
 
   // Append temporary Typing indicator
@@ -250,7 +248,7 @@ async function handleUserSendMessage(container, text) {
   }
 
   // Restore status text
-  statusEl.innerHTML = '<span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span> พร้อมช่วยเหลือ';
+  statusEl.innerHTML = `<span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span> ${t('aiReady')}`;
   statusEl.style.color = 'var(--text-secondary)';
 
   renderMessages(container);
@@ -258,99 +256,62 @@ async function handleUserSendMessage(container, text) {
 
 
 async function getAIResponse(userInput) {
-  // Check if API Key is not set or mock fallback is forced
-  if (API_KEY === 'YOUR_GEMINI_API_KEY' || !API_KEY) {
-    return mockSmartResponse(userInput);
-  }
-
-  // Retrieve current financial context to pass to Gemini API
-  const metrics = store.getFinanceMetrics();
-  const symbol = store.getCurrencySymbol();
-  const transactions = store.getAllTransactions();
-
-  // Get Top 3 categories spending this month
-  const categoryTotals = {};
-  const now = new Date();
-  transactions.forEach(t => {
-    if (!t.isIncome && t.date.getFullYear() === now.getFullYear() && t.date.getMonth() === now.getMonth()) {
-      categoryTotals[t.category] = (categoryTotals[t.category] || 0) + store.toDisplay(t.amount);
-    }
-  });
-  
-  const sortedCats = Object.entries(categoryTotals)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(e => `${e[0]}: ${symbol}${e[1].toFixed(2)}`)
-    .join(', ');
-
-  const prompt = `
-  ข้อมูลการเงินปัจจุบันของผู้ใช้ (เดือนนี้):
-  - รายรับ: ${symbol}${metrics.monthlyIncome.toFixed(2)}
-  - รายจ่าย: ${symbol}${metrics.monthlyExpense.toFixed(2)}
-  - คงเหลือ: ${symbol}${metrics.monthlyBalance.toFixed(2)}
-  - รายจ่ายสูงสุด 3 อันดับ: ${sortedCats || 'ยังไม่มีข้อมูล'}
-
-  คำพูดของผู้ใช้: "${userInput}"
-
-  จงตอบกลับด้วย JSON FORMAT เท่านั้น! (ห้ามมี backticks (\`\`\`json หรือ \`\`\`) หรือคำอธิบายภายนอกตัววัตถุ) รูปแบบตามนี้:
-  {
-    "response": "คำตอบที่จะพูดกับผู้ใช้ (เป็นภาษาไทย แนะนำ อภิปราย วิเคราะห์ หรือกระตุ้นอย่างเป็นมิตร สุภาพ)",
-    "transaction_to_add": null หรือ {
-       "title": "ชื่อรายการสั้นๆ เช่น ข้าวผัดกะเพรา, ซื้อหูฟัง, เงินเดือนเข้า",
-       "amount": ตัวเลขทศนิยมจำนวนเงิน (ในสกุลเงินหลักของผู้ใช้ที่กำลังแสดงผล ${store.settings.selectedCurrency}),
-       "isIncome": boolean (true สำหรับรายรับ, false สำหรับรายจ่าย),
-       "category": "หมวดหมู่ภาษาอังกฤษที่ถูกต้องตรงกับระบบ: Food, Transport, Shopping, Salary, Bills, Entertainment, Health, Investment, Gift, Travel, Education, Other"
-    }
-  }
-  `;
-
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch('/api/ai', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: prompt }]
-          }
-        ],
-        systemInstruction: {
-          parts: [{
-            text: `คุณคือ "Finny" (ฟินนี่) ผู้ช่วยอัจฉริยะด้านการเงินของแอป FinTrack
-คุณมีความเชี่ยวชาญในการช่วยจัดการรายรับรายจ่าย วิเคราะห์และวางแผนการใช้เงิน
-ตอบคำถามอย่างเป็นมิตร สุภาพ ให้กำลังใจ และใช้ภาษาไทยเป็นหลัก
-หากผู้ใช้ต้องการบันทึกรายรับหรือรายจ่าย คุณต้องส่งข้อมูล JSON สำหรับบันทึกลงใน transaction_to_add ด้วย`
-          }]
-        }
+        message: userInput,
+        context: buildFinanceContext()
       })
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP Error: ${response.status}`);
+      throw new Error(`AI endpoint failed: ${response.status}`);
     }
 
-    const data = await response.json();
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!responseText) {
-      throw new Error('Empty response from model');
-    }
-
-    // Clean JSON response block
-    const cleanJson = responseText
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .trim();
-
-    return JSON.parse(cleanJson);
+    return await response.json();
 
   } catch (error) {
-    console.warn('API connection failed. Falling back to Mock parser:', error);
+    console.warn('AI endpoint unavailable. Using offline planner:', error);
     return mockSmartResponse(userInput);
   }
+}
+
+function buildFinanceContext() {
+  const metrics = store.getFinanceMetrics();
+  const symbol = store.getCurrencySymbol();
+  const transactions = store.getAllTransactions();
+  const now = new Date();
+  const categoryTotals = {};
+
+  transactions.forEach(t => {
+    if (!t.isIncome && t.date.getFullYear() === now.getFullYear() && t.date.getMonth() === now.getMonth()) {
+      categoryTotals[t.category] = (categoryTotals[t.category] || 0) + store.toDisplay(t.amount);
+    }
+  });
+
+  const topExpenseCategories = Object.entries(categoryTotals)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([category, amount]) => ({ category, amount }));
+
+  return {
+    currency: store.settings.selectedCurrency,
+    symbol,
+    metrics,
+    topExpenseCategories,
+    transactionCount: transactions.length,
+    recentTransactions: transactions.slice(0, 10).map(t => ({
+      title: t.title,
+      amount: store.toDisplay(t.amount),
+      isIncome: t.isIncome,
+      category: t.category,
+      date: t.date
+    }))
+  };
 }
 
 // offline Mock / Rule-based Fallback Parser
@@ -358,6 +319,15 @@ function mockSmartResponse(input) {
   const lowerText = input.toLowerCase();
   const metrics = store.getFinanceMetrics();
   const symbol = store.getCurrencySymbol();
+  const isEnglish = store.settings.language === 'en';
+
+  const plan = parseMoneyPlan(input);
+  if (plan) {
+    return {
+      response: formatOfflinePlan(plan, symbol, isEnglish),
+      transaction_to_add: null
+    };
+  }
 
   // Summary / Analysis Keywords
   if (lowerText.includes('สรุป') || lowerText.includes('วิเคราะห์') || lowerText.includes('แนะนำ')) {
@@ -377,13 +347,20 @@ function mockSmartResponse(input) {
     }
 
     return {
-      response: `📊 สรุปและวิเคราะห์การเงินเดือนนี้ค่ะ
+      response: isEnglish ? `Financial summary for this month
 
-📥 รายรับ: ${symbol}${metrics.monthlyIncome.toFixed(2)}
-📤 รายจ่าย: ${symbol}${metrics.monthlyExpense.toFixed(2)}
-💰 คงเหลือ: ${symbol}${metrics.monthlyBalance.toFixed(2)}
+Income: ${symbol}${metrics.monthlyIncome.toFixed(2)}
+Expense: ${symbol}${metrics.monthlyExpense.toFixed(2)}
+Remaining: ${symbol}${metrics.monthlyBalance.toFixed(2)}
 
-💡 คำแนะนำจาก Finny:
+Finny advice:
+${advice}` : `สรุปและวิเคราะห์การเงินเดือนนี้ค่ะ
+
+รายรับ: ${symbol}${metrics.monthlyIncome.toFixed(2)}
+รายจ่าย: ${symbol}${metrics.monthlyExpense.toFixed(2)}
+คงเหลือ: ${symbol}${metrics.monthlyBalance.toFixed(2)}
+
+คำแนะนำจาก Finny:
 ${advice}`,
       transaction_to_add: null
     };
@@ -392,7 +369,9 @@ ${advice}`,
   // Balance keywords
   if (lowerText.includes('ยอด') || lowerText.includes('เงินเหลือ') || lowerText.includes('คงเหลือ')) {
     return {
-      response: `💰 ยอดเงินคงเหลือของคุณตอนนี้คือ ${symbol}${metrics.monthlyBalance.toFixed(2)} สำหรับเดือนนี้ค่ะ \nหากต้องการดูภาพรวมเพิ่มเติมพิมพ์ 'วิเคราะห์' ได้เลยนะคะ`,
+      response: isEnglish
+        ? `Your remaining balance this month is ${symbol}${metrics.monthlyBalance.toFixed(2)}. Type "analyze" if you want a deeper breakdown.`
+        : `ยอดเงินคงเหลือของคุณตอนนี้คือ ${symbol}${metrics.monthlyBalance.toFixed(2)} สำหรับเดือนนี้ค่ะ \nหากต้องการดูภาพรวมเพิ่มเติมพิมพ์ 'วิเคราะห์' ได้เลยนะคะ`,
       transaction_to_add: null
     };
   }
@@ -421,7 +400,9 @@ ${advice}`,
         .trim() || (isInc ? 'รายรับเพิ่มเติม' : 'รายจ่ายเพิ่มเติม');
 
       return {
-        response: `รับทราบค่ะ! Finny ได้จดบันทึกประวัติรายการ "${cleanTitle}" จำนวน ${symbol}${amount.toFixed(2)} ในหมวดหมู่ ${category} เรียบร้อยแล้วนะคะ 📝 มีอะไรให้ช่วยเหลือเพิ่มบอกมาได้เลยค่ะ`,
+        response: isEnglish
+          ? `Saved "${cleanTitle}" for ${symbol}${amount.toFixed(2)} in ${category}.`
+          : `รับทราบค่ะ! Finny ได้จดบันทึกประวัติรายการ "${cleanTitle}" จำนวน ${symbol}${amount.toFixed(2)} ในหมวดหมู่ ${category} เรียบร้อยแล้วนะคะ`,
         transaction_to_add: {
           title: cleanTitle,
           amount: amount,
@@ -435,19 +416,112 @@ ${advice}`,
   // Greeting
   if (lowerText.includes('สวัสดี') || lowerText.includes('หวัดดี') || lowerText.includes('hi') || lowerText.includes('hello')) {
     return {
-      response: `สวัสดีค่ะ! 🎉 Finny พร้อมช่วยจัดการและวิเคราะห์การเงินให้คุณแล้ววันนี้\nอยากให้บันทึกรายจ่าย หรือวิเคราะห์ภาพรวมการเงิน บอกได้เลยค่ะ!`,
+      response: isEnglish
+        ? `Hi! Finny is ready to help you track spending, analyze your cash flow, and plan your money.`
+        : `สวัสดีค่ะ! Finny พร้อมช่วยจัดการและวิเคราะห์การเงินให้คุณแล้ววันนี้\nอยากให้บันทึกรายจ่าย หรือวิเคราะห์ภาพรวมการเงิน บอกได้เลยค่ะ!`,
       transaction_to_add: null
     };
   }
 
   // Standard Fallback instructions
   return {
-    response: `🤔 Finny ยังไม่เข้าใจคำถามนี้ค่ะ ลองบอกรายละเอียดให้ชัดเจนขึ้นดูนะคะ เช่น:
-• 📥 บันทึกรายรับ: "ได้ค่าของ 800 บาท"
-• 📤 บันทึกรายจ่าย: "จ่ายค่าเดินทาง 60"
-• 📊 วิเคราะห์ภาพรวม: "วิเคราะห์" หรือ "สรุป"`,
+    response: isEnglish ? `I can help with examples like:
+• "I have 5000 for 20 days"
+• "Save 30000 in 6 months"
+• "Lunch 150"
+• "Analyze my spending"` : `Finny ยังไม่เข้าใจคำถามนี้ค่ะ ลองบอกรายละเอียดให้ชัดเจนขึ้นดูนะคะ เช่น:
+• บันทึกรายรับ: "ได้ค่าของ 800 บาท"
+• บันทึกรายจ่าย: "จ่ายค่าเดินทาง 60"
+• วางแผนเงิน: "มีเงิน 5000 ใช้ 20 วัน"
+• วิเคราะห์ภาพรวม: "วิเคราะห์" หรือ "สรุป"`,
     transaction_to_add: null
   };
+}
+
+function parseMoneyPlan(input) {
+  const normalized = input.toLowerCase().replace(/,/g, '');
+  const numbers = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map(match => parseFloat(match[1]));
+  if (numbers.length < 2) return null;
+
+  const hasTimeline = /(วัน|day|days|เดือน|month|months|ปี|year|years|week|weeks|สัปดาห์)/i.test(normalized);
+  const hasPlanningIntent = /(ใช้|พอ|plan|budget|save|saving|เก็บ|เป้าหมาย|goal|need|ต้องการ|อยาก)/i.test(normalized);
+  if (!hasTimeline && !hasPlanningIntent) return null;
+
+  const amount = numbers[0];
+  const duration = numbers[1];
+  let days = duration;
+
+  if (/(เดือน|month|months)/i.test(normalized)) days = duration * 30;
+  if (/(ปี|year|years)/i.test(normalized)) days = duration * 365;
+  if (/(week|weeks|สัปดาห์)/i.test(normalized)) days = duration * 7;
+
+  const isSavingsGoal = /(save|saving|เก็บ|เป้าหมาย|goal)/i.test(normalized);
+
+  return {
+    amount,
+    duration,
+    days: Math.max(1, Math.round(days)),
+    isSavingsGoal
+  };
+}
+
+function formatOfflinePlan(plan, symbol, isEnglish) {
+  const daily = plan.amount / plan.days;
+  const weekly = daily * 7;
+  const monthly = daily * 30;
+  const needsTightBudget = daily < 200;
+
+  if (isEnglish) {
+    if (plan.isSavingsGoal) {
+      return `Offline plan:
+Goal: ${symbol}${plan.amount.toLocaleString()} in ${plan.days} days
+Save per day: ${symbol}${daily.toFixed(2)}
+Save per week: ${symbol}${weekly.toFixed(2)}
+Save per month: ${symbol}${monthly.toFixed(2)}
+
+Suggested plan:
+• Move the daily amount out first when income arrives.
+• Keep a small emergency buffer before flexible spending.
+• Review progress every 7 days and adjust if you miss a day.`;
+    }
+
+    return `Offline budget plan:
+Available money: ${symbol}${plan.amount.toLocaleString()}
+Timeline: ${plan.days} days
+Daily limit: ${symbol}${daily.toFixed(2)}
+Weekly limit: ${symbol}${weekly.toFixed(2)}
+
+Suggested split:
+• Essentials: ${symbol}${(daily * 0.65).toFixed(2)} per day
+• Food/transport: ${symbol}${(daily * 0.25).toFixed(2)} per day
+• Buffer: ${symbol}${(daily * 0.10).toFixed(2)} per day
+${needsTightBudget ? '\nThis is a tight budget, so avoid non-essential spending until the timeline ends.' : ''}`;
+  }
+
+  if (plan.isSavingsGoal) {
+    return `แผนออฟไลน์:
+เป้าหมาย: ${symbol}${plan.amount.toLocaleString()} ภายใน ${plan.days} วัน
+ต้องเก็บต่อวัน: ${symbol}${daily.toFixed(2)}
+ต้องเก็บต่อสัปดาห์: ${symbol}${weekly.toFixed(2)}
+ประมาณต่อเดือน: ${symbol}${monthly.toFixed(2)}
+
+แนะนำ:
+• แยกเงินเก็บทันทีเมื่อมีรายรับ
+• กันเงินฉุกเฉินเล็กน้อยก่อนใช้จ่ายยืดหยุ่น
+• ตรวจความคืบหน้าทุก 7 วันแล้วปรับแผนถ้าหลุด`;
+  }
+
+  return `แผนใช้งบแบบออฟไลน์:
+เงินที่มี: ${symbol}${plan.amount.toLocaleString()}
+ระยะเวลา: ${plan.days} วัน
+ใช้ได้ต่อวัน: ${symbol}${daily.toFixed(2)}
+ใช้ได้ต่อสัปดาห์: ${symbol}${weekly.toFixed(2)}
+
+แบ่งงบแนะนำ:
+• จำเป็น: ${symbol}${(daily * 0.65).toFixed(2)} ต่อวัน
+• อาหาร/เดินทาง: ${symbol}${(daily * 0.25).toFixed(2)} ต่อวัน
+• กันพลาด: ${symbol}${(daily * 0.10).toFixed(2)} ต่อวัน
+${needsTightBudget ? '\nงบนี้ค่อนข้างตึง ควรงดรายจ่ายที่ไม่จำเป็นจนกว่าจะครบระยะเวลานี้ค่ะ' : ''}`;
 }
 
 function escapeHTML(str) {

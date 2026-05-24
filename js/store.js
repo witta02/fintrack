@@ -9,7 +9,10 @@ export const store = {
   settings: {
     selectedCurrency: 'THB',
     isDarkMode: true,
-    isPremium: true
+    isPremium: true,
+    language: 'th',
+    hasCompletedOnboarding: false,
+    dataVersion: 2
   },
 
   subscribe(listener) {
@@ -44,8 +47,7 @@ export const store = {
         amount: parseFloat(t.amount)
       }));
     } else {
-      // Seed mock transactions
-      this.seedMockData();
+      this.transactions = [];
     }
 
     if (savedRules) {
@@ -56,14 +58,40 @@ export const store = {
         createdAt: new Date(r.createdAt)
       }));
     } else {
-      this.seedMockRules();
+      this.recurringRules = [];
     }
+
+    this.removeLegacyDemoData();
 
     // Process recurring rules immediately
     this.processRecurringPayments();
 
     // Set initial theme
     document.documentElement.setAttribute('data-theme', this.settings.isDarkMode ? 'dark' : 'light');
+    document.documentElement.lang = this.settings.language === 'en' ? 'en' : 'th';
+  },
+
+  removeLegacyDemoData() {
+    if (this.settings.dataVersion >= 3) return;
+
+    const demoTransactionIds = new Set([
+      '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13',
+      '101', '102', '103', '104'
+    ]);
+    const demoRuleIds = new Set(['r1', 'r2']);
+
+    const beforeTransactions = this.transactions.length;
+    const beforeRules = this.recurringRules.length;
+
+    this.transactions = this.transactions.filter(t => !demoTransactionIds.has(String(t.id)));
+    this.recurringRules = this.recurringRules.filter(r => !demoRuleIds.has(String(r.id)));
+    this.settings.dataVersion = 3;
+
+    if (beforeTransactions !== this.transactions.length || beforeRules !== this.recurringRules.length) {
+      this.save();
+    } else {
+      localStorage.setItem('fintrack_settings', JSON.stringify(this.settings));
+    }
   },
 
   save() {
@@ -307,6 +335,17 @@ export const store = {
 
   setPremium(val) {
     this.settings.isPremium = !!val;
+    this.save();
+  },
+
+  completeOnboarding() {
+    this.settings.hasCompletedOnboarding = true;
+    this.save();
+  },
+
+  setLanguage(language) {
+    this.settings.language = language === 'en' ? 'en' : 'th';
+    document.documentElement.lang = this.settings.language === 'en' ? 'en' : 'th';
     this.save();
   },
 

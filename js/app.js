@@ -1,6 +1,7 @@
 import '../css/styles.css';
 import { store } from './store.js';
 import { router } from './router.js';
+import { t } from './i18n.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('FinTrack: Initializing...');
@@ -10,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize the router
   router.init();
+  updateStaticLabels();
 
   const splash = document.getElementById('splash-screen');
   const app = document.getElementById('app');
@@ -26,3 +28,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 500);
 });
+
+export function updateStaticLabels() {
+  const labels = {
+    dashboard: t('navDashboard'),
+    transactions: t('navTransactions'),
+    addTransaction: t('navAdd'),
+    ai: 'AI',
+    recurring: t('navRecurring'),
+    settings: t('navSettings')
+  };
+
+  document.querySelectorAll('[data-screen]').forEach(btn => {
+    const screen = btn.getAttribute('data-screen');
+    const label = btn.querySelector('span');
+    if (label && labels[screen]) label.textContent = labels[screen];
+  });
+}

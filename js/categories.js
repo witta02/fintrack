@@ -1,3 +1,5 @@
+import { getLanguage } from './i18n.js';
+
 export const categoryColors = {
   'Food': '#FF8F00',
   'Transport': '#58A6FF',
@@ -35,9 +37,24 @@ export const incomeCategories = [
 export function getCategoryInfo(name) {
   const all = [...expenseCategories, ...incomeCategories];
   const cat = all.find(c => c.name === name);
+  const englishLabels = {
+    Food: 'Food',
+    Transport: 'Transport',
+    Shopping: 'Shopping',
+    Salary: 'Salary',
+    Bills: 'Bills',
+    Entertainment: 'Entertainment',
+    Health: 'Health',
+    Education: 'Education',
+    Investment: 'Investment',
+    Gift: 'Gift',
+    Travel: 'Travel',
+    Other: 'Other'
+  };
+  const isEnglish = getLanguage() === 'en';
   return {
     name: name,
-    label: cat ? cat.label : 'อื่นๆ',
+    label: isEnglish ? (englishLabels[name] || 'Other') : (cat ? cat.label : 'อื่นๆ'),
     icon: cat ? cat.icon : 'lucide-grid',
     emoji: cat ? cat.emoji : '📦',
     color: categoryColors[name] || '#FFB800'
