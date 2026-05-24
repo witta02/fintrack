@@ -8,7 +8,7 @@ const GEMINI_MODELS = [
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyDXpFjOTv3CuxtdtPPlameZ5VGqSkUB91M';
     const { models: availableModels, error: listError } = apiKey 
       ? await listGenerateContentModels(apiKey) 
       : { models: [], error: 'No API key' };
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ response: 'Method not allowed', transaction_to_add: null, source: 'server' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyDXpFjOTv3CuxtdtPPlameZ5VGqSkUB91M';
   if (!apiKey) {
     return res.status(503).json({
       response: 'AI API key is not configured. Offline planner will handle this request.',
