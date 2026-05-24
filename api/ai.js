@@ -1,14 +1,17 @@
 const GEMINI_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-3.1-flash',
+  'gemini-3.1-flash-lite',
   'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash-latest',
   'gemini-1.5-flash'
 ];
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     const apiKey = process.env.GEMINI_API_KEY;
-    const availableModels = apiKey ? await listGenerateContentModels(apiKey) : [];
+    const { models: availableModels, error: listError } = apiKey 
+      ? await listGenerateContentModels(apiKey) 
+      : { models: [], error: 'No API key' };
 
     return res.status(200).json({
       ok: true,
@@ -16,7 +19,8 @@ export default async function handler(req, res) {
       provider: 'Gemini',
       hasGeminiKey: Boolean(apiKey),
       preferredModels: GEMINI_MODELS,
-      availableGenerateContentModels: availableModels
+      availableGenerateContentModels: availableModels,
+      listError: listError
     });
   }
 
@@ -70,7 +74,7 @@ export default async function handler(req, res) {
 
 async function callGeminiWithFallback(apiKey, prompt) {
   let lastError = '';
-  const availableModels = await listGenerateContentModels(apiKey);
+  const { models: availableModels } = await listGenerateContentModels(apiKey);
   const models = buildModelCandidates(availableModels);
   let lastModel = models[0] || GEMINI_MODELS[0];
 
@@ -124,14 +128,19 @@ Return valid JSON only. No markdown fences.`
 async function listGenerateContentModels(apiKey) {
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-    if (!response.ok) return [];
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { models: [], error: `${response.status}: ${errorText}` };
+    }
 
     const data = await response.json();
-    return (data.models || [])
+    const models = (data.models || [])
       .filter((model) => model.supportedGenerationMethods?.includes('generateContent'))
       .map((model) => model.name);
-  } catch {
-    return [];
+    
+    return { models, error: null };
+  } catch (error) {
+    return { models: [], error: error.message };
   }
 }
 
