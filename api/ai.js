@@ -1,15 +1,26 @@
 const GEMINI_MODEL = 'gemini-1.5-flash';
 
 export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      ok: true,
+      service: 'FinTrack AI',
+      provider: 'Gemini',
+      hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
+      model: GEMINI_MODEL
+    });
+  }
+
   if (req.method !== 'POST') {
-    return res.status(405).json({ response: 'Method not allowed', transaction_to_add: null });
+    return res.status(405).json({ response: 'Method not allowed', transaction_to_add: null, source: 'server' });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(503).json({
       response: 'AI API key is not configured. Offline planner will handle this request.',
-      transaction_to_add: null
+      transaction_to_add: null,
+      source: 'server_missing_key'
     });
   }
 
@@ -49,6 +60,7 @@ Return valid JSON only. No markdown fences.`
       return res.status(502).json({
         response: `AI provider error: ${geminiResponse.status}. Offline planner will handle this request.`,
         transaction_to_add: null,
+        source: 'gemini_error',
         detail
       });
     }
@@ -59,12 +71,14 @@ Return valid JSON only. No markdown fences.`
 
     return res.status(200).json({
       response: parsed.response || 'I calculated a result, but the answer was empty.',
-      transaction_to_add: parsed.transaction_to_add || null
+      transaction_to_add: parsed.transaction_to_add || null,
+      source: 'gemini'
     });
   } catch (error) {
     return res.status(500).json({
       response: 'AI service failed. Offline planner will handle this request.',
       transaction_to_add: null,
+      source: 'server_error',
       error: error.message
     });
   }

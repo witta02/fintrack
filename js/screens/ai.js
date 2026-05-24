@@ -113,6 +113,7 @@ function renderMessages(container) {
     
     bubble.innerHTML = `
       <div class="chat-bubble-text">${formatMessageText(msg.text)}</div>
+      ${msg.source ? `<div class="chat-source">${msg.source === 'gemini' ? 'Gemini Online' : 'Offline Planner'}</div>` : ''}
       ${msg.transaction ? renderTransactionNotice(msg.transaction) : ''}
     `;
 
@@ -233,6 +234,7 @@ async function handleUserSendMessage(container, text) {
     messages.push({
       isUser: false,
       text: result.response || 'มีปัญหาระหว่างคำนวณผลลัพธ์ค่ะ',
+      source: result.source === 'gemini' ? 'gemini' : 'offline',
       transaction: newTransaction,
       time: new Date()
     });
@@ -325,6 +327,7 @@ function mockSmartResponse(input) {
   if (plan) {
     return {
       response: formatOfflinePlan(plan, symbol, isEnglish),
+      source: 'offline',
       transaction_to_add: null
     };
   }
@@ -403,13 +406,13 @@ ${advice}`,
         response: isEnglish
           ? `Saved "${cleanTitle}" for ${symbol}${amount.toFixed(2)} in ${category}.`
           : `รับทราบค่ะ! Finny ได้จดบันทึกประวัติรายการ "${cleanTitle}" จำนวน ${symbol}${amount.toFixed(2)} ในหมวดหมู่ ${category} เรียบร้อยแล้วนะคะ`,
-        transaction_to_add: {
+      transaction_to_add: {
           title: cleanTitle,
           amount: amount,
           isIncome: isInc,
           category: category
-        }
-      };
+      }
+    };
     }
   }
 
