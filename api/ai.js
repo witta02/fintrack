@@ -80,45 +80,51 @@ async function callGeminiWithFallback(apiKey, prompt) {
 
   for (const model of models) {
     lastModel = model;
+    
+    // In May 2026, GA models are on v1, while previews/older models might be on v1beta
+    const versions = model.includes('preview') ? ['v1beta', 'v1'] : ['v1', 'v1beta'];
 
-    try {
-      const modelPath = model.startsWith('models/') ? model : `models/${model}`;
-      const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            systemInstruction: {
-              parts: [{
-                text: `You are Finny, the finance assistant inside FinTrack.
+    for (const ver of versions) {
+      try {
+        const modelPath = model.startsWith('models/') ? model : `models/${model}`;
+        const geminiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/${ver}/${modelPath}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts: [{ text: prompt }] }],
+              systemInstruction: {
+                parts: [{
+                  text: `You are Finny, the finance assistant inside FinTrack.
 Reply mainly in the user's app language when possible.
 Give practical, specific, numerically useful personal finance guidance.
 If the user asks to record an income or expense, return transaction_to_add.
 Return valid JSON only. No markdown fences.`
-              }]
-            },
-            generationConfig: {
-              temperature: 0.45,
-              responseMimeType: 'application/json'
-            }
-          })
+                }]
+              },
+              generationConfig: {
+                temperature: 0.45,
+                responseMimeType: 'application/json'
+              }
+            })
+          }
+        );
+
+        if (!geminiResponse.ok) {
+          lastError = `${ver} ${geminiResponse.status}: ${await geminiResponse.text()}`;
+          // If 404, try the next version or next model
+          continue;
         }
-      );
 
-      if (!geminiResponse.ok) {
-        lastError = `${geminiResponse.status}: ${await geminiResponse.text()}`;
-        continue;
+        const data = await geminiResponse.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+
+        return { ok: true, model: `${ver}/${model}`, parsed };
+      } catch (error) {
+        lastError = error.message;
       }
-
-      const data = await geminiResponse.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-
-      return { ok: true, model, parsed };
-    } catch (error) {
-      lastError = error.message;
     }
   }
 
@@ -126,22 +132,32 @@ Return valid JSON only. No markdown fences.`
 }
 
 async function listGenerateContentModels(apiKey) {
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { models: [], error: `${response.status}: ${errorText}` };
-    }
+  const versions = ['v1', 'v1beta'];
+  let allModels = [];
+  let lastError = null;
 
-    const data = await response.json();
-    const models = (data.models || [])
-      .filter((model) => model.supportedGenerationMethods?.includes('generateContent'))
-      .map((model) => model.name);
-    
-    return { models, error: null };
-  } catch (error) {
-    return { models: [], error: error.message };
+  for (const ver of versions) {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/${ver}/models?key=${apiKey}`);
+      if (response.ok) {
+        const data = await response.json();
+        const models = (data.models || [])
+          .filter((model) => model.supportedGenerationMethods?.includes('generateContent'))
+          .map((model) => model.name);
+        allModels = [...new Set([...allModels, ...models])];
+      } else {
+        const errText = await response.text();
+        lastError = `${ver} ${response.status}: ${errText}`;
+      }
+    } catch (error) {
+      lastError = error.message;
+    }
   }
+
+  return { 
+    models: allModels, 
+    error: allModels.length > 0 ? null : lastError 
+  };
 }
 
 function buildModelCandidates(availableModels) {
