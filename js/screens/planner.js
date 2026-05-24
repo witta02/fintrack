@@ -5,19 +5,19 @@ import { t } from '../i18n.js';
 let messages = [
   {
     isUser: false,
-    text: `สวัสดีค่ะ! ฉันคือ Finny ของ FinTrack
+    text: `สวัสดีค่ะ! นี่คือตัววางแผนการเงินแบบออฟไลน์
 
-ฉันช่วยคุณได้หลายเรื่อง:
+ใช้งานได้โดยไม่ต้องเชื่อมต่อบริการภายนอก:
 • บันทึกรายการ เช่น "กินข้าว 150 บาท"
 • สรุปและวิเคราะห์เงินของคุณ
 • วางแผนใช้เงิน เช่น "มี 5000 ใช้ 20 วัน"
 • ช่วยแบ่งงบเพื่อเป้าหมาย เช่น "เก็บ 30000 ใน 6 เดือน"
 
-ลองพิมพ์ข้อความคุยกับ Finny ได้เลยค่ะ!`
+ลองพิมพ์จำนวนเงิน เป้าหมาย หรือรายการที่ต้องการบันทึกได้เลยค่ะ`
   }
 ];
 
-export function renderAI(container) {
+export function renderPlanner(container) {
   container.innerHTML = `
     <div class="chat-container">
       <!-- Header -->
@@ -26,10 +26,10 @@ export function renderAI(container) {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
         </div>
         <div style="flex: 1;">
-          <h1 class="brand-title" style="font-size: 17px; margin: 0; font-weight: 800; letter-spacing: -0.3px;">Finny Assistant</h1>
-          <span id="ai-status" style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
+          <h1 class="brand-title" style="font-size: 17px; margin: 0; font-weight: 800; letter-spacing: -0.3px;">Offline Planner</h1>
+          <span id="planner-status" style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
             <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span>
-            ${t('aiReady')}
+            ${t('plannerReady')}
           </span>
         </div>
         <button id="quick-sum-btn" class="quick-action" title="${t('quickSummary')}" style="padding: 8px; border-radius: 10px; background: var(--card);">
@@ -54,7 +54,7 @@ export function renderAI(container) {
           <input 
             type="text" 
             id="chat-input" 
-            placeholder="${t('aiPlaceholder')}" 
+            placeholder="${t('plannerPlaceholder')}" 
             autocomplete="off"
             required 
           />
@@ -109,11 +109,10 @@ function renderMessages(container) {
 
   messages.forEach(msg => {
     const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${msg.isUser ? 'user' : 'ai'}`;
+    bubble.className = `chat-bubble ${msg.isUser ? 'user' : 'planner'}`;
     
     bubble.innerHTML = `
       <div class="chat-bubble-text">${formatMessageText(msg.text)}</div>
-      ${msg.source ? `<div class="chat-source">${formatSourceLabel(msg.source, msg.model)}</div>` : ''}
       ${msg.transaction ? renderTransactionNotice(msg.transaction) : ''}
     `;
 
@@ -137,7 +136,6 @@ function renderMessages(container) {
 function renderTransactionNotice(t) {
   const cat = getCategoryInfo(t.category);
   const typeLabel = t.isIncome ? 'รายรับ' : 'รายจ่าย';
-  const typeClass = t.isIncome ? 'income' : 'expense';
   const symbol = store.getCurrencySymbol();
   
   return `
@@ -160,15 +158,6 @@ function renderTransactionNotice(t) {
       </div>
     </div>
   `;
-}
-
-function formatSourceLabel(source, model) {
-  if (source === 'gemini') return model ? `Gemini Online - ${model}` : 'Gemini Online';
-  if (source === 'server_missing_key') return 'Offline Planner - Missing Vercel Key';
-  if (source === 'gemini_error') return 'Offline Planner - Gemini Error';
-  if (source === 'server_error') return 'Offline Planner - Server Error';
-  if (source === 'network_error') return 'Offline Planner - Network Error';
-  return `Offline Planner - ${source}`;
 }
 
 function formatMessageText(text) {
@@ -195,8 +184,8 @@ async function handleUserSendMessage(container, text) {
   renderMessages(container);
 
   // Set loading status
-  const statusEl = container.querySelector('#ai-status');
-  statusEl.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span> ${t('aiTyping')}`;
+  const statusEl = container.querySelector('#planner-status');
+  statusEl.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span> ${t('plannerTyping')}`;
   statusEl.style.color = 'var(--gold)';
 
   // Append temporary Typing indicator
@@ -211,9 +200,9 @@ async function handleUserSendMessage(container, text) {
   msgContainer.appendChild(typingEl);
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
-  try {
-    // Generate AI response (using real Gemini API or mock)
-    const result = await getAIResponse(text);
+  // Use offline mock response directly
+  setTimeout(() => {
+    const result = getOfflinePlannerResponse(text);
 
     // Remove typing bubble
     typingEl.remove();
@@ -229,7 +218,7 @@ async function handleUserSendMessage(container, text) {
         : tx.amount / store.toDisplay(1.0);
 
       newTransaction = {
-        title: tx.title || 'รายการด่วนจาก AI',
+        title: tx.title || 'รายการด่วนจาก Planner',
         amount: thbAmount,
         isIncome: !!tx.isIncome,
         category: tx.category || 'Other',
@@ -239,105 +228,23 @@ async function handleUserSendMessage(container, text) {
       store.addTransaction(newTransaction);
     }
 
-    // Append AI Response
+    // Append planner response
     messages.push({
       isUser: false,
       text: result.response || 'มีปัญหาระหว่างคำนวณผลลัพธ์ค่ะ',
-      source: result.source === 'gemini' ? 'gemini' : 'offline',
-      model: result.model || null,
       transaction: newTransaction,
       time: new Date()
     });
 
-  } catch (error) {
-    console.error('AI error:', error);
-    typingEl.remove();
-    messages.push({
-      isUser: false,
-      text: 'ขออภัยค่ะ Finny กำลังประสบปัญหาการเชื่อมต่อเพื่อคุยกับคุณในขณะนี้ ลองพิมพ์ข้อความแบบออฟไลน์ดูนะคะ 🙏',
-      time: new Date()
-    });
-  }
+    // Restore status text
+    statusEl.innerHTML = `<span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span> ${t('plannerReady')}`;
+    statusEl.style.color = 'var(--text-secondary)';
 
-  // Restore status text
-  statusEl.innerHTML = `<span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span> ${t('aiReady')}`;
-  statusEl.style.color = 'var(--text-secondary)';
-
-  renderMessages(container);
+    renderMessages(container);
+  }, 600); // Small delay to feel natural
 }
 
-
-async function getAIResponse(userInput) {
-  try {
-    const response = await fetch('/api/ai', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: userInput,
-        context: buildFinanceContext()
-      })
-    });
-
-    if (!response.ok) {
-      const errorResult = await response.json().catch(() => null);
-      const fallback = mockSmartResponse(userInput);
-      return {
-        ...fallback,
-        source: errorResult?.source || `http_${response.status}`,
-        response: `${fallback.response}\n\nAI status: ${errorResult?.source || response.status}${errorResult?.error ? ` - ${errorResult.error}` : ''}`
-      };
-    }
-
-    return await response.json();
-
-  } catch (error) {
-    console.warn('AI endpoint unavailable. Using offline planner:', error);
-    const fallback = mockSmartResponse(userInput);
-    return {
-      ...fallback,
-      source: 'network_error'
-    };
-  }
-}
-
-function buildFinanceContext() {
-  const metrics = store.getFinanceMetrics();
-  const symbol = store.getCurrencySymbol();
-  const transactions = store.getAllTransactions();
-  const now = new Date();
-  const categoryTotals = {};
-
-  transactions.forEach(t => {
-    if (!t.isIncome && t.date.getFullYear() === now.getFullYear() && t.date.getMonth() === now.getMonth()) {
-      categoryTotals[t.category] = (categoryTotals[t.category] || 0) + store.toDisplay(t.amount);
-    }
-  });
-
-  const topExpenseCategories = Object.entries(categoryTotals)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([category, amount]) => ({ category, amount }));
-
-  return {
-    currency: store.settings.selectedCurrency,
-    symbol,
-    metrics,
-    topExpenseCategories,
-    transactionCount: transactions.length,
-    recentTransactions: transactions.slice(0, 10).map(t => ({
-      title: t.title,
-      amount: store.toDisplay(t.amount),
-      isIncome: t.isIncome,
-      category: t.category,
-      date: t.date
-    }))
-  };
-}
-
-// offline Mock / Rule-based Fallback Parser
-function mockSmartResponse(input) {
+function getOfflinePlannerResponse(input) {
   const lowerText = input.toLowerCase();
   const metrics = store.getFinanceMetrics();
   const symbol = store.getCurrencySymbol();
@@ -347,7 +254,6 @@ function mockSmartResponse(input) {
   if (plan) {
     return {
       response: formatOfflinePlan(plan, symbol, isEnglish),
-      source: 'offline',
       transaction_to_add: null
     };
   }
@@ -364,7 +270,7 @@ function mockSmartResponse(input) {
     } else if (rate >= 10) {
       advice = '👍 การเงินอยู่ในเกณฑ์ดีค่ะ แต่ถ้าลองลดรายจ่ายฟุ่มเฟือยลงอีกนิด จะมีเงินออมเพิ่มขึ้นนะคะ';
     } else if (rate > 0) {
-      advice = '⚠️ เดือนนี้ใช้จ่ายค่อนข้างตึงตัวนะคะ Finny แนะนำให้ลองตรวจสอบหมวดหมู่ที่จ่ายเยอะสุดดูค่ะ';
+      advice = '⚠️ เดือนนี้ใช้จ่ายค่อนข้างตึงตัวนะคะ แนะนำให้ลองตรวจสอบหมวดหมู่ที่จ่ายเยอะสุดดูค่ะ';
     } else {
       advice = '🚨 สัญญาณอันตราย! เดือนนี้ใช้จ่ายเกินรายรับแล้วค่ะ แนะนำให้งดการใช้จ่ายที่ไม่จำเป็นทันทีนะคะ';
     }
@@ -376,14 +282,14 @@ Income: ${symbol}${metrics.monthlyIncome.toFixed(2)}
 Expense: ${symbol}${metrics.monthlyExpense.toFixed(2)}
 Remaining: ${symbol}${metrics.monthlyBalance.toFixed(2)}
 
-Finny advice:
+Planner note:
 ${advice}` : `สรุปและวิเคราะห์การเงินเดือนนี้ค่ะ
 
 รายรับ: ${symbol}${metrics.monthlyIncome.toFixed(2)}
 รายจ่าย: ${symbol}${metrics.monthlyExpense.toFixed(2)}
 คงเหลือ: ${symbol}${metrics.monthlyBalance.toFixed(2)}
 
-คำแนะนำจาก Finny:
+คำแนะนำจากตัววางแผน:
 ${advice}`,
       transaction_to_add: null
     };
@@ -425,7 +331,7 @@ ${advice}`,
       return {
         response: isEnglish
           ? `Saved "${cleanTitle}" for ${symbol}${amount.toFixed(2)} in ${category}.`
-          : `รับทราบค่ะ! Finny ได้จดบันทึกประวัติรายการ "${cleanTitle}" จำนวน ${symbol}${amount.toFixed(2)} ในหมวดหมู่ ${category} เรียบร้อยแล้วนะคะ`,
+          : `รับทราบค่ะ! บันทึกรายการ "${cleanTitle}" จำนวน ${symbol}${amount.toFixed(2)} ในหมวดหมู่ ${category} เรียบร้อยแล้วนะคะ`,
       transaction_to_add: {
           title: cleanTitle,
           amount: amount,
@@ -440,19 +346,19 @@ ${advice}`,
   if (lowerText.includes('สวัสดี') || lowerText.includes('หวัดดี') || lowerText.includes('hi') || lowerText.includes('hello')) {
     return {
       response: isEnglish
-        ? `Hi! Finny is ready to help you track spending, analyze your cash flow, and plan your money.`
-        : `สวัสดีค่ะ! Finny พร้อมช่วยจัดการและวิเคราะห์การเงินให้คุณแล้ววันนี้\nอยากให้บันทึกรายจ่าย หรือวิเคราะห์ภาพรวมการเงิน บอกได้เลยค่ะ!`,
+        ? `Hi! The offline planner is ready to help you track spending, analyze cash flow, and plan your money.`
+        : `สวัสดีค่ะ! ตัววางแผนออฟไลน์พร้อมช่วยจัดการและวิเคราะห์การเงินให้คุณแล้ววันนี้\nอยากให้บันทึกรายจ่าย หรือวิเคราะห์ภาพรวมการเงิน บอกได้เลยค่ะ!`,
       transaction_to_add: null
     };
   }
 
   // Standard Fallback instructions
   return {
-    response: isEnglish ? `I can help with examples like:
+    response: isEnglish ? `The offline planner can help with examples like:
 • "I have 5000 for 20 days"
 • "Save 30000 in 6 months"
 • "Lunch 150"
-• "Analyze my spending"` : `Finny ยังไม่เข้าใจคำถามนี้ค่ะ ลองบอกรายละเอียดให้ชัดเจนขึ้นดูนะคะ เช่น:
+• "Analyze my spending"` : `ตัววางแผนยังไม่เข้าใจคำถามนี้ค่ะ ลองบอกรายละเอียดให้ชัดเจนขึ้นดูนะคะ เช่น:
 • บันทึกรายรับ: "ได้ค่าของ 800 บาท"
 • บันทึกรายจ่าย: "จ่ายค่าเดินทาง 60"
 • วางแผนเงิน: "มีเงิน 5000 ใช้ 20 วัน"
@@ -522,7 +428,7 @@ ${needsTightBudget ? '\nThis is a tight budget, so avoid non-essential spending 
   }
 
   if (plan.isSavingsGoal) {
-    return `แผนออฟไลน์:
+    return `แผนจัดการเงิน:
 เป้าหมาย: ${symbol}${plan.amount.toLocaleString()} ภายใน ${plan.days} วัน
 ต้องเก็บต่อวัน: ${symbol}${daily.toFixed(2)}
 ต้องเก็บต่อสัปดาห์: ${symbol}${weekly.toFixed(2)}
@@ -534,7 +440,7 @@ ${needsTightBudget ? '\nThis is a tight budget, so avoid non-essential spending 
 • ตรวจความคืบหน้าทุก 7 วันแล้วปรับแผนถ้าหลุด`;
   }
 
-  return `แผนใช้งบแบบออฟไลน์:
+  return `แผนใช้งบ:
 เงินที่มี: ${symbol}${plan.amount.toLocaleString()}
 ระยะเวลา: ${plan.days} วัน
 ใช้ได้ต่อวัน: ${symbol}${daily.toFixed(2)}

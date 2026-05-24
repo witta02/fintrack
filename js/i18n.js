@@ -26,8 +26,8 @@ const dictionary = {
     starterIncomeDesc: 'เริ่มจากยอดเงินจริงของคุณ ไม่ใช้ข้อมูลตัวอย่าง',
     starterExpenseTitle: 'บันทึกรายจ่ายแรก',
     starterExpenseDesc: 'จดรายการจริง แล้วกราฟและสรุปจะอัปเดตทันที',
-    starterAiTitle: 'ให้ Finny ช่วยวางแผน',
-    starterAiDesc: 'บอกจำนวนเงิน เป้าหมาย และระยะเวลาที่ต้องการ',
+    starterPlannerTitle: 'เปิดตัววางแผนออฟไลน์',
+    starterPlannerDesc: 'บอกจำนวนเงิน เป้าหมาย และระยะเวลาที่ต้องการ',
     emptyTransactions: 'ยังไม่มีรายการใดๆ',
     emptyTransactionsHint: 'เพิ่มรายการแรกเพื่อเริ่มติดตามเงินของคุณ',
     addFirst: 'เพิ่มรายการแรก',
@@ -54,9 +54,9 @@ const dictionary = {
     noSearchResults: 'ไม่พบรายการที่ตรงกับเงื่อนไขการค้นหา',
     deleteConfirm: 'คุณต้องการลบรายการนี้ใช่หรือไม่?',
     recurringTitle: 'รายการประจำ',
-    aiReady: 'พร้อมช่วยเหลือ',
-    aiTyping: 'กำลังพิมพ์...',
-    aiPlaceholder: 'พิมพ์ข้อความคุยกับ Finny...',
+    plannerReady: 'พร้อมคำนวณ',
+    plannerTyping: 'กำลังคำนวณ...',
+    plannerPlaceholder: 'พิมพ์แผน เช่น มีเงิน 5000 ใช้ 20 วัน',
     quickSummary: 'สรุปการเงิน'
   },
   en: {
@@ -86,8 +86,8 @@ const dictionary = {
     starterIncomeDesc: 'Start with your real numbers. No sample data is used.',
     starterExpenseTitle: 'Record the first expense',
     starterExpenseDesc: 'Add real spending and the charts update automatically.',
-    starterAiTitle: 'Ask Finny to plan',
-    starterAiDesc: 'Tell Finny your amount, goal, and timeline.',
+    starterPlannerTitle: 'Open offline planner',
+    starterPlannerDesc: 'Enter your amount, goal, and timeline.',
     emptyTransactions: 'No transactions yet',
     emptyTransactionsHint: 'Add your first record to start tracking your money.',
     addFirst: 'Add First Record',
@@ -114,9 +114,9 @@ const dictionary = {
     noSearchResults: 'No transactions match your filters',
     deleteConfirm: 'Do you want to delete this transaction?',
     recurringTitle: 'Recurring',
-    aiReady: 'Ready',
-    aiTyping: 'Typing...',
-    aiPlaceholder: 'Message Finny...',
+    plannerReady: 'Ready',
+    plannerTyping: 'Calculating...',
+    plannerPlaceholder: 'Try: I have 5000 for 20 days',
     quickSummary: 'Financial Summary'
   }
 };

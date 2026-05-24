@@ -80,11 +80,11 @@ export function renderDashboard(container) {
             <small>${t('starterExpenseDesc')}</small>
           </span>
         </button>
-        <button class="starter-step" data-screen-target="ai">
-          <span class="step-icon ai-bg">AI</span>
+        <button class="starter-step" data-screen-target="planner">
+          <span class="step-icon planner-bg">÷</span>
           <span>
-            <strong>${t('starterAiTitle')}</strong>
-            <small>${t('starterAiDesc')}</small>
+            <strong>${t('starterPlannerTitle')}</strong>
+            <small>${t('starterPlannerDesc')}</small>
           </span>
         </button>
       </div>

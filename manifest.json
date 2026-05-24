@@ -1,7 +1,7 @@
 {
-  "name": "FinTrack — Manage Money Smart",
+  "name": "FinTrack — Offline Money Planner",
   "short_name": "FinTrack",
-  "description": "Smart Money Management with AI Assistant",
+  "description": "Offline money planner and spending tracker",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#030712",

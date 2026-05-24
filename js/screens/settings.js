@@ -29,7 +29,7 @@ export function renderSettings(container) {
         <span style="font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 1px;">FinTrack Pro Member</span>
       </div>
       <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: #161B22;">เปิดใช้งานฟีเจอร์พรีเมียมแล้ว</h3>
-      <p style="margin: 0; font-size: 12px; opacity: 0.9; line-height: 1.4;">คุณสามารถใช้งานฟีเจอร์ AI Assistant, รายการประจำไม่จำกัด, เปลี่ยนสกุลเงินทั่วโลก และระบบแจ้งเตือนแบบอัจฉริยะได้ทั้งหมด</p>
+      <p style="margin: 0; font-size: 12px; opacity: 0.9; line-height: 1.4;">คุณสามารถใช้งานตัววางแผนการเงินแบบออฟไลน์, รายการประจำไม่จำกัด, เปลี่ยนสกุลเงินทั่วโลก และระบบแจ้งเตือนภายในแอปได้ทั้งหมด</p>
     </div>
 
     <!-- Settings Group -->
@@ -200,7 +200,7 @@ function updateNavLabels() {
     dashboard: t('navDashboard'),
     transactions: t('navTransactions'),
     addTransaction: t('navAdd'),
-    ai: 'AI',
+    planner: 'Planner',
     recurring: t('navRecurring'),
     settings: t('navSettings')
   };

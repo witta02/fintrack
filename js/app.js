@@ -34,7 +34,7 @@ export function updateStaticLabels() {
     dashboard: t('navDashboard'),
     transactions: t('navTransactions'),
     addTransaction: t('navAdd'),
-    ai: 'AI',
+    planner: 'Planner',
     recurring: t('navRecurring'),
     settings: t('navSettings')
   };

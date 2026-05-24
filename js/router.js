@@ -3,7 +3,7 @@ import { renderTransactions } from './screens/transactions.js';
 import { renderAddTransaction } from './screens/addTransaction.js';
 import { renderRecurring } from './screens/recurring.js';
 import { renderSettings } from './screens/settings.js';
-import { renderAI } from './screens/ai.js';
+import { renderPlanner } from './screens/planner.js';
 
 let currentScreen = 'dashboard';
 let currentParams = null;
@@ -14,7 +14,7 @@ const screens = {
   addTransaction: renderAddTransaction,
   recurring: renderRecurring,
   settings: renderSettings,
-  ai: renderAI,
+  planner: renderPlanner,
 };
 
 export const router = {
