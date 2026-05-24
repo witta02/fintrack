@@ -7,12 +7,16 @@ const GEMINI_MODELS = [
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const availableModels = apiKey ? await listGenerateContentModels(apiKey) : [];
+
     return res.status(200).json({
       ok: true,
       service: 'FinTrack AI',
       provider: 'Gemini',
-      hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
-      models: GEMINI_MODELS
+      hasGeminiKey: Boolean(apiKey),
+      preferredModels: GEMINI_MODELS,
+      availableGenerateContentModels: availableModels
     });
   }
 
@@ -66,14 +70,17 @@ export default async function handler(req, res) {
 
 async function callGeminiWithFallback(apiKey, prompt) {
   let lastError = '';
-  let lastModel = GEMINI_MODELS[0];
+  const availableModels = await listGenerateContentModels(apiKey);
+  const models = buildModelCandidates(availableModels);
+  let lastModel = models[0] || GEMINI_MODELS[0];
 
-  for (const model of GEMINI_MODELS) {
+  for (const model of models) {
     lastModel = model;
 
     try {
+      const modelPath = model.startsWith('models/') ? model : `models/${model}`;
       const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -112,6 +119,30 @@ Return valid JSON only. No markdown fences.`
   }
 
   return { ok: false, model: lastModel, error: lastError };
+}
+
+async function listGenerateContentModels(apiKey) {
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    return (data.models || [])
+      .filter((model) => model.supportedGenerationMethods?.includes('generateContent'))
+      .map((model) => model.name);
+  } catch {
+    return [];
+  }
+}
+
+function buildModelCandidates(availableModels) {
+  const preferred = GEMINI_MODELS.map((model) => `models/${model}`);
+  const exactPreferred = preferred.filter((model) => availableModels.includes(model));
+  const flashModels = availableModels.filter((model) => /flash/i.test(model));
+  const otherModels = availableModels.filter((model) => !/flash/i.test(model));
+  const candidates = [...exactPreferred, ...flashModels, ...otherModels, ...preferred];
+
+  return [...new Set(candidates)];
 }
 
 function buildPrompt(message, context = {}) {
