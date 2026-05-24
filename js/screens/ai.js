@@ -113,7 +113,7 @@ function renderMessages(container) {
     
     bubble.innerHTML = `
       <div class="chat-bubble-text">${formatMessageText(msg.text)}</div>
-      ${msg.source ? `<div class="chat-source">${formatSourceLabel(msg.source)}</div>` : ''}
+      ${msg.source ? `<div class="chat-source">${formatSourceLabel(msg.source, msg.model)}</div>` : ''}
       ${msg.transaction ? renderTransactionNotice(msg.transaction) : ''}
     `;
 
@@ -162,8 +162,8 @@ function renderTransactionNotice(t) {
   `;
 }
 
-function formatSourceLabel(source) {
-  if (source === 'gemini') return 'Gemini Online';
+function formatSourceLabel(source, model) {
+  if (source === 'gemini') return model ? `Gemini Online - ${model}` : 'Gemini Online';
   if (source === 'server_missing_key') return 'Offline Planner - Missing Vercel Key';
   if (source === 'gemini_error') return 'Offline Planner - Gemini Error';
   if (source === 'server_error') return 'Offline Planner - Server Error';
@@ -244,6 +244,7 @@ async function handleUserSendMessage(container, text) {
       isUser: false,
       text: result.response || 'มีปัญหาระหว่างคำนวณผลลัพธ์ค่ะ',
       source: result.source === 'gemini' ? 'gemini' : 'offline',
+      model: result.model || null,
       transaction: newTransaction,
       time: new Date()
     });

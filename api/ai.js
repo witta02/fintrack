@@ -1,4 +1,9 @@
-const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-flash'
+];
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
@@ -7,7 +12,7 @@ export default async function handler(req, res) {
       service: 'FinTrack AI',
       provider: 'Gemini',
       hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
-      model: GEMINI_MODEL
+      models: GEMINI_MODELS
     });
   }
 
@@ -31,48 +36,23 @@ export default async function handler(req, res) {
     }
 
     const prompt = buildPrompt(message, context);
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          systemInstruction: {
-            parts: [{
-              text: `You are Finny, the finance assistant inside FinTrack.
-Reply mainly in the user's app language when possible.
-Give practical, specific, numerically useful personal finance guidance.
-If the user asks to record an income or expense, return transaction_to_add.
-Return valid JSON only. No markdown fences.`
-            }]
-          },
-          generationConfig: {
-            temperature: 0.45,
-            responseMimeType: 'application/json'
-          }
-        })
-      }
-    );
+    const result = await callGeminiWithFallback(apiKey, prompt);
 
-    if (!geminiResponse.ok) {
-      const detail = await geminiResponse.text();
+    if (!result.ok) {
       return res.status(502).json({
-        response: `AI provider error: ${geminiResponse.status}. Offline planner will handle this request.`,
+        response: `AI provider error. Offline planner will handle this request.`,
         transaction_to_add: null,
         source: 'gemini_error',
-        detail
+        error: result.error,
+        model: result.model
       });
     }
 
-    const data = await geminiResponse.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    const parsed = JSON.parse((text || '').replace(/```json|```/g, '').trim());
-
     return res.status(200).json({
-      response: parsed.response || 'I calculated a result, but the answer was empty.',
-      transaction_to_add: parsed.transaction_to_add || null,
-      source: 'gemini'
+      response: result.parsed.response || 'I calculated a result, but the answer was empty.',
+      transaction_to_add: result.parsed.transaction_to_add || null,
+      source: 'gemini',
+      model: result.model
     });
   } catch (error) {
     return res.status(500).json({
@@ -82,6 +62,56 @@ Return valid JSON only. No markdown fences.`
       error: error.message
     });
   }
+}
+
+async function callGeminiWithFallback(apiKey, prompt) {
+  let lastError = '';
+  let lastModel = GEMINI_MODELS[0];
+
+  for (const model of GEMINI_MODELS) {
+    lastModel = model;
+
+    try {
+      const geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            systemInstruction: {
+              parts: [{
+                text: `You are Finny, the finance assistant inside FinTrack.
+Reply mainly in the user's app language when possible.
+Give practical, specific, numerically useful personal finance guidance.
+If the user asks to record an income or expense, return transaction_to_add.
+Return valid JSON only. No markdown fences.`
+              }]
+            },
+            generationConfig: {
+              temperature: 0.45,
+              responseMimeType: 'application/json'
+            }
+          })
+        }
+      );
+
+      if (!geminiResponse.ok) {
+        lastError = `${geminiResponse.status}: ${await geminiResponse.text()}`;
+        continue;
+      }
+
+      const data = await geminiResponse.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+
+      return { ok: true, model, parsed };
+    } catch (error) {
+      lastError = error.message;
+    }
+  }
+
+  return { ok: false, model: lastModel, error: lastError };
 }
 
 function buildPrompt(message, context = {}) {
