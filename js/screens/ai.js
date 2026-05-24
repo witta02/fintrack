@@ -113,7 +113,7 @@ function renderMessages(container) {
     
     bubble.innerHTML = `
       <div class="chat-bubble-text">${formatMessageText(msg.text)}</div>
-      ${msg.source ? `<div class="chat-source">${msg.source === 'gemini' ? 'Gemini Online' : 'Offline Planner'}</div>` : ''}
+      ${msg.source ? `<div class="chat-source">${formatSourceLabel(msg.source)}</div>` : ''}
       ${msg.transaction ? renderTransactionNotice(msg.transaction) : ''}
     `;
 
@@ -160,6 +160,15 @@ function renderTransactionNotice(t) {
       </div>
     </div>
   `;
+}
+
+function formatSourceLabel(source) {
+  if (source === 'gemini') return 'Gemini Online';
+  if (source === 'server_missing_key') return 'Offline Planner - Missing Vercel Key';
+  if (source === 'gemini_error') return 'Offline Planner - Gemini Error';
+  if (source === 'server_error') return 'Offline Planner - Server Error';
+  if (source === 'network_error') return 'Offline Planner - Network Error';
+  return `Offline Planner - ${source}`;
 }
 
 function formatMessageText(text) {
@@ -271,14 +280,24 @@ async function getAIResponse(userInput) {
     });
 
     if (!response.ok) {
-      throw new Error(`AI endpoint failed: ${response.status}`);
+      const errorResult = await response.json().catch(() => null);
+      const fallback = mockSmartResponse(userInput);
+      return {
+        ...fallback,
+        source: errorResult?.source || `http_${response.status}`,
+        response: `${fallback.response}\n\nAI status: ${errorResult?.source || response.status}${errorResult?.error ? ` - ${errorResult.error}` : ''}`
+      };
     }
 
     return await response.json();
 
   } catch (error) {
     console.warn('AI endpoint unavailable. Using offline planner:', error);
-    return mockSmartResponse(userInput);
+    const fallback = mockSmartResponse(userInput);
+    return {
+      ...fallback,
+      source: 'network_error'
+    };
   }
 }
 
