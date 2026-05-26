@@ -70,13 +70,10 @@ export function renderTransactions(container) {
     <div style="height: 100px;"></div>
   `;
 
-  // Bind Event Listeners
   setupEventListeners(container);
 
-  // Initial update
   updateUI(container);
 
-  // Subscribe to changes
   const unsubscribe = store.subscribe(() => {
     if (document.getElementById('transactions-full-list')) {
       updateUI(container);
@@ -87,12 +84,10 @@ export function renderTransactions(container) {
 }
 
 function setupEventListeners(container) {
-  // Search input change handler
   const searchInput = container.querySelector('#search-input');
   searchInput.addEventListener('input', (e) => {
     searchQuery = e.target.value;
     
-    // Toggle clear button
     let clearBtn = container.querySelector('#clear-search-btn');
     if (searchQuery) {
       if (!clearBtn) {

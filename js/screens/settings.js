@@ -121,17 +121,15 @@ export function renderSettings(container) {
     <div style="height: 100px;"></div>
   `;
 
-  // Bind Listeners
   setupEventListeners(container);
 }
 
 function setupEventListeners(container) {
-  // Dark mode switch handler
+
   container.querySelector('#setting-darkmode-chk').addEventListener('change', () => {
     store.toggleTheme();
   });
 
-  // Currency select change handler
   container.querySelector('#setting-currency-select').addEventListener('change', (e) => {
     store.setCurrency(e.target.value);
   });
@@ -148,7 +146,6 @@ function setupEventListeners(container) {
     renderSettings(container);
   });
 
-  // PWA Install handler
   const installBtn = container.querySelector('#install-app-btn');
   installBtn.addEventListener('click', () => {
     if (window.deferredPrompt) {
@@ -160,11 +157,10 @@ function setupEventListeners(container) {
         window.deferredPrompt = null;
       });
     } else {
-      alert('หากคุณใช้งานบน iOS: ให้กดปุ่ม "แชร์" แล้วเลือก "เพิ่มลงในหน้าจอโฮม" \n\nหากคุณใช้งานบน Android: แอปจะพร้อมติดตั้งเมื่อคุณใช้งานไประยะหนึ่งค่ะ');
+      alert('ให้กดปุ่ม "แชร์" ใน Browser ของคุณ จากนั้นให้คลิกที่ "เพิ่มลงในหน้าจอโฮม"');
     }
   });
 
-  // Test Notification trigger
   container.querySelector('#test-notify-btn').addEventListener('click', () => {
     if ('Notification' in window) {
       if (Notification.permission === 'granted') {
@@ -182,7 +178,7 @@ function setupEventListeners(container) {
         });
       }
     } else {
-      alert('เบราว์เซอร์นี้ไม่สนับสนุน Web Notifications API');
+      alert('เบราว์เซอร์นี้ไม่สนับสนุนการแจ้งเตือนภายในแอป');
     }
   });
 
