@@ -1,5 +1,6 @@
 const dictionary = {
   th: {
+    installbtn: 'เพิ่มลงในหน้าจอหลัก',
     swhtodarktxt: 'สลับหน้าจอเป็นโหมดกลางคืนเพื่อถนอมสายตา',
     chgcurtxt: 'แปลงยอดรวมอัตโนมัติตามอัตราแลกเปลี่ยน',
     navDashboard: 'หน้าหลัก',
@@ -59,9 +60,14 @@ const dictionary = {
     plannerReady: 'พร้อมคำนวณ',
     plannerTyping: 'กำลังคำนวณ...',
     plannerPlaceholder: 'พิมพ์แผน เช่น มีเงิน 5000 ใช้ 20 วัน',
-    quickSummary: 'สรุปการเงิน'
+    quickSummary: 'สรุปการเงิน',
+    installbtn:'ติดตั้งแอปพลิเคชัน',
+    installtxt:'ติดตั้ง FinTrack ลงบนเครื่องของคุณเพื่อการเข้าถึงที่รวดเร็วและใช้งานแบบออฟไลน์ได้',
   },
   en: {
+    installbtn:'Install Fintrack',
+    installtxt:'Install "Fintrack" for easier access',
+    installbtn: 'Install App',
     swhtodarktxt: 'Switch to dark mode.',
     chgcurtxt: 'Switch currency',
     navDashboard: 'Home',
