@@ -178,7 +178,7 @@ function setupEventListeners(container) {
         });
       }
     } else {
-      alert(clearbtn);
+      alert('เบราว์เซอร์นี้ไม่สนับสนุนการแจ้งเตือนภายในแอป');
     }
   });
 
