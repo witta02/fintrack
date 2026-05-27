@@ -159,7 +159,6 @@ function setupEventListeners(container) {
         window.deferredPrompt = null;
       });
     } else {
-      alert(installbtn)
       alert('ให้กดปุ่ม "แชร์" ใน Browser ของคุณ จากนั้นให้คลิกที่ "เพิ่มลงในหน้าจอโฮม"');
     }
   });
