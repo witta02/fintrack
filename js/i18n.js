@@ -64,9 +64,13 @@ const dictionary = {
     installbtn:'ติดตั้งแอปพลิเคชัน',
     notitestbtn:'ทดสอบการแจ้งเตือน',
     clearbtn:'ล้างการอนุญาตและประวัติทั้งหมด',
+    confirmdel: "แน่ใจแล้วนะ ที่จะลบ?",
+    emptyrecur: "ยังไม่มีรายการประจำ",
     installtxt:'ติดตั้ง FinTrack ลงบนเครื่องของคุณเพื่อการเข้าถึงที่รวดเร็วและใช้งานแบบออฟไลน์ได้',
   },
   en: {
+    emptyrecur: "Still empty",
+    confirmdel: "Are you sure to delete?",
     clearbtn:'Clear all allowed permission',
     notitestbtn:'Test Notification',
     installbtn:'Install Fintrack',
