@@ -1,10 +1,12 @@
 const dictionary = {
   th: {
+    swhtodarktxt: 'สลับหน้าจอเป็นโหมดกลางคืนเพื่อถนอมสายตา',
+    chgcurtxt: 'แปลงยอดรวมอัตโนมัติตามอัตราแลกเปลี่ยน',
     navDashboard: 'หน้าหลัก',
     navTransactions: 'รายการ',
     navAdd: 'เพิ่ม',
-    navRecurring: 'ประจำ',
-    navSettings: 'ตั้งค่า',
+    navRecurring: 'รายการประจำ',
+    navSettings: 'การตั้งค่า',
     dashboardToday: 'วันนี้',
     dashboardMonth: 'เดือนนี้',
     dashboardYear: 'ปีนี้',
@@ -60,6 +62,8 @@ const dictionary = {
     quickSummary: 'สรุปการเงิน'
   },
   en: {
+    swhtodarktxt: 'Switch to dark mode.',
+    chgcurtxt: 'Switch currency',
     navDashboard: 'Home',
     navTransactions: 'Records',
     navAdd: 'Add',
