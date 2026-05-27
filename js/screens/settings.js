@@ -104,17 +104,17 @@ export function renderSettings(container) {
 
     <!-- PWA Installation -->
     <div class="card" style="margin-bottom: 24px; padding: 12px; border: 1px dashed var(--gold);">
-      <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.5px;">เพิ่มลงในหน้าจอหลัก (Install App)</h3>
-      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">ติดตั้ง FinTrack ลงบนเครื่องของคุณเพื่อการเข้าถึงที่รวดเร็วและใช้งานแบบออฟไลน์ได้</p>
+      <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.5px;">${t('installbtn')}</h3>
+      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${t('installtxt')}</p>
       <button id="install-app-btn" class="btn-primary" style="padding: 12px; font-size: 14px;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        ติดตั้งแอปพลิเคชัน
+        ${t('installbtn')}
       </button>
     </div>
 
     <!-- App details -->
     <div style="text-align: center; color: var(--text-secondary); font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
-      <div>FinTrack Web SPA Application</div>
+      <div>FinTrack</div>
       <div>Version 2.0.0 )</div>
     </div>
 
@@ -157,6 +157,7 @@ function setupEventListeners(container) {
         window.deferredPrompt = null;
       });
     } else {
+      alert(installbtn)
       alert('ให้กดปุ่ม "แชร์" ใน Browser ของคุณ จากนั้นให้คลิกที่ "เพิ่มลงในหน้าจอโฮม"');
     }
   });
