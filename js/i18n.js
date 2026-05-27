@@ -62,9 +62,13 @@ const dictionary = {
     plannerPlaceholder: 'พิมพ์แผน เช่น มีเงิน 5000 ใช้ 20 วัน',
     quickSummary: 'สรุปการเงิน',
     installbtn:'ติดตั้งแอปพลิเคชัน',
+    notitestbtn:'ทดสอบการแจ้งเตือน',
+    clearbtn:'ล้างการอนุญาตและประวัติทั้งหมด',
     installtxt:'ติดตั้ง FinTrack ลงบนเครื่องของคุณเพื่อการเข้าถึงที่รวดเร็วและใช้งานแบบออฟไลน์ได้',
   },
   en: {
+    clearbtn:'Clear all allowed permission',
+    notitestbtn:'Test Notification',
     installbtn:'Install Fintrack',
     installtxt:'Install "Fintrack" for easier access',
     installbtn: 'Install App',
