@@ -44,7 +44,7 @@ export function renderSettings(container) {
           </div>
           <div>
             <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('darkMode')}</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">สลับหน้าจอเป็นโหมดกลางคืนเพื่อถนอมสายตา</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">${t('swhtodarktxt')}</div>
           </div>
         </div>
         <label class="switch-toggle">
@@ -61,7 +61,7 @@ export function renderSettings(container) {
           </div>
           <div>
             <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('currency')}</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">แปลงยอดรวมอัตโนมัติตามอัตราแลกเปลี่ยน</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">${t('chgcurtxt')}</div>
           </div>
         </div>
         <div class="select-wrapper" style="width: 100%; margin-top: 4px;">
