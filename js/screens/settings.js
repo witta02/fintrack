@@ -94,10 +94,10 @@ export function renderSettings(container) {
       
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <button id="test-notify-btn" class="btn" style="background: rgba(255, 184, 0, 0.1); color: var(--gold); border: 1px solid rgba(255, 184, 0, 0.2); padding: 10px; font-size: 13px; font-weight: 600;">
-          ทดสอบส่งการแจ้งเตือนจำลอง (Test Notification)
+        ${t('notitestbtn')}
         </button>
         <button id="clear-notify-btn" class="btn" style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 10px; font-size: 13px;">
-          ล้างการอนุญาตและประวัติทั้งหมด
+        ${t('clearbtn')}
         </button>
       </div>
     </div>
