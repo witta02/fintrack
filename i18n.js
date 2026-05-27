@@ -1,10 +1,11 @@
 const dictionary = {
   th: {
+    chgcurtxt: 'แปลงยอดรวมอัตโนมัติตามอัตราแลกเปลี่ยน',
     navDashboard: 'หน้าหลัก',
     navTransactions: 'รายการ',
     navAdd: 'เพิ่ม',
     navRecurring: 'รายการประจำ',
-    navSettings: 'ตั้งค่า',
+    navSettings: 'การตั้งค่า',
     dashboardToday: 'วันนี้',
     dashboardMonth: 'เดือนนี้',
     dashboardYear: 'ปีนี้',
@@ -60,6 +61,7 @@ const dictionary = {
     quickSummary: 'สรุปการเงิน'
   },
   en: {
+    chgcurtxt: 'Switch currency',
     navDashboard: 'Home',
     navTransactions: 'Records',
     navAdd: 'Add',
