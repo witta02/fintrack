@@ -106,12 +106,10 @@ export function renderSettings(container) {
     <div class="card" style="margin-bottom: 24px; padding: 12px; border: 1px dashed var(--gold);">
       <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.5px;">${t('installbtn')}</h3>
       <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${t('installtxt')}</p>
-      <div style="width: 100%; display: flex; justify-content: flex-start;">
-        <button id="install-app-btn" class="btn-primary" style="padding: 12px; font-size: 14px; width: 100%; cursor: pointer; user-select: none; outline: none; border: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Install "Fintrack"
-        </button>
-      </div>
+      <button id="install-app-btn" class="btn-primary" style="padding: 12px; font-size: 14px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        ${t('installbtn')}
+      </button>
     </div>
 
     <!-- App details -->
