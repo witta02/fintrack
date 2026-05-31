@@ -1,11 +1,14 @@
 import { store } from '../store.js';
 import { router } from '../router.js';
-import { renderSpendingChart } from '../components/spendingChart.js';
+import { renderSpendingChart, renderCategoryPieChart } from '../components/spendingChart.js';
 import { createTransactionTile } from '../components/transactionTile.js';
 import { t } from '../i18n.js';
 import { convertToTHB } from '../currency.js';
 
 let activePeriod = 'monthly'; // 'daily', 'monthly', 'yearly', 'all'
+let analysisPeriod = 'monthly';
+let analysisMonth = new Date().getMonth();
+let analysisYear = new Date().getFullYear();
 
 export function renderDashboard(container) {
   // Build HTML template
@@ -30,89 +33,117 @@ export function renderDashboard(container) {
       <button class="period-tab ${activePeriod === 'all' ? 'active' : ''}" data-period="all">${t('dashboardAll')}</button>
     </div>
 
-    <!-- Balance Card -->
-    <div class="balance-card" id="balance-card-clickable">
-      <div class="period-label">${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}</div>
-      <div class="balance-amount" id="card-balance">฿0.00</div>
-      <div class="balance-row">
-        <div class="balance-item income">
-          <div class="balance-item-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    <div class="dashboard-grid">
+      <!-- Balance Card -->
+      <div class="balance-card" id="balance-card-clickable" style="cursor: pointer;">
+        <div class="period-label">${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}</div>
+        <div class="balance-amount" id="card-balance">฿0.00</div>
+        <div class="balance-row">
+          <div class="balance-item income">
+            <div class="balance-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div class="balance-item-label">${t('income')}</div>
+                <span style="font-size: 10px; color: var(--gold); font-weight: 800;">${t('tax')}</span>
+              </div>
+              <div class="balance-item-value" id="card-income">฿0.00</div>
+              <div class="balance-item-tax" id="card-income-tax" style="color: var(--gold); font-weight: 700; font-size: 11px;">ภาษี ฿0.00</div>
+            </div>
           </div>
+          <div class="balance-item expense">
+            <div class="balance-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            </div>
+            <div>
+              <div class="balance-item-label">${t('expense')}</div>
+              <div class="balance-item-value" id="card-expense">฿0.00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="starter-guide" class="starter-guide hidden">
+        <div class="starter-guide-header">
           <div>
-            <div class="balance-item-label">${t('income')}</div>
-            <div class="balance-item-value" id="card-income">฿0.00</div>
-            <div class="balance-item-tax" id="card-income-tax">ภาษี ฿0.00</div>
+            <div class="eyebrow">${t('starterEyebrow')}</div>
+            <h2>${t('starterTitle')}</h2>
+          </div>
+          <button id="dismiss-starter-btn" class="icon-btn" title="ซ่อนคำแนะนำ">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div class="starter-steps">
+          <button class="starter-step" data-screen-target="addTransaction">
+            <span class="step-icon income-bg">+</span>
+            <span>
+              <strong>${t('starterIncomeTitle')}</strong>
+              <small>${t('starterIncomeDesc')}</small>
+            </span>
+          </button>
+          <button class="starter-step" data-screen-target="addTransaction">
+            <span class="step-icon expense-bg">-</span>
+            <span>
+              <strong>${t('starterExpenseTitle')}</strong>
+              <small>${t('starterExpenseDesc')}</small>
+            </span>
+          </button>
+          <button class="starter-step" data-screen-target="planner">
+            <span class="step-icon planner-bg">÷</span>
+            <span>
+              <strong>${t('starterPlannerTitle')}</strong>
+              <small>${t('starterPlannerDesc')}</small>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chart Section -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="card-title">${t('analysis')}</h3>
+          <div class="chart-legends">
+            <span class="legend"><span class="dot dot-expense"></span>${t('chartExpense')}</span>
+            <span class="legend"><span class="dot dot-income"></span>${t('chartIncome')}</span>
           </div>
         </div>
-        <div class="balance-item expense">
-          <div class="balance-item-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        
+        <div class="analysis-controls">
+          <select id="analysis-period-select" class="analysis-select">
+            <option value="monthly" ${analysisPeriod === 'monthly' ? 'selected' : ''}>รายเดือน</option>
+            <option value="yearly" ${analysisPeriod === 'yearly' ? 'selected' : ''}>รายปี</option>
+          </select>
+          <select id="analysis-month-select" class="analysis-select ${analysisPeriod !== 'monthly' ? 'hidden' : ''}">
+            ${Array.from({ length: 12 }, (_, i) => `
+              <option value="${i}" ${analysisMonth === i ? 'selected' : ''}>${new Date(2000, i).toLocaleString('th-TH', { month: 'long' })}</option>
+            `).join('')}
+          </select>
+        </div>
+
+        <div class="chart-container" style="height: 180px;">
+          <canvas id="spending-chart-canvas"></canvas>
+        </div>
+
+        <div class="pie-chart-container">
+          <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text-secondary);">สัดส่วนรายจ่ายแยกตามหมวดหมู่</h4>
+          <div style="height: 200px; width: 100%;">
+            <canvas id="category-pie-chart-canvas"></canvas>
           </div>
-          <div>
-            <div class="balance-item-label">${t('expense')}</div>
-            <div class="balance-item-value" id="card-expense">฿0.00</div>
-          </div>
+          <div id="pie-chart-legend" class="pie-chart-legend"></div>
         </div>
       </div>
-    </div>
 
-    <div id="starter-guide" class="starter-guide hidden">
-      <div class="starter-guide-header">
-        <div>
-          <div class="eyebrow">${t('starterEyebrow')}</div>
-          <h2>${t('starterTitle')}</h2>
+      <div class="recent-section">
+        <!-- Recent Transactions -->
+        <div class="section-header" style="display: flex; align-items: center; justify-content: space-between;">
+          <h3 class="section-title" style="font-size: 16px; font-weight: 800; color: var(--text-primary);">${t('recentTransactions')}</h3>
+          <button id="view-all-transactions-btn" class="text-link-btn" style="color: var(--gold); font-size: 13px; font-weight: 600;">${t('viewAll')}</button>
         </div>
-        <button id="dismiss-starter-btn" class="icon-btn" title="ซ่อนคำแนะนำ">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
-      </div>
-      <div class="starter-steps">
-        <button class="starter-step" data-screen-target="addTransaction">
-          <span class="step-icon income-bg">+</span>
-          <span>
-            <strong>${t('starterIncomeTitle')}</strong>
-            <small>${t('starterIncomeDesc')}</small>
-          </span>
-        </button>
-        <button class="starter-step" data-screen-target="addTransaction">
-          <span class="step-icon expense-bg">-</span>
-          <span>
-            <strong>${t('starterExpenseTitle')}</strong>
-            <small>${t('starterExpenseDesc')}</small>
-          </span>
-        </button>
-        <button class="starter-step" data-screen-target="planner">
-          <span class="step-icon planner-bg">÷</span>
-          <span>
-            <strong>${t('starterPlannerTitle')}</strong>
-            <small>${t('starterPlannerDesc')}</small>
-          </span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Chart Section -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <h3 class="card-title">${t('analysis')}</h3>
-        <div class="chart-legends">
-          <span class="legend"><span class="dot dot-expense"></span>${t('chartExpense')}</span>
-          <span class="legend"><span class="dot dot-income"></span>${t('chartIncome')}</span>
+        <div id="recent-transactions-list" class="transactions-list-container" style="margin-top: 12px;">
+          <!-- Loaded dynamically -->
         </div>
       </div>
-      <div class="chart-container" style="height: 180px;">
-        <canvas id="spending-chart-canvas"></canvas>
-      </div>
-    </div>
-
-    <!-- Recent Transactions -->
-    <div class="section-header" style="margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
-      <h3 class="section-title" style="font-size: 16px; font-weight: 800; color: var(--text-primary);">${t('recentTransactions')}</h3>
-      <button id="view-all-transactions-btn" class="text-link-btn" style="color: var(--gold); font-size: 13px; font-weight: 600;">${t('viewAll')}</button>
-    </div>
-    <div id="recent-transactions-list" class="transactions-list-container" style="margin-top: 12px;">
-      <!-- Loaded dynamically -->
     </div>
 
     <div style="height: 100px;"></div>
@@ -126,13 +157,49 @@ export function renderDashboard(container) {
 
   // Subscribe to store updates
   const unsubscribe = store.subscribe(() => {
-    // Check if the element is still in DOM to prevent memory leak
     if (document.getElementById('card-balance')) {
       updateUI(container);
     } else {
       unsubscribe();
     }
   });
+}
+
+function showBalancePopup(container) {
+  const metrics = store.getFinanceMetrics();
+  const symbol = store.getCurrencySymbol();
+  let amount = 0;
+  let label = '';
+
+  switch (activePeriod) {
+    case 'daily': amount = metrics.dailyBalance; label = t('balanceToday'); break;
+    case 'monthly': amount = metrics.monthlyBalance; label = t('balanceMonth'); break;
+    case 'yearly': amount = metrics.yearlyBalance; label = t('balanceYear'); break;
+    case 'all': amount = metrics.totalBalance; label = t('balanceAll'); break;
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">รายละเอียดเงินคงเหลือ</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="amount-popup-content">
+        <div class="amount-popup-label">${label}</div>
+        <div class="amount-popup-value">${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+      </div>
+      <button class="btn-primary modal-ok-btn" style="margin-top: 24px;">ตกลง</button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => document.body.removeChild(modal);
+  modal.querySelector('.modal-close-btn').onclick = close;
+  modal.querySelector('.modal-ok-btn').onclick = close;
+  modal.onclick = (e) => { if (e.target === modal) close(); };
 }
 
 function setupEventListeners(container) {
@@ -149,6 +216,18 @@ function setupEventListeners(container) {
       activePeriod = tab.getAttribute('data-period');
       updateUI(container);
     });
+  });
+
+  // Analysis Controls
+  container.querySelector('#analysis-period-select').addEventListener('change', (e) => {
+    analysisPeriod = e.target.value;
+    container.querySelector('#analysis-month-select').classList.toggle('hidden', analysisPeriod !== 'monthly');
+    updateUI(container);
+  });
+
+  container.querySelector('#analysis-month-select').addEventListener('change', (e) => {
+    analysisMonth = parseInt(e.target.value);
+    updateUI(container);
   });
 
   // View All button
@@ -222,16 +301,44 @@ function updateUI(container) {
     : convertToTHB(metrics.yearlyIncome, store.settings.selectedCurrency);
   const taxAmountTHB = store.calculateThaiTax(yearlyIncomeInTHB);
   const taxAmountDisplay = store.toDisplay(taxAmountTHB);
-  container.querySelector('#card-income-tax').textContent = `${t('tax')} ${formatVal(taxAmountDisplay)}`;
+  container.querySelector('#card-income-tax').textContent = `ประมาณการภาษีรายปี: ${formatVal(taxAmountDisplay)}`;
 
   // Render Spending Chart
   const canvas = container.querySelector('#spending-chart-canvas');
   const now = new Date();
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const dailyExpenses = store.getDailyExpensesForMonth();
-  const dailyIncome = store.getDailyIncomeForMonth();
   
-  renderSpendingChart(canvas, dailyExpenses, dailyIncome, daysInMonth, symbol);
+  // Use selected analysis period for the bar chart as well
+  if (analysisPeriod === 'monthly') {
+    const daysInMonth = new Date(analysisYear, analysisMonth + 1, 0).getDate();
+    const dailyExpenses = store.getDailyExpensesForMonth(); // Needs to be updated to support specific month
+    const dailyIncome = store.getDailyIncomeForMonth();
+    renderSpendingChart(canvas, dailyExpenses, dailyIncome, daysInMonth, symbol);
+  } else {
+    // Yearly chart simplified or just show current month for now
+    renderSpendingChart(canvas, store.getDailyExpensesForMonth(), store.getDailyIncomeForMonth(), 31, symbol);
+  }
+
+  // Render Category Pie Chart
+  const pieCanvas = container.querySelector('#category-pie-chart-canvas');
+  const categoryData = store.getCategorySpending(analysisPeriod, analysisMonth, analysisYear);
+  const pieInfo = renderCategoryPieChart(pieCanvas, categoryData, symbol);
+
+  // Render Pie Legend
+  const legendContainer = container.querySelector('#pie-chart-legend');
+  legendContainer.innerHTML = '';
+  if (pieInfo) {
+    pieInfo.categories.forEach((cat, i) => {
+      const val = pieInfo.dataValues[i];
+      const percent = ((val / pieInfo.total) * 100).toFixed(1);
+      const item = document.createElement('div');
+      item.className = 'pie-legend-item';
+      item.innerHTML = `
+        <span class="pie-dot" style="background: ${pieInfo.colors[i]}"></span>
+        <span>${cat} ${percent}%</span>
+      `;
+      legendContainer.appendChild(item);
+    });
+  }
 
   // Render Recent Transactions
   const listContainer = container.querySelector('#recent-transactions-list');
@@ -283,3 +390,4 @@ function updateUI(container) {
     });
   }
 }
+

@@ -12,6 +12,7 @@ export const store = {
     isPremium: true,
     language: 'th',
     hasCompletedOnboarding: false,
+    taxDeduction: 60000,
     dataVersion: 2
   },
 
@@ -458,41 +459,7 @@ export const store = {
     return daily;
   },
 
-  // Thai tax calculation based on 2026 personal income tax rates
-  calculateThaiTax(annualIncome) {
-    // Thai personal income tax rates for 2026 (annual)
-    const taxBrackets = [
-      { min: 0, max: 150000, rate: 0 },
-      { min: 150001, max: 300000, rate: 0.05 },
-      { min: 300001, max: 500000, rate: 0.1 },
-      { min: 500001, max: 750000, rate: 0.15 },
-      { min: 750001, max: 1000000, rate: 0.2 },
-      { min: 1000001, max: 2000000, rate: 0.25 },
-      { min: 2000001, max: 5000000, rate: 0.3 },
-      { min: 5000001, max: Infinity, rate: 0.35 }
-    ];
-
-    let tax = 0;
-    let remainingIncome = annualIncome;
-
-    for (const bracket of taxBrackets) {
-      if (remainingIncome <= 0) break;
-
-      const taxableAmount = Math.min(
-        remainingIncome,
-        bracket.max - bracket.min + 1
-      );
-
-      if (taxableAmount > 0) {
-        tax += taxableAmount * bracket.rate;
-        remainingIncome -= taxableAmount;
-      }
-    }
-
-    return tax;
-  },
-
-  getDailyExpensesForMonth() {
+  getDailyIncomeForMonth() {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
@@ -506,6 +473,66 @@ export const store = {
     });
 
     return daily;
+  },
+
+  getCategorySpending(period = 'monthly', month = null, year = null) {
+    const now = new Date();
+    const currentYear = year || now.getFullYear();
+    const currentMonth = month !== null ? month : now.getMonth();
+    const categories = {};
+
+    this.transactions.forEach(t => {
+      if (t.isIncome) return;
+
+      const tDate = t.date;
+      let match = false;
+
+      if (period === 'monthly') {
+        match = tDate.getFullYear() === currentYear && tDate.getMonth() === currentMonth;
+      } else if (period === 'yearly') {
+        match = tDate.getFullYear() === currentYear;
+      } else if (period === 'all') {
+        match = true;
+      }
+
+      if (match) {
+        const cat = t.category || 'Other';
+        categories[cat] = (categories[cat] || 0) + this.toDisplay(t.amount);
+      }
+    });
+
+    return categories;
+  },
+
+  // Thai tax calculation based on 2026 personal income tax rates
+  calculateThaiTax(annualIncome) {
+    const netIncome = Math.max(0, annualIncome - (this.settings.taxDeduction || 60000));
+    const taxBrackets = [
+      { min: 0, max: 150000, rate: 0 },
+      { min: 150001, max: 300000, rate: 0.05 },
+      { min: 300001, max: 500000, rate: 0.1 },
+      { min: 500001, max: 750000, rate: 0.15 },
+      { min: 750001, max: 1000000, rate: 0.2 },
+      { min: 1000001, max: 2000000, rate: 0.25 },
+      { min: 2000001, max: 5000000, rate: 0.3 },
+      { min: 5000001, max: Infinity, rate: 0.35 }
+    ];
+
+    let calculatedTax = 0;
+    taxBrackets.forEach(bracket => {
+      if (netIncome > bracket.min) {
+        const taxableInBracket = Math.min(netIncome, bracket.max) - (bracket.min === 0 ? 0 : bracket.min - 1);
+        if (taxableInBracket > 0) {
+          calculatedTax += taxableInBracket * bracket.rate;
+        }
+      }
+    });
+    return calculatedTax;
+  },
+
+  updateTaxDeduction(amount) {
+    this.settings.taxDeduction = parseFloat(amount) || 0;
+    this.save();
   },
 
   // --- Browser Notification wrapper ---

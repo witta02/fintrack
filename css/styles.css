@@ -69,9 +69,80 @@ input, select { font-family: var(--font); background: var(--input-bg); border: 1
 /* --- Layout --- */
 .app { display: flex; flex-direction: column; height: 100vh; width: 100%; margin: 0 auto; position: relative; }
 @media (min-width: 768px) {
-  .app { max-width: 600px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); box-shadow: 0 0 100px rgba(0,0,0,0.5); }
+  .app { 
+    max-width: 100%; 
+    border-left: none; 
+    border-right: none; 
+    box-shadow: none; 
+  }
+  .screen-container {
+    padding: 0 5%;
+  }
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .balance-card { grid-column: span 2; }
 }
 .screen-container { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; }
+
+/* --- Popups --- */
+.amount-popup-content {
+  text-align: center;
+  padding: 20px;
+}
+.amount-popup-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.amount-popup-value {
+  font-size: 42px;
+  font-weight: 800;
+  color: var(--gold);
+  word-break: break-all;
+}
+
+/* --- Analysis Enhancements --- */
+.analysis-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.analysis-select {
+  flex: 1;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+.pie-chart-container {
+  height: 250px;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pie-chart-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  margin-top: 16px;
+}
+.pie-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.pie-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
 
 /* --- Splash Screen --- */
 .splash-screen {

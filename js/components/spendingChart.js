@@ -141,3 +141,71 @@ export function renderSpendingChart(canvasElement, dailyExpenses, dailyIncome, d
     }
   });
 }
+
+let pieChartInstance = null;
+
+export function renderCategoryPieChart(canvasElement, categoryData, symbol) {
+  if (pieChartInstance) {
+    pieChartInstance.destroy();
+    pieChartInstance = null;
+  }
+
+  if (!canvasElement) return;
+
+  const categories = Object.keys(categoryData);
+  const dataValues = Object.values(categoryData);
+  const total = dataValues.reduce((a, b) => a + b, 0);
+
+  if (total === 0) {
+    const ctx = canvasElement.getContext('2d');
+    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.fillStyle = '#8B949E';
+    ctx.font = '14px "Inter", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ยังไม่มีข้อมูลการใช้จ่าย', canvasElement.width / 2, canvasElement.height / 2);
+    return;
+  }
+
+  const colors = [
+    '#FFC107', '#4ade80', '#f87171', '#60a5fa', '#a78bfa', 
+    '#fb923c', '#2dd4bf', '#f472b6', '#94a3b8', '#fbbf24'
+  ];
+
+  pieChartInstance = new Chart(canvasElement, {
+    type: 'doughnut',
+    data: {
+      labels: categories,
+      datasets: [{
+        data: dataValues,
+        backgroundColor: colors,
+        borderWidth: 0,
+        hoverOffset: 10
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(17, 24, 39, 0.9)',
+          padding: 12,
+          cornerRadius: 12,
+          callbacks: {
+            label: (item) => {
+              const val = item.raw;
+              const percent = ((val / total) * 100).toFixed(1);
+              return ` ${item.label}: ${symbol}${val.toLocaleString()} (${percent}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  return { categories, dataValues, colors, total };
+}

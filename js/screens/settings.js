@@ -53,7 +53,6 @@ export function renderSettings(container) {
         </label>
       </div>
 
-      <!-- Currency Select Option -->
       <div class="setting-item" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 6px;">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="color: var(--gold); font-size: 18px;">
@@ -71,7 +70,23 @@ export function renderSettings(container) {
         </div>
       </div>
 
+      <!-- Tax Settings Option -->
       <div class="setting-item" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 6px; border-top: 1px solid var(--border);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="color: var(--gold); font-size: 18px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/><path d="M12 10h3"/></svg>
+          </div>
+          <div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">คำนวณภาษี (Thai Tax)</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">ตั้งค่าค่าลดหย่อนเพื่อความแม่นยำ</div>
+          </div>
+        </div>
+        <button id="setting-tax-btn" class="btn" style="background: rgba(255, 184, 0, 0.1); color: var(--gold); border: 1px solid rgba(255, 184, 0, 0.2); padding: 10px; font-size: 13px; font-weight: 600; width: 100%; margin-top: 4px;">
+          จัดการค่าลดหย่อนภาษี
+        </button>
+      </div>
+
+            <div class="setting-item" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 6px; border-top: 1px solid var(--border);">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="color: var(--gold); font-size: 18px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
@@ -182,6 +197,10 @@ function setupEventListeners(container) {
     }
   });
 
+  container.querySelector('#setting-tax-btn').addEventListener('click', () => {
+    showTaxSettings(container);
+  });
+
   // Reset localstorage handler
   container.querySelector('#clear-notify-btn').addEventListener('click', () => {
     if (confirm('คุณต้องการล้างข้อมูลแอปทั้งหมดและเริ่มใหม่ใช่หรือไม่? (การทำธุรกรรมทั้งหมดจะถูกรีเซ็ตกลับเป็นค่าเริ่มต้น)')) {
@@ -189,6 +208,58 @@ function setupEventListeners(container) {
       window.location.reload();
     }
   });
+}
+
+function showTaxSettings(container) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">ตั้งค่าภาษี (Thai Tax)</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="padding-top: 10px;">
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+          ระบบจะนำยอดรายรับทั้งปีมาหักลบกับ "ค่าลดหย่อน" เพื่อคำนวณภาษีตามอัตราก้าวหน้าของไทย (ปี 2569)
+        </p>
+        
+        <div class="form-group">
+          <label class="form-label">ค่าลดหย่อนรวมทั้งปี (฿)</label>
+          <input type="number" id="tax-deduction-input" class="form-control" value="${store.settings.taxDeduction || 60000}" placeholder="เช่น 60000, 100000" />
+          <small style="display: block; margin-top: 6px; color: var(--text-secondary); font-size: 11px;">
+            รวมค่าลดหย่อนส่วนตัว (60,000) + ประกันสังคม + กองทุนต่างๆ (SSF/RMF) + อื่นๆ
+          </small>
+        </div>
+
+        <div style="background: var(--surface); padding: 14px; border-radius: 14px; border: 1px solid var(--border); margin-top: 10px;">
+          <h4 style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--gold);">เกร็ดความรู้ภาษี</h4>
+          <ul style="font-size: 11px; color: var(--text-secondary); padding-left: 16px; line-height: 1.6;">
+            <li>รายได้สุทธิ 0 - 150,000 บาท: ยกเว้นภาษี</li>
+            <li>รายได้สุทธิ 150,001 - 300,000 บาท: 5%</li>
+            <li>รายได้สุทธิ 300,001 - 500,000 บาท: 10%</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 24px;">
+        <button class="btn modal-cancel-btn" style="flex: 1; border: 1px solid var(--border); padding: 12px; border-radius: 12px;">ยกเลิก</button>
+        <button class="btn-primary modal-save-btn" style="flex: 1; padding: 12px; border-radius: 12px;">บันทึก</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => document.body.removeChild(modal);
+  modal.querySelector('.modal-close-btn').onclick = close;
+  modal.querySelector('.modal-cancel-btn').onclick = close;
+  
+  modal.querySelector('.modal-save-btn').onclick = () => {
+    const val = modal.querySelector('#tax-deduction-input').value;
+    store.updateTaxDeduction(val);
+    close();
+    alert('บันทึกค่าลดหย่อนเรียบร้อยแล้ว');
+  };
 }
 
 function updateNavLabels() {
