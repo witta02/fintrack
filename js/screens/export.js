@@ -55,12 +55,7 @@ export function renderExport(container) {
         </div>
       </div>
 
-      <button id="generate-pdf-btn" class="primary-btn" style="margin-top: 20px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 700; font-size: 16px; border: none; box-shadow: var(--shadow-gold); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        ${t('generatePDF')}
-      </button>
-
-      <button id="print-report-btn" class="icon-btn-secondary" style="height: 56px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <button id="print-report-btn" class="primary-btn" style="margin-top: 20px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 700; font-size: 16px; border: none; box-shadow: var(--shadow-gold); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         ${t('printReport')}
       </button>
@@ -97,11 +92,6 @@ function setupEventListeners(container) {
         sections[k].style.display = k === mode ? (k === 'range' ? 'grid' : 'block') : 'none';
       });
     });
-  });
-
-  const generateBtn = container.querySelector('#generate-pdf-btn');
-  generateBtn.addEventListener('click', () => {
-    generatePDF(container);
   });
 
   const printBtn = container.querySelector('#print-report-btn');
@@ -142,55 +132,6 @@ function getFilteredData(container) {
   } catch (err) {
     console.error('Filtering error:', err);
     return null;
-  }
-}
-
-function generatePDF(container) {
-  try {
-    const result = getFilteredData(container);
-    if (!result) return;
-    const { data: filteredTransactions, suffix: titleSuffix } = result;
-
-    const doc = new jsPDF();
-    const symbol = store.getCurrencySymbol();
-
-    doc.setFontSize(18);
-    doc.text(t('pdfHeaderTitle'), 14, 22);
-    
-    doc.setFontSize(11);
-    doc.setTextColor(100);
-    doc.text(`${t('pdfGeneratedOn')}: ${new Date().toLocaleString(locale())}`, 14, 30);
-
-    const tableData = filteredTransactions.map(t => [
-      t.date.toLocaleDateString(locale()),
-      t.title,
-      getCategoryInfo(t.category).label,
-      `${t.isIncome ? '+' : '-'}${symbol}${store.toDisplay(t.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}`
-    ]);
-
-    const totalIncome = filteredTransactions.filter(t => t.isIncome).reduce((sum, t) => sum + store.toDisplay(t.amount), 0);
-    const totalExpense = filteredTransactions.filter(t => !t.isIncome).reduce((sum, t) => sum + store.toDisplay(t.amount), 0);
-    const net = totalIncome - totalExpense;
-
-    autoTable(doc, {
-      startY: 40,
-      head: [[t('pdfTableDate'), t('pdfTableTitle'), t('pdfTableCategory'), t('pdfTableAmount')]],
-      body: tableData,
-      theme: 'striped',
-      headStyles: { fillColor: [218, 165, 32], textColor: [0, 0, 0], fontStyle: 'bold' },
-      foot: [
-        ['', '', t('pdfTotalIncome'), `${symbol}${totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2})}`],
-        ['', '', t('pdfTotalExpense'), `${symbol}${totalExpense.toLocaleString(undefined, {minimumFractionDigits: 2})}`],
-        ['', '', t('pdfNetBalance'), `${symbol}${net.toLocaleString(undefined, {minimumFractionDigits: 2})}`]
-      ],
-      footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      styles: { font: 'helvetica' }
-    });
-
-    doc.save(t('pdfFileName', { date: titleSuffix }));
-  } catch (err) {
-    console.error('PDF Generation Error:', err);
-    alert('Error generating PDF. Please try "Print Report" instead.');
   }
 }
 

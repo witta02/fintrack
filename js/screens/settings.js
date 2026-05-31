@@ -149,7 +149,7 @@ export function renderSettings(container) {
     <!-- App details -->
     <div style="text-align: center; color: var(--text-secondary); font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
       <div>FinTrack</div>
-      <div>Version 2.5.3</div>
+      <div>Version 2.5.4</div>
     </div>
 
     <div style="height: 100px;"></div>
