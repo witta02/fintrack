@@ -34,25 +34,6 @@ export function renderSettings(container) {
 
     <!-- Settings Group -->
     <div class="card" style="margin-bottom: 16px; padding: 12px;">
-      <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">${t('reportsAndExport')}</h3>
-      <div class="setting-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 6px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="color: var(--gold); font-size: 18px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </div>
-          <div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('exportTitle')}</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">${t('exportDesc')}</div>
-          </div>
-        </div>
-        <button id="go-to-export-btn" class="icon-btn" style="border: none; background: var(--gold-soft); color: var(--gold); width: 32px; height: 32px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Settings Group -->
-    <div class="card" style="margin-bottom: 16px; padding: 12px;">
       <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">${t('generalSettings')}</h3>
       
       <!-- Theme Switch Option -->
@@ -149,7 +130,7 @@ export function renderSettings(container) {
     <!-- App details -->
     <div style="text-align: center; color: var(--text-secondary); font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
       <div>FinTrack</div>
-      <div>Version 2.5.4</div>
+      <div>Version 2.5.5</div>
     </div>
 
     <div style="height: 100px;"></div>
@@ -226,11 +207,6 @@ function setupEventListeners(container) {
       localStorage.clear();
       window.location.reload();
     }
-  });
-
-  // Export button
-  container.querySelector('#go-to-export-btn').addEventListener('click', () => {
-    router.navigate('export');
   });
 }
 
