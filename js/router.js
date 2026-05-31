@@ -4,6 +4,7 @@ import { renderAddTransaction } from './screens/addTransaction.js';
 import { renderRecurring } from './screens/recurring.js';
 import { renderSettings } from './screens/settings.js';
 import { renderPlanner } from './screens/planner.js';
+import { renderExport } from './screens/export.js';
 
 let currentScreen = 'dashboard';
 let currentParams = null;
@@ -15,6 +16,7 @@ const screens = {
   recurring: renderRecurring,
   settings: renderSettings,
   planner: renderPlanner,
+  export: renderExport,
 };
 
 export const router = {

@@ -24,9 +24,14 @@ export function renderTransactions(container) {
   container.innerHTML = `
     <div class="screen-header" style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px;">
       <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -1px; color: var(--text-primary);">${t('transactionsTitle')}</h1>
-      <button id="add-trans-btn" class="icon-btn" style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--gold), var(--amber)); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--shadow-gold); transition: all var(--transition);">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
+      <div style="display: flex; gap: 10px;">
+        <button id="export-btn" class="icon-btn-secondary" style="width: 44px; height: 44px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-primary); transition: all var(--transition);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        <button id="add-trans-btn" class="icon-btn" style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--gold), var(--amber)); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--shadow-gold); transition: all var(--transition);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
     </div>
 
     <!-- Search Box -->
@@ -130,6 +135,11 @@ function setupEventListeners(container) {
   // Add transaction button
   container.querySelector('#add-trans-btn').addEventListener('click', () => {
     router.navigate('addTransaction');
+  });
+
+  // Export button
+  container.querySelector('#export-btn').addEventListener('click', () => {
+    router.navigate('export');
   });
 }
 
