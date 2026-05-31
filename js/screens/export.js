@@ -3,7 +3,7 @@ import { router } from '../router.js';
 import { t, locale, getLanguage } from '../i18n.js';
 import { getCategoryInfo } from '../categories.js';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export function renderExport(container) {
   const now = new Date();
@@ -35,7 +35,7 @@ export function renderExport(container) {
         <input type="month" id="export-month" class="form-control" value="${currentYear}-${String(currentMonth + 1).padStart(2, '0')}" style="width: 100%; height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px;">
       </div>
 
-      <!-- Year Selector (Hidden initially) -->
+      <!-- Year Selector -->
       <div id="year-selector-container" class="filter-section" style="display: none;">
         <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: var(--text-secondary);">${t('selectYear')}</label>
         <select id="export-year" class="form-control" style="width: 100%; height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px;">
@@ -43,15 +43,15 @@ export function renderExport(container) {
         </select>
       </div>
 
-      <!-- Range Selector (Hidden initially) -->
-      <div id="range-selector-container" class="filter-section" style="display: none; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div>
+      <!-- Range Selector (Responsive Fix) -->
+      <div id="range-selector-container" class="filter-section" style="display: none; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; width: 100%;">
+        <div style="width: 100%;">
           <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: var(--text-secondary);">${t('startDate')}</label>
-          <input type="date" id="export-start-date" class="form-control" value="${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01" style="width: 100%; height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px;">
+          <input type="date" id="export-start-date" class="form-control" value="${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01" style="width: 100%; height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px; font-size: 14px;">
         </div>
-        <div>
+        <div style="width: 100%;">
           <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: var(--text-secondary);">${t('endDate')}</label>
-          <input type="date" id="export-end-date" class="form-control" value="${now.toISOString().split('T')[0]}" style="width: 100%; height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px;">
+          <input type="date" id="export-end-date" class="form-control" value="${now.toISOString().split('T')[0]}" style="width: 100%; height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px; font-size: 14px;">
         </div>
       </div>
 
@@ -115,73 +115,83 @@ function getFilteredData(container) {
   let filteredTransactions = store.getAllTransactions();
   let titleSuffix = '';
 
-  if (mode === 'month') {
-    const monthVal = container.querySelector('#export-month').value;
-    if (!monthVal) return null;
-    const [y, m] = monthVal.split('-').map(Number);
-    filteredTransactions = filteredTransactions.filter(t => t.date.getFullYear() === y && t.date.getMonth() === (m - 1));
-    titleSuffix = monthVal;
-  } else if (mode === 'year') {
-    const y = parseInt(container.querySelector('#export-year').value);
-    filteredTransactions = filteredTransactions.filter(t => t.date.getFullYear() === y);
-    titleSuffix = y.toString();
-  } else if (mode === 'range') {
-    const start = new Date(container.querySelector('#export-start-date').value);
-    const end = new Date(container.querySelector('#export-end-date').value);
-    end.setHours(23, 59, 59, 999);
-    filteredTransactions = filteredTransactions.filter(t => t.date >= start && t.date <= end);
-    titleSuffix = `${start.toISOString().split('T')[0]}_to_${end.toISOString().split('T')[0]}`;
-  }
+  try {
+    if (mode === 'month') {
+      const monthVal = container.querySelector('#export-month').value;
+      if (!monthVal) return null;
+      const [y, m] = monthVal.split('-').map(Number);
+      filteredTransactions = filteredTransactions.filter(t => t.date.getFullYear() === y && t.date.getMonth() === (m - 1));
+      titleSuffix = monthVal;
+    } else if (mode === 'year') {
+      const y = parseInt(container.querySelector('#export-year').value);
+      filteredTransactions = filteredTransactions.filter(t => t.date.getFullYear() === y);
+      titleSuffix = y.toString();
+    } else if (mode === 'range') {
+      const startInput = container.querySelector('#export-start-date').value;
+      const endInput = container.querySelector('#export-end-date').value;
+      if (!startInput || !endInput) return null;
+      const start = new Date(startInput);
+      const end = new Date(endInput);
+      end.setHours(23, 59, 59, 999);
+      filteredTransactions = filteredTransactions.filter(t => t.date >= start && t.date <= end);
+      titleSuffix = `${start.toISOString().split('T')[0]}_to_${end.toISOString().split('T')[0]}`;
+    }
 
-  filteredTransactions.sort((a, b) => a.date - b.date);
-  return { data: filteredTransactions, suffix: titleSuffix };
+    filteredTransactions.sort((a, b) => a.date - b.date);
+    return { data: filteredTransactions, suffix: titleSuffix };
+  } catch (err) {
+    console.error('Filtering error:', err);
+    return null;
+  }
 }
 
 function generatePDF(container) {
-  const result = getFilteredData(container);
-  if (!result) return;
-  const { data: filteredTransactions, suffix: titleSuffix } = result;
+  try {
+    const result = getFilteredData(container);
+    if (!result) return;
+    const { data: filteredTransactions, suffix: titleSuffix } = result;
 
-  const doc = new jsPDF();
-  const lang = getLanguage();
-  const isThai = lang === 'th';
+    const doc = new jsPDF();
+    const symbol = store.getCurrencySymbol();
 
-  doc.setFontSize(18);
-  doc.text(t('pdfHeaderTitle'), 14, 22);
-  
-  doc.setFontSize(11);
-  doc.setTextColor(100);
-  doc.text(`${t('pdfGeneratedOn')}: ${new Date().toLocaleString(locale())}`, 14, 30);
+    doc.setFontSize(18);
+    doc.text(t('pdfHeaderTitle'), 14, 22);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`${t('pdfGeneratedOn')}: ${new Date().toLocaleString(locale())}`, 14, 30);
 
-  const symbol = store.getCurrencySymbol();
+    const tableData = filteredTransactions.map(t => [
+      t.date.toLocaleDateString(locale()),
+      t.title,
+      getCategoryInfo(t.category).label,
+      `${t.isIncome ? '+' : '-'}${symbol}${store.toDisplay(t.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}`
+    ]);
 
-  const tableData = filteredTransactions.map(t => [
-    t.date.toLocaleDateString(locale()),
-    t.title,
-    getCategoryInfo(t.category).label,
-    `${t.isIncome ? '+' : '-'}${symbol}${store.toDisplay(t.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}`
-  ]);
+    const totalIncome = filteredTransactions.filter(t => t.isIncome).reduce((sum, t) => sum + store.toDisplay(t.amount), 0);
+    const totalExpense = filteredTransactions.filter(t => !t.isIncome).reduce((sum, t) => sum + store.toDisplay(t.amount), 0);
+    const net = totalIncome - totalExpense;
 
-  const totalIncome = filteredTransactions.filter(t => t.isIncome).reduce((sum, t) => sum + store.toDisplay(t.amount), 0);
-  const totalExpense = filteredTransactions.filter(t => !t.isIncome).reduce((sum, t) => sum + store.toDisplay(t.amount), 0);
-  const net = totalIncome - totalExpense;
+    autoTable(doc, {
+      startY: 40,
+      head: [[t('pdfTableDate'), t('pdfTableTitle'), t('pdfTableCategory'), t('pdfTableAmount')]],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [218, 165, 32], textColor: [0, 0, 0], fontStyle: 'bold' },
+      foot: [
+        ['', '', t('pdfTotalIncome'), `${symbol}${totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2})}`],
+        ['', '', t('pdfTotalExpense'), `${symbol}${totalExpense.toLocaleString(undefined, {minimumFractionDigits: 2})}`],
+        ['', '', t('pdfNetBalance'), `${symbol}${net.toLocaleString(undefined, {minimumFractionDigits: 2})}`]
+      ],
+      footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { font: 'helvetica' }
+    });
 
-  doc.autoTable({
-    startY: 40,
-    head: [[t('pdfTableDate'), t('pdfTableTitle'), t('pdfTableCategory'), t('pdfTableAmount')]],
-    body: tableData,
-    theme: 'striped',
-    headStyles: { fillColor: [218, 165, 32], textColor: [0, 0, 0], fontStyle: 'bold' },
-    foot: [
-      ['', '', t('pdfTotalIncome'), `${symbol}${totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2})}`],
-      ['', '', t('pdfTotalExpense'), `${symbol}${totalExpense.toLocaleString(undefined, {minimumFractionDigits: 2})}`],
-      ['', '', t('pdfNetBalance'), `${symbol}${net.toLocaleString(undefined, {minimumFractionDigits: 2})}`]
-    ],
-    footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-    styles: { font: 'helvetica' }
-  });
-
-  doc.save(t('pdfFileName', { date: titleSuffix }));
+    doc.save(t('pdfFileName', { date: titleSuffix }));
+  } catch (err) {
+    console.error('PDF Generation Error:', err);
+    alert('Error generating PDF. Please try "Print Report" instead.');
+  }
 }
 
 function printReport(container) {
@@ -195,12 +205,17 @@ function printReport(container) {
   const net = totalIncome - totalExpense;
 
   const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Please allow popups to print the report.');
+    return;
+  }
+
   printWindow.document.write(`
     <html>
       <head>
         <title>${t('pdfHeaderTitle')} - ${titleSuffix}</title>
         <style>
-          body { font-family: 'Inter', sans-serif; padding: 40px; color: #333; }
+          body { font-family: sans-serif; padding: 40px; color: #333; }
           h1 { color: #000; margin-bottom: 5px; }
           .meta { color: #666; font-size: 14px; margin-bottom: 30px; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
@@ -262,8 +277,9 @@ function printReport(container) {
 
         <script>
           window.onload = () => {
-            window.print();
-            // window.close(); // Optional: close window after printing
+            setTimeout(() => {
+              window.print();
+            }, 500);
           };
         </script>
       </body>
