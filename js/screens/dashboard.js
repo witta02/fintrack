@@ -3,6 +3,7 @@ import { router } from '../router.js';
 import { renderSpendingChart } from '../components/spendingChart.js';
 import { createTransactionTile } from '../components/transactionTile.js';
 import { t } from '../i18n.js';
+import { convertToTHB } from '../currency.js';
 
 let activePeriod = 'monthly'; // 'daily', 'monthly', 'yearly', 'all'
 
@@ -30,7 +31,7 @@ export function renderDashboard(container) {
     </div>
 
     <!-- Balance Card -->
-    <div class="balance-card">
+    <div class="balance-card" id="balance-card-clickable">
       <div class="period-label">${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}</div>
       <div class="balance-amount" id="card-balance">฿0.00</div>
       <div class="balance-row">
@@ -41,6 +42,7 @@ export function renderDashboard(container) {
           <div>
             <div class="balance-item-label">${t('income')}</div>
             <div class="balance-item-value" id="card-income">฿0.00</div>
+            <div class="balance-item-tax" id="card-income-tax">ภาษี ฿0.00</div>
           </div>
         </div>
         <div class="balance-item expense">
@@ -165,6 +167,14 @@ function setupEventListeners(container) {
     const guide = container.querySelector('#starter-guide');
     if (guide) guide.classList.add('hidden');
   });
+
+  // Balance card click to show full amount popup
+  const balanceCard = container.querySelector('#balance-card-clickable');
+  if (balanceCard) {
+    balanceCard.addEventListener('click', () => {
+      showBalancePopup(container);
+    });
+  }
 }
 
 function updateUI(container) {
@@ -201,10 +211,18 @@ function updateUI(container) {
 
   // Render metrics to card
   const formatVal = (val) => `${symbol}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  
+
   container.querySelector('#card-balance').textContent = formatVal(balance);
   container.querySelector('#card-income').textContent = formatVal(income);
   container.querySelector('#card-expense').textContent = formatVal(expense);
+
+  // Calculate and display tax (based on yearly income)
+  const yearlyIncomeInTHB = store.settings.selectedCurrency === 'THB'
+    ? metrics.yearlyIncome
+    : convertToTHB(metrics.yearlyIncome, store.settings.selectedCurrency);
+  const taxAmountTHB = store.calculateThaiTax(yearlyIncomeInTHB);
+  const taxAmountDisplay = store.toDisplay(taxAmountTHB);
+  container.querySelector('#card-income-tax').textContent = `${t('tax')} ${formatVal(taxAmountDisplay)}`;
 
   // Render Spending Chart
   const canvas = container.querySelector('#spending-chart-canvas');

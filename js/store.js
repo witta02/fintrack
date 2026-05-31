@@ -458,7 +458,41 @@ export const store = {
     return daily;
   },
 
-  getDailyIncomeForMonth() {
+  // Thai tax calculation based on 2026 personal income tax rates
+  calculateThaiTax(annualIncome) {
+    // Thai personal income tax rates for 2026 (annual)
+    const taxBrackets = [
+      { min: 0, max: 150000, rate: 0 },
+      { min: 150001, max: 300000, rate: 0.05 },
+      { min: 300001, max: 500000, rate: 0.1 },
+      { min: 500001, max: 750000, rate: 0.15 },
+      { min: 750001, max: 1000000, rate: 0.2 },
+      { min: 1000001, max: 2000000, rate: 0.25 },
+      { min: 2000001, max: 5000000, rate: 0.3 },
+      { min: 5000001, max: Infinity, rate: 0.35 }
+    ];
+
+    let tax = 0;
+    let remainingIncome = annualIncome;
+
+    for (const bracket of taxBrackets) {
+      if (remainingIncome <= 0) break;
+
+      const taxableAmount = Math.min(
+        remainingIncome,
+        bracket.max - bracket.min + 1
+      );
+
+      if (taxableAmount > 0) {
+        tax += taxableAmount * bracket.rate;
+        remainingIncome -= taxableAmount;
+      }
+    }
+
+    return tax;
+  },
+
+  getDailyExpensesForMonth() {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
