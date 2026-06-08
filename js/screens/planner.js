@@ -217,7 +217,7 @@ async function handleUserSendMessage(container, text) {
         : tx.amount / store.toDisplay(1.0);
 
       newTransaction = {
-        title: tx.title || 'รายการด่วนจาก Planner',
+        title: tx.title || 'รายการด่วนจาก Finny',
         amount: thbAmount,
         isIncome: !!tx.isIncome,
         category: tx.category || 'Other',
@@ -345,7 +345,7 @@ ${advice}`,
   if (lowerText.includes('สวัสดี') || lowerText.includes('หวัดดี') || lowerText.includes('hi') || lowerText.includes('hello')) {
     return {
       response: isEnglish
-        ? `Hi! The offline planner is ready to help you track spending, analyze cash flow, and plan your money.`
+        ? `Hi! The Finny Assistant is ready to help you track spending, analyze cash flow, and plan your money.`
         : `สวัสดีค่ะ! ตัววางแผนออฟไลน์พร้อมช่วยจัดการและวิเคราะห์การเงินให้คุณแล้ววันนี้\nอยากให้บันทึกรายจ่าย หรือวิเคราะห์ภาพรวมการเงิน บอกได้เลยค่ะ!`,
       transaction_to_add: null
     };
@@ -353,11 +353,11 @@ ${advice}`,
 
   // Standard Fallback instructions
   return {
-    response: isEnglish ? `The offline planner can help with examples like:
+    response: isEnglish ? `The Finny Assistant can help with examples like:
 • "I have 5000 for 20 days"
 • "Save 30000 in 6 months"
 • "Lunch 150"
-• "Analyze my spending"` : `ตัววางแผนยังไม่เข้าใจคำถามนี้ค่ะ ลองบอกรายละเอียดให้ชัดเจนขึ้นดูนะคะ เช่น:
+• "Analyze my spending"` : `Finny ยังไม่เข้าใจคำถามนี้ค่ะ ลองบอกรายละเอียดให้ชัดเจนขึ้นดูนะคะ เช่น:
 • บันทึกรายรับ: "ได้ค่าของ 800 บาท"
 • บันทึกรายจ่าย: "จ่ายค่าเดินทาง 60"
 • วางแผนเงิน: "มีเงิน 5000 ใช้ 20 วัน"
