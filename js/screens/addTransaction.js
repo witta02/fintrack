@@ -232,79 +232,12 @@ function setupFormListeners(container) {
     fileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) {
-        const spinner = container.querySelector('#ocr-spinner-overlay');
-        spinner.classList.remove('hidden');
-        
-        try {
-          const base64Data = await readAsBase64(file);
-          const mimeType = file.type || "image/jpeg";
-          const rawBase64 = base64Data.split(',')[1];
-          
-          const apiKey = 'AIzaSyD_HbW4n63iEyyESfw2Uux877SHmBCoP-g';
-          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    {
-                      inlineData: {
-                        mimeType: mimeType,
-                        data: rawBase64
-                      }
-                    },
-                    {
-                      text: `Scan this receipt image. Extract payee name (store name) and total check due.
-                      Return JSON format ONLY matching this (no markdown blocks, no backticks, no comments, just valid JSON):
-                      {
-                        "payee": "Name of store (e.g. Molly Wiebe or Aimee W, search top of receipt)",
-                        "total": 56.78
-                      }`
-                    }
-                  ]
-                }
-              ]
-            })
+        if (!store.settings.geminiApiKey) {
+          showGeminiKeyModal(container, file, (key) => {
+            processImageWithKey(container, file, key);
           });
-
-          if (!response.ok) throw new Error("API call failed");
-
-          const data = await response.json();
-          const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!textResult) throw new Error("Empty response");
-
-          const cleanJson = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
-          const result = JSON.parse(cleanJson);
-
-          const payeeVal = result.payee || "";
-          const totalVal = parseFloat(result.total) || 0.0;
-
-          container.querySelector('#title').value = payeeVal ? `บิลจาก ${payeeVal}` : 'บิลใบเสร็จ';
-          if (totalVal > 0) {
-            container.querySelector('#amount').value = totalVal.toFixed(2);
-          }
-          
-          selectedCategory = 'Food';
-          isIncome = false;
-          container.querySelector('#switch-expense').classList.add('active');
-          container.querySelector('#switch-income').classList.remove('active');
-          renderCategoryPicker(container);
-
-        } catch (err) {
-          console.error("AI Scanner Error, loading mock:", err);
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          container.querySelector('#title').value = 'บิลจาก Molly Wiebe';
-          container.querySelector('#amount').value = '80.87';
-          selectedCategory = 'Food';
-          isIncome = false;
-          container.querySelector('#switch-expense').classList.add('active');
-          container.querySelector('#switch-income').classList.remove('active');
-          renderCategoryPicker(container);
-        } finally {
-          spinner.classList.add('hidden');
+        } else {
+          processImageWithKey(container, file, store.settings.geminiApiKey);
         }
       }
     });
@@ -386,4 +319,155 @@ function readAsBase64(file) {
     reader.onerror = (e) => reject(e);
     reader.readAsDataURL(file);
   });
+}
+
+function showGeminiKeyModal(container, file, onSuccess) {
+  const isEn = store.settings.language === 'en';
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-dialog" style="background: #1C2128; border-radius: 20px; text-align: center; color: white; padding: 24px; border: 1px solid var(--border);">
+      <div style="padding: 10px 0;">
+        <div style="width: 56px; height: 56px; background: rgba(255, 193, 7, 0.1); color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/></svg>
+        </div>
+        <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 800; color: white;">
+          ${isEn ? 'Gemini API Key Required' : 'ต้องระบุ Gemini API Key'}
+        </h3>
+        <p style="margin: 0 0 16px 0; font-size: 12.5px; color: rgba(255, 255, 255, 0.6); line-height: 1.5;">
+          ${isEn 
+            ? 'To scan and analyze real receipts, bills or bank slips, please enter your Gemini API Key.' 
+            : 'เพื่อวิเคราะห์สแกนใบเสร็จหรือสลิปธนาคารจริง กรุณากรอกรหัส Gemini API Key ของคุณ'}
+          <br/>
+          <a href="https://aistudio.google.com/" target="_blank" style="color: var(--gold); font-weight: 700; text-decoration: underline; display: inline-block; margin-top: 6px;">
+            ${isEn ? 'Get free key here' : 'ขอรับกุญแจฟรีคลิกที่นี่'}
+          </a>
+        </p>
+        
+        <input 
+          type="password" 
+          id="modal-gemini-key-input" 
+          class="form-control" 
+          placeholder="AIzaSy..." 
+          style="font-family: monospace; font-size: 13px; text-align: center; margin-bottom: 18px; background: #0d1117; color: white; border: 1px solid var(--border);"
+        />
+        
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button id="modal-cancel-btn" class="btn" style="flex: 1; border: 1px solid var(--border); padding: 12px; border-radius: 12px; font-weight: 700; color: white;">
+            ${isEn ? 'Cancel' : 'ยกเลิก'}
+          </button>
+          <button id="modal-save-btn" class="btn-primary" style="flex: 1; padding: 12px; border-radius: 12px; font-weight: 700; margin-top:0;">
+            ${isEn ? 'Save & Scan' : 'บันทึกและสแกน'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector('#modal-cancel-btn').onclick = () => {
+    document.body.removeChild(modal);
+  };
+  
+  modal.querySelector('#modal-save-btn').onclick = () => {
+    const keyVal = modal.querySelector('#modal-gemini-key-input').value.trim();
+    if (keyVal) {
+      store.settings.geminiApiKey = keyVal;
+      store.save();
+      document.body.removeChild(modal);
+      onSuccess(keyVal);
+    } else {
+      alert(isEn ? 'Please enter a valid key' : 'กรุณากรอกรหัสคีย์ที่ถูกต้อง');
+    }
+  };
+}
+
+async function processImageWithKey(container, file, apiKey) {
+  const spinner = container.querySelector('#ocr-spinner-overlay');
+  spinner.classList.remove('hidden');
+  
+  try {
+    const base64Data = await readAsBase64(file);
+    const mimeType = file.type || "image/jpeg";
+    const rawBase64 = base64Data.split(',')[1];
+    
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                inlineData: {
+                  mimeType: mimeType,
+                  data: rawBase64
+                }
+              },
+              {
+                text: `Analyze this image. It can be a restaurant/store receipt OR a bank transfer e-slip (e.g. Thai mobile banking transaction slip).
+                Extract the following details and return JSON format ONLY (no markdown blocks, no backticks, no comments, just valid JSON):
+                {
+                  "title": "Title for this transaction (e.g. 'บิลจาก [Store Name]' or 'โอนเงินให้ [Receiver Name]' or 'รับเงินจาก [Sender Name]')",
+                  "amount": Total amount in THB (double),
+                  "isIncome": true if it is a deposit/incoming transfer, false if it is a payment/outgoing transfer,
+                  "category": "Suitable choice from: Food, Transport, Shopping, Salary, Bills, Entertainment, Health, Gift, Travel, Education, Investment, Other",
+                  "date": "Transaction date and time in YYYY-MM-DDTHH:mm format (e.g. '2026-06-09T12:27', else empty string)"
+                }`
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const msg = errData.error?.message || "API call failed";
+      throw new Error(msg);
+    }
+
+    const data = await response.json();
+    const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!textResult) throw new Error("Empty response from Gemini");
+
+    const cleanJson = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
+    const result = JSON.parse(cleanJson);
+
+    const titleVal = result.title || "รายการโอนเงิน";
+    const amountVal = parseFloat(result.amount) || 0.0;
+    const isInc = result.isIncome === true;
+    const cat = result.category || "Other";
+    const dateVal = result.date || "";
+
+    container.querySelector('#title').value = titleVal;
+    if (amountVal > 0) {
+      container.querySelector('#amount').value = amountVal.toFixed(2);
+    }
+    if (dateVal) {
+      container.querySelector('#date').value = dateVal;
+    }
+    
+    isIncome = isInc;
+    selectedCategory = cat;
+    
+    if (isIncome) {
+      container.querySelector('#switch-income').classList.add('active');
+      container.querySelector('#switch-expense').classList.remove('active');
+    } else {
+      container.querySelector('#switch-expense').classList.add('active');
+      container.querySelector('#switch-income').classList.remove('active');
+    }
+    renderCategoryPicker(container);
+
+  } catch (err) {
+    console.error("AI Scanner Error:", err);
+    alert(store.settings.language === 'en' 
+      ? `AI Scan Failed: ${err.message}. Please check your API key in Settings.` 
+      : `การสแกนด้วย AI ล้มเหลว: ${err.message} กรุณาตรวจสอบ API Key ของคุณในเมนูตั้งค่า`);
+  } finally {
+    spinner.classList.add('hidden');
+  }
 }

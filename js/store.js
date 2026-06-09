@@ -13,7 +13,8 @@ export const store = {
     language: 'th',
     hasCompletedOnboarding: false,
     taxDeduction: 60000,
-    dataVersion: 2
+    dataVersion: 2,
+    geminiApiKey: ''
   },
 
   subscribe(listener) {

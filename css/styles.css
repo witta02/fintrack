@@ -68,23 +68,32 @@ input, select { font-family: var(--font); background: var(--input-bg); border: 1
 
 /* --- Layout --- */
 .app { display: flex; flex-direction: column; height: 100vh; width: 100%; margin: 0 auto; position: relative; }
-@media (min-width: 768px) {
+@media (min-width: 600px) {
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 16px;
+    background: #090d16;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(255, 193, 7, 0.04) 0px, transparent 50%), 
+      radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.04) 0px, transparent 50%);
+  }
   .app { 
-    max-width: 100%; 
-    border-left: none; 
-    border-right: none; 
-    box-shadow: none; 
+    max-width: 480px; 
+    height: min(880px, 94vh);
+    border: 1.5px solid var(--border);
+    border-radius: 36px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 50px rgba(255, 193, 7, 0.03);
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
   }
-  .screen-container {
-    padding: 0 5%;
+  .bottom-nav {
+    border-bottom-left-radius: 34px;
+    border-bottom-right-radius: 34px;
   }
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    align-items: start;
-  }
-  .balance-card { grid-column: span 2; }
 }
 .screen-container { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; }
 
