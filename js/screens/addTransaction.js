@@ -3,7 +3,7 @@ import { router } from '../router.js';
 import { expenseCategories, incomeCategories, getCategoryInfo } from '../categories.js';
 import { t } from '../i18n.js';
 import jsQR from 'jsqr';
-import { runLocalOCR, parseReceiptText, guessCategory, parseBankSlipAmount } from '../utils/ocrParser.js';
+import { runLocalOCR, parseReceiptText, guessCategory, parseBankSlipAmount, detectIfBankSlip, parseBankSlipReceiver } from '../utils/ocrParser.js';
 
 let isIncome = false; // default to Expense
 let selectedCategory = 'Food';
@@ -307,27 +307,52 @@ function setupFormListeners(container) {
           
           if (statusSubtitle) statusSubtitle.textContent = originalText;
           
-          const parsed = parseReceiptText(rawText);
-          
-          // Pre-fill form fields
-          container.querySelector('#title').value = parsed.payee || "ร้านค้า";
-          if (parsed.total > 0) {
-            container.querySelector('#amount').value = parsed.total.toFixed(2);
+          if (detectIfBankSlip(rawText)) {
+            // It's a bank/e-wallet slip without a QR code
+            const payeeName = parseBankSlipReceiver(rawText);
+            const amountVal = parseBankSlipAmount(rawText);
+            
+            container.querySelector('#title').value = payeeName;
+            if (amountVal) {
+              container.querySelector('#amount').value = amountVal.toFixed(2);
+            } else {
+              setTimeout(() => container.querySelector('#amount').focus(), 150);
+            }
+            
+            selectedCategory = guessCategory(rawText, payeeName);
+            isIncome = false;
+            
+            container.querySelector('#switch-expense').classList.add('active');
+            container.querySelector('#switch-income').classList.remove('active');
+            renderCategoryPicker(container);
+            
+            alert(store.settings.language === 'en'
+              ? `Successfully scanned bank slip from ${payeeName}!`
+              : `สแกนสลิปธนาคารจาก ${payeeName} สำเร็จ!`);
           } else {
-            setTimeout(() => container.querySelector('#amount').focus(), 150);
+            // It's a regular itemized receipt
+            const parsed = parseReceiptText(rawText);
+            
+            // Pre-fill form fields
+            container.querySelector('#title').value = parsed.payee || "ร้านค้า";
+            if (parsed.total > 0) {
+              container.querySelector('#amount').value = parsed.total.toFixed(2);
+            } else {
+              setTimeout(() => container.querySelector('#amount').focus(), 150);
+            }
+            
+            // Guess category
+            selectedCategory = guessCategory(rawText, parsed.payee);
+            isIncome = false; // receipts are typically expense
+            
+            container.querySelector('#switch-expense').classList.add('active');
+            container.querySelector('#switch-income').classList.remove('active');
+            renderCategoryPicker(container);
+            
+            alert(store.settings.language === 'en'
+              ? `Successfully scanned receipt from ${parsed.payee}!`
+              : `สแกนใบเสร็จจาก ${parsed.payee} สำเร็จ!`);
           }
-          
-          // Guess category
-          selectedCategory = guessCategory(rawText, parsed.payee);
-          isIncome = false; // receipts are typically expense
-          
-          container.querySelector('#switch-expense').classList.add('active');
-          container.querySelector('#switch-income').classList.remove('active');
-          renderCategoryPicker(container);
-          
-          alert(store.settings.language === 'en'
-            ? `Successfully scanned receipt from ${parsed.payee}!`
-            : `สแกนใบเสร็จจาก ${parsed.payee} สำเร็จ!`);
             
         } catch (ocrErr) {
           console.error("Local OCR failed:", ocrErr);

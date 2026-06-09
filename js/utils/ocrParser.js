@@ -200,7 +200,29 @@ export function parseBankSlipAmount(text) {
   if (!text) return null;
   const lines = text.split('\n');
   
-  // Strategy 1: Keyword Proximity
+  // Strategy 1: Look for final payment amount keywords (ชำระ, สุทธิ, net, paid) to avoid subtotal/discount lines
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].toLowerCase();
+    if (/ชำระ|สุทธิ|net|paid/i.test(line) && !/ธรรม|fee/i.test(line)) {
+      let match = line.match(/(\d+[\.,]\d{2})/) || line.match(/\b(\d+)\s*(?:บาท|thb|฿|\s|$)/i);
+      if (match) {
+        const val = parseFloat(match[1].replace(',', '.'));
+        if (val > 0) return val;
+      }
+      
+      // Check next line
+      if (i + 1 < lines.length) {
+        const nextLine = lines[i + 1].trim();
+        match = nextLine.match(/(\d+[\.,]\d{2})/) || nextLine.match(/\b(\d+)\b/);
+        if (match) {
+          const val = parseFloat(match[1].replace(',', '.'));
+          if (val > 0) return val;
+        }
+      }
+    }
+  }
+  
+  // Strategy 2: Keyword Proximity
   // Check for amount labels on a line and look for the number on that line or next line
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].toLowerCase();
@@ -210,7 +232,7 @@ export function parseBankSlipAmount(text) {
     
     if (isAmountLabel) {
       // Find a decimal number in this line
-      let match = line.match(/(\d+[\.,]\d{2})/);
+      let match = line.match(/(\d+[\.,]\d{2})/) || line.match(/\b(\d+)\s*(?:บาท|thb|฿|\s|$)/i);
       if (match) {
         const val = parseFloat(match[1].replace(',', '.'));
         if (val > 0) return val;
@@ -219,7 +241,7 @@ export function parseBankSlipAmount(text) {
       // Check next line
       if (i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        match = nextLine.match(/(\d+[\.,]\d{2})/);
+        match = nextLine.match(/(\d+[\.,]\d{2})/) || nextLine.match(/\b(\d+)\b/);
         if (match) {
           const val = parseFloat(match[1].replace(',', '.'));
           if (val > 0) return val;
@@ -228,7 +250,7 @@ export function parseBankSlipAmount(text) {
     }
   }
 
-  // Strategy 2: Decimal Extraction
+  // Strategy 3: Decimal Extraction
   // Find all decimal numbers and pick the first positive one that is not 0.00
   const decimals = [];
   for (const line of lines) {
@@ -248,11 +270,11 @@ export function parseBankSlipAmount(text) {
     return decimals[0];
   }
 
-  // Strategy 3: Currency Symbol Proximity
+  // Strategy 4: Currency Symbol Proximity
   for (const line of lines) {
     const lowerLine = line.toLowerCase();
     if (/บาท|thb|฿/i.test(lowerLine) && !/ธรรม|fee/i.test(lowerLine)) {
-      const match = line.match(/(\d+[\.,]\d{2})/) || line.match(/(\d+)/);
+      const match = line.match(/(\d+[\.,]\d{2})/) || line.match(/\b(\d+)\b/);
       if (match) {
         const val = parseFloat(match[1].replace(',', '.')) || 0.0;
         if (val > 0) return val;
@@ -261,4 +283,56 @@ export function parseBankSlipAmount(text) {
   }
 
   return null;
+}
+
+// Detects if the OCR text represents a bank transfer slip or e-wallet transaction
+export function detectIfBankSlip(text) {
+  if (!text) return false;
+  const lowerText = text.toLowerCase();
+  
+  const keywords = [
+    'โอนเงินสำเร็จ', 'รายการสำเร็จ', 'ทำรายการสำเร็จ', 'รหัสอ้างอิง', 'เลขที่อ้างอิง',
+    'ค่าธรรมเนียม', 'พร้อมเพย์', 'g-wallet', 'เป๋าตัง', 'krungthai', 'bangkok bank',
+    'kbank', 'scb', 'kasikorn', 'ไทยพาณิชย์', 'กสิกร', 'กรุงไทย', 'กรุงเทพ', 'ttb',
+    'โอนเงิน', 'ชำระเงิน', 'สิทธิ์คนละครึ่ง', 'สิทธิ์ไทยช่วยไทย'
+  ];
+  
+  let count = 0;
+  for (const kw of keywords) {
+    if (lowerText.includes(kw)) {
+      count++;
+    }
+  }
+  
+  return count >= 2;
+}
+
+// Extracts receiver's name from bank/e-wallet slips
+export function parseBankSlipReceiver(text) {
+  if (!text) return "โอนเงินสำเร็จ";
+  const lines = text.split('\n');
+  
+  // Look for lines that indicate receiver
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.includes('ไปยัง') || line.includes('ไปที่') || line.toLowerCase().includes('to:')) {
+      if (i + 1 < lines.length) {
+        let name = lines[i + 1].trim();
+        // Clean name
+        name = name.replace(/[\d\-*]+/g, '').trim();
+        if (name.length > 2) return name;
+      }
+    }
+  }
+
+  // Fallback for Pao Tang or other layouts: search for a shop/name indicator
+  for (let i = Math.floor(lines.length / 4); i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.includes('ร้าน') || line.includes('บริษัท') || line.includes('นาย') || line.includes('นาง') || line.includes('น.ส.')) {
+      // Clean names from prefixes/suffixes
+      return line.replace(/[^\w\s\u0E00-\u0E7F]/g, '').trim();
+    }
+  }
+  
+  return "รายการโอนเงิน";
 }

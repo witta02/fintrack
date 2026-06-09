@@ -2,7 +2,7 @@ import { store } from '../store.js';
 import { router } from '../router.js';
 import { t } from '../i18n.js';
 import jsQR from 'jsqr';
-import { runLocalOCR, parseReceiptText, parseBankSlipAmount } from '../utils/ocrParser.js';
+import { runLocalOCR, parseReceiptText, parseBankSlipAmount, detectIfBankSlip, parseBankSlipReceiver } from '../utils/ocrParser.js';
 
 // State variables
 let payee = "Molly Wiebe";
@@ -793,30 +793,52 @@ function setupScreenListeners(container) {
         
         if (statusSubtitle) statusSubtitle.textContent = originalText;
         
-        const parsed = parseReceiptText(rawText);
-        
-        payee = parsed.payee || "ร้านค้า";
-        tax = parsed.tax || 0.0;
-        tip = parsed.tip || 0.0;
-        
-        if (parsed.items.length > 0) {
-          items = parsed.items;
-          alert(store.settings.language === 'en'
-            ? `Successfully scanned receipt from ${payee}!`
-            : `สแกนใบเสร็จจาก ${payee} สำเร็จ!`);
-        } else {
-          // If no items, we add one manual placeholder item
+        if (detectIfBankSlip(rawText)) {
+          // It's a bank/e-wallet slip without a QR code
+          payee = parseBankSlipReceiver(rawText);
+          tax = 0.0;
+          tip = 0.0;
+          const amountVal = parseBankSlipAmount(rawText);
+          
           items = [
             {
               id: Math.random().toString(36).substring(2, 11),
-              name: "อาหาร / เครื่องดื่ม (ระบุข้อมูลเอง)",
-              price: parsed.total > 0 ? (parsed.total - tax - tip) : 100.0,
+              name: "รายการโอนเงิน / ชำระเงิน",
+              price: amountVal || 0.0,
               qty: 1
             }
           ];
+          
           alert(store.settings.language === 'en'
-            ? "Could not auto-extract items. You can add them manually."
-            : "ระบบไม่สามารถดึงข้อมูลรายการอาหารได้อัตโนมัติ คุณสามารถเพิ่มและแก้ไขรายการเองได้เลยค่ะ");
+            ? `Successfully scanned bank slip from ${payee}!`
+            : `สแกนสลิปธนาคารจาก ${payee} สำเร็จ!`);
+        } else {
+          // It's a regular receipt
+          const parsed = parseReceiptText(rawText);
+          
+          payee = parsed.payee || "ร้านค้า";
+          tax = parsed.tax || 0.0;
+          tip = parsed.tip || 0.0;
+          
+          if (parsed.items.length > 0) {
+            items = parsed.items;
+            alert(store.settings.language === 'en'
+              ? `Successfully scanned receipt from ${payee}!`
+              : `สแกนใบเสร็จจาก ${payee} สำเร็จ!`);
+          } else {
+            // If no items, we add one manual placeholder item
+            items = [
+              {
+                id: Math.random().toString(36).substring(2, 11),
+                name: "อาหาร / เครื่องดื่ม (ระบุข้อมูลเอง)",
+                price: parsed.total > 0 ? (parsed.total - tax - tip) : 100.0,
+                qty: 1
+              }
+            ];
+            alert(store.settings.language === 'en'
+              ? "Could not auto-extract items. You can add them manually."
+              : "ระบบไม่สามารถดึงข้อมูลรายการอาหารได้อัตโนมัติ คุณสามารถเพิ่มและแก้ไขรายการเองได้เลยค่ะ");
+          }
         }
         
         selectedItems = {};
