@@ -76,6 +76,28 @@ input, select { font-family: var(--font); background: var(--input-bg); border: 1
     margin: 0 auto;
   }
   
+  .balance-card {
+    max-width: 800px;
+    margin: 0 auto 30px auto !important;
+    padding: 30px 40px !important;
+  }
+  
+  .balance-card .balance-amount {
+    font-size: 48px !important;
+    text-align: center;
+    margin: 12px 0 24px 0 !important;
+  }
+  
+  .balance-card .period-label {
+    text-align: center;
+    font-size: 15px;
+  }
+  
+  .balance-card .balance-row {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
   .dashboard-grid {
     display: grid;
     grid-template-columns: 1fr 1.2fr;

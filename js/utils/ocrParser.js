@@ -233,7 +233,15 @@ export function parseBankSlipAmount(text) {
   // Strategy 2: Keyword Proximity
   // Check for amount labels on a line and look for the number on that line or next line
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].toLowerCase();
+    let line = lines[i].toLowerCase();
+    
+    // Truncate line before fee keywords if it contains both amount and fee details (OCR merging)
+    if (line.includes('ธรรม') || line.includes('fee')) {
+      if (/[จจํ][ําา]นวน|ยอด|amount|total|sum/i.test(line)) {
+        const idx = line.includes('ธรรม') ? line.indexOf('ธรรม') : line.indexOf('fee');
+        line = line.substring(0, idx);
+      }
+    }
     
     // Check for amount keywords (matching both standard and decomposed SARAM AM) and exclude fees
     const isAmountLabel = (/[จจํ][ําา]นวน|ยอด|amount|total|sum/i.test(line)) && !(/ธรรม|fee/i.test(line));

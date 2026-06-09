@@ -34,37 +34,38 @@ export function renderDashboard(container) {
       <button class="period-tab ${activePeriod === 'all' ? 'active' : ''}" data-period="all">${t('dashboardAll')}</button>
     </div>
 
-    <div class="dashboard-grid">
-      <div class="dashboard-col-left">
-        <!-- Balance Card -->
-        <div class="balance-card" id="balance-card-clickable" style="cursor: pointer;">
-          <div class="period-label">${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}</div>
-          <div class="balance-amount" id="card-balance">฿0.00</div>
-          <div class="balance-row">
-            <div class="balance-item income">
-              <div class="balance-item-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-              </div>
-              <div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <div class="balance-item-label">${t('income')}</div>
-                  <span style="font-size: 10px; color: var(--gold); font-weight: 800;">${t('tax')}</span>
-                </div>
-                <div class="balance-item-value" id="card-income">฿0.00</div>
-                <div class="balance-item-tax" id="card-income-tax" style="color: var(--gold); font-weight: 700; font-size: 11px;">ภาษี ฿0.00</div>
-              </div>
+    <!-- Balance Card -->
+    <div class="balance-card" id="balance-card-clickable" style="cursor: pointer;">
+      <div class="period-label">${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}</div>
+      <div class="balance-amount" id="card-balance">฿0.00</div>
+      <div class="balance-row">
+        <div class="balance-item income">
+          <div class="balance-item-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <div class="balance-item-label">${t('income')}</div>
+              <span style="font-size: 10px; color: var(--gold); font-weight: 800;">${t('tax')}</span>
             </div>
-            <div class="balance-item expense">
-              <div class="balance-item-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-              </div>
-              <div>
-                <div class="balance-item-label">${t('expense')}</div>
-                <div class="balance-item-value" id="card-expense">฿0.00</div>
-              </div>
-            </div>
+            <div class="balance-item-value" id="card-income">฿0.00</div>
+            <div class="balance-item-tax" id="card-income-tax" style="color: var(--gold); font-weight: 700; font-size: 11px;">ภาษี ฿0.00</div>
           </div>
         </div>
+        <div class="balance-item expense">
+          <div class="balance-item-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          </div>
+          <div>
+            <div class="balance-item-label">${t('expense')}</div>
+            <div class="balance-item-value" id="card-expense">฿0.00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="dashboard-col-left">
 
         <!-- Split Bill Card -->
         <div class="card split-bill-card-banner" id="split-bill-card" style="cursor: pointer; margin-bottom: 16px; border: 1px solid var(--border); padding: 18px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(255, 184, 0, 0.05) 0%, rgba(255, 143, 0, 0.02) 100%); transition: all var(--transition);">
