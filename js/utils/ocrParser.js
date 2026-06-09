@@ -181,34 +181,62 @@ export async function runLocalOCR(file, progressCallback) {
 
 // Parses bank slip amount from OCR text (Thai e-slip specific)
 export function parseBankSlipAmount(text) {
+  if (!text) return null;
   const lines = text.split('\n');
+  
+  // Strategy 1: Keyword Proximity
+  // Check for amount labels on a line and look for the number on that line or next line
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].toLowerCase();
     
-    // Check if the line mentions "จำนวนเงิน" or "amount" but NOT "ค่าธรรมเนียม" or "fee"
-    if ((line.includes('จำนวนเงิน') || line.includes('amount')) && !line.includes('ค่าธรรมเนียม') && !line.includes('fee')) {
-      // Search for price pattern in this line first (e.g. 155.00)
-      let priceMatch = line.match(/(\d+[\.,]\d{2})/);
-      if (priceMatch) {
-        return parseFloat(priceMatch[1].replace(',', '.')) || null;
+    // Check for amount keywords (matching both standard and decomposed SARAM AM) and exclude fees
+    const isAmountLabel = (/[จจํ][ําา]นวน|ยอด|amount|total|sum/i.test(line)) && !(/ธรรม|fee/i.test(line));
+    
+    if (isAmountLabel) {
+      // Find a decimal number in this line
+      let match = line.match(/(\d+[\.,]\d{2})/);
+      if (match) {
+        const val = parseFloat(match[1].replace(',', '.'));
+        if (val > 0) return val;
       }
       
-      // If not on the same line, check the next line
+      // Check next line
       if (i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        priceMatch = nextLine.match(/(\d+[\.,]\d{2})/);
-        if (priceMatch) {
-          return parseFloat(priceMatch[1].replace(',', '.')) || null;
+        match = nextLine.match(/(\d+[\.,]\d{2})/);
+        if (match) {
+          const val = parseFloat(match[1].replace(',', '.'));
+          if (val > 0) return val;
         }
       }
     }
   }
 
-  // Fallback: search for any line that contains a number followed by "บาท" or "thb" (excluding 0.00 fee)
+  // Strategy 2: Decimal Extraction
+  // Find all decimal numbers and pick the first positive one that is not 0.00
+  const decimals = [];
+  for (const line of lines) {
+    if (/ธรรม|fee/i.test(line)) continue;
+    
+    const matches = line.match(/(\d+[\.,]\d{2})/g);
+    if (matches) {
+      for (const m of matches) {
+        const val = parseFloat(m.replace(',', '.'));
+        if (val > 0 && val < 1000000) {
+          decimals.push(val);
+        }
+      }
+    }
+  }
+  if (decimals.length > 0) {
+    return decimals[0];
+  }
+
+  // Strategy 3: Currency Symbol Proximity
   for (const line of lines) {
     const lowerLine = line.toLowerCase();
-    if ((lowerLine.includes('บาท') || lowerLine.includes('thb')) && !lowerLine.includes('ค่าธรรมเนียม') && !lowerLine.includes('fee')) {
-      const match = line.match(/(\d+[\.,]\d{2})/);
+    if (/บาท|thb|฿/i.test(lowerLine) && !/ธรรม|fee/i.test(lowerLine)) {
+      const match = line.match(/(\d+[\.,]\d{2})/) || line.match(/(\d+)/);
       if (match) {
         const val = parseFloat(match[1].replace(',', '.')) || 0.0;
         if (val > 0) return val;
