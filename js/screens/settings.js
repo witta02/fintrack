@@ -1,6 +1,7 @@
 import { store } from '../store.js';
 import { currencies } from '../currency.js';
 import { t } from '../i18n.js';
+import { alerts } from '../utils/alertHelper.js';
 
 export function renderSettings(container) {
   const selectedCurrency = store.getSelectedCurrency();
@@ -173,7 +174,7 @@ function setupEventListeners(container) {
         window.deferredPrompt = null;
       });
     } else {
-      alert(t('installPwaHint'));
+      alerts.info(t('installPwaHint'));
     }
   });
 
@@ -189,12 +190,12 @@ function setupEventListeners(container) {
           if (perm === 'granted') {
             store.triggerNotification(t('notiWelcomeTitle'), t('notiWelcomeBody'));
           } else {
-            alert(t('notiDenied'));
+            alerts.warning(t('notiDenied'));
           }
         });
       }
     } else {
-      alert(t('notiUnsupported'));
+      alerts.error(t('notiUnsupported'));
     }
   });
 
@@ -203,8 +204,12 @@ function setupEventListeners(container) {
   });
 
   // Reset localstorage handler
-  container.querySelector('#clear-notify-btn').addEventListener('click', () => {
-    if (confirm(t('resetAppConfirm'))) {
+  container.querySelector('#clear-notify-btn').addEventListener('click', async () => {
+    const isConfirmed = await alerts.confirmReset(
+      store.settings.language === 'en' ? 'Reset App Data?' : 'ยืนยันการรีเซ็ตข้อมูล?',
+      t('resetAppConfirm')
+    );
+    if (isConfirmed) {
       localStorage.clear();
       window.location.reload();
     }
@@ -259,7 +264,7 @@ function showTaxSettings(container) {
     const val = modal.querySelector('#tax-deduction-input').value;
     store.updateTaxDeduction(val);
     close();
-    alert(t('taxSaveSuccess'));
+    alerts.success(t('taxSaveSuccess'));
   };
 }
 

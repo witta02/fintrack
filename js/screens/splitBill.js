@@ -3,6 +3,7 @@ import { router } from '../router.js';
 import { t } from '../i18n.js';
 import jsQR from 'jsqr';
 import { runLocalOCR, parseReceiptText, parseBankSlipAmount, detectIfBankSlip, parseBankSlipReceiver } from '../utils/ocrParser.js';
+import { alerts } from '../utils/alertHelper.js';
 
 // State variables
 let payee = "Molly Wiebe";
@@ -770,9 +771,9 @@ function setupScreenListeners(container) {
             selectedItems = { [items[0].id]: true };
             selectedQuantities = { [items[0].id]: 1 };
             
-            alert(store.settings.language === 'en'
-              ? `Successfully scanned QR from ${parsed.title}!`
-              : `สแกน QR Code สำเร็จจาก ${parsed.title}!`);
+            alerts.success(store.settings.language === 'en'
+              ? `Successfully scanned QR!`
+              : `สแกน QR Code สำเร็จ!`, parsed.title);
             
             spinner.classList.add('hidden');
             renderReceiptPaper(container);
@@ -809,9 +810,9 @@ function setupScreenListeners(container) {
             }
           ];
           
-          alert(store.settings.language === 'en'
-            ? `Successfully scanned bank slip from ${payee}!`
-            : `สแกนสลิปธนาคารจาก ${payee} สำเร็จ!`);
+          alerts.success(store.settings.language === 'en'
+            ? `Successfully scanned bank slip!`
+            : `สแกนสลิปธนาคารสำเร็จ!`, payee);
         } else {
           // It's a regular receipt
           const parsed = parseReceiptText(rawText);
@@ -822,9 +823,9 @@ function setupScreenListeners(container) {
           
           if (parsed.items.length > 0) {
             items = parsed.items;
-            alert(store.settings.language === 'en'
-              ? `Successfully scanned receipt from ${payee}!`
-              : `สแกนใบเสร็จจาก ${payee} สำเร็จ!`);
+            alerts.success(store.settings.language === 'en'
+              ? `Successfully scanned receipt!`
+              : `สแกนใบเสร็จสำเร็จ!`, payee);
           } else {
             // If no items, we add one manual placeholder item
             items = [
@@ -835,7 +836,7 @@ function setupScreenListeners(container) {
                 qty: 1
               }
             ];
-            alert(store.settings.language === 'en'
+            alerts.warning(store.settings.language === 'en'
               ? "Could not auto-extract items. You can add them manually."
               : "ระบบไม่สามารถดึงข้อมูลรายการอาหารได้อัตโนมัติ คุณสามารถเพิ่มและแก้ไขรายการเองได้เลยค่ะ");
           }
@@ -846,7 +847,7 @@ function setupScreenListeners(container) {
         
       } catch (ocrErr) {
         console.error("Local OCR failed:", ocrErr);
-        alert(store.settings.language === 'en'
+        alerts.error(store.settings.language === 'en'
           ? 'Failed to scan receipt. Please enter items manually.'
           : 'สแกนใบเสร็จล้มเหลว ขออภัยในความไม่สะดวกค่ะ คุณสามารถเพิ่มรายการเองได้เลย');
       } finally {

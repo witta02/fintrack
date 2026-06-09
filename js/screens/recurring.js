@@ -1,5 +1,6 @@
 import { store } from '../store.js';
 import { getCategoryInfo, expenseCategories, incomeCategories } from '../categories.js';
+import { alerts } from '../utils/alertHelper.js';
 
 export function renderRecurring(container) {
   container.innerHTML = `
@@ -129,8 +130,12 @@ function updateUI(container) {
     });
 
     // Listen delete button click
-    card.querySelector('.rule-delete-btn').addEventListener('click', () => {
-      if (confirm('คุณต้องการยกเลิกและลบรายการประจำนี้ใช่หรือไม่?')) {
+    card.querySelector('.rule-delete-btn').addEventListener('click', async () => {
+      const isConfirmed = await alerts.confirmDelete(
+        store.settings.language === 'en' ? 'Delete Recurring Rule?' : 'ต้องการยกเลิกรายการประจำใช่หรือไม่?',
+        store.settings.language === 'en' ? 'This recurring rule will be deleted.' : 'รายการประจำนี้จะถูกลบออกและยกเลิกบันทึกอัตโนมัติ'
+      );
+      if (isConfirmed) {
         store.deleteRecurringRule(rule.id);
       }
     });
@@ -311,7 +316,7 @@ function showAddRecurringModal() {
     const dueDateVal = new Date(overlay.querySelector('#modal-due-date').value);
 
     if (isNaN(amountVal) || amountVal <= 0) {
-      alert('กรุณากรอกจำนวนเงินให้ถูกต้อง');
+      alerts.warning(store.settings.language === 'en' ? 'Please enter a valid amount' : 'กรุณากรอกจำนวนเงินให้ถูกต้อง');
       return;
     }
 

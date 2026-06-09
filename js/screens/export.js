@@ -1,6 +1,7 @@
 import { store } from '../store.js';
 import { router } from '../router.js';
 import { t, locale, getLanguage } from '../i18n.js';
+import { alerts } from '../utils/alertHelper.js';
 import { getCategoryInfo } from '../categories.js';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -147,7 +148,10 @@ function printReport(container) {
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Please allow popups to print the report.');
+    alerts.warning(
+      store.settings.language === 'en' ? 'Popups Blocked' : 'การแสดงป๊อปอัปถูกบล็อก',
+      store.settings.language === 'en' ? 'Please allow popups to print the report.' : 'กรุณาอนุญาตให้แสดงหน้าต่างป๊อปอัปเพื่อพิมพ์รายงาน'
+    );
     return;
   }
 

@@ -3,6 +3,7 @@ import { router } from '../router.js';
 import { createTransactionTile } from '../components/transactionTile.js';
 import { expenseCategories, incomeCategories, getCategoryInfo } from '../categories.js';
 import { t } from '../i18n.js';
+import { alerts } from '../utils/alertHelper.js';
 
 let searchQuery = '';
 let activeFilterType = 'all'; // 'all', 'income', 'expense'
@@ -191,8 +192,12 @@ function updateUI(container) {
           router.navigate('addTransaction', { transactionId: transaction.id });
         },
         // onDelete
-        (id) => {
-          if (confirm(t('deleteConfirm'))) {
+        async (id) => {
+          const isConfirmed = await alerts.confirmDelete(
+            store.settings.language === 'en' ? 'Delete Transaction?' : 'ต้องการลบรายการใช่หรือไม่?',
+            t('deleteConfirm')
+          );
+          if (isConfirmed) {
             store.deleteTransaction(id);
           }
         }

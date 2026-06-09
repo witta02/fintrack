@@ -4,6 +4,7 @@ import { renderSpendingChart, renderCategoryPieChart } from '../components/spend
 import { createTransactionTile } from '../components/transactionTile.js';
 import { t } from '../i18n.js';
 import { convertToTHB } from '../currency.js';
+import { alerts } from '../utils/alertHelper.js';
 
 let activePeriod = 'monthly'; // 'daily', 'monthly', 'yearly', 'all'
 let analysisPeriod = 'monthly';
@@ -404,8 +405,12 @@ function updateUI(container) {
           router.navigate('addTransaction', { transactionId: transaction.id });
         },
         // onDelete callback
-        (id) => {
-          if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+        async (id) => {
+          const isConfirmed = await alerts.confirmDelete(
+            store.settings.language === 'en' ? 'Delete Transaction?' : 'ต้องการลบรายการใช่หรือไม่?',
+            store.settings.language === 'en' ? 'This transaction will be permanently removed' : 'รายการนี้จะถูกลบออกอย่างถาวร'
+          );
+          if (isConfirmed) {
             store.deleteTransaction(id);
           }
         }

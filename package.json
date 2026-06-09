@@ -16,6 +16,7 @@
     "jimp": "^1.6.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
-    "jsqr": "^1.4.0"
+    "jsqr": "^1.4.0",
+    "sweetalert2": "^11.26.25"
   }
 }

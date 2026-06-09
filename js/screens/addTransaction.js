@@ -4,6 +4,7 @@ import { expenseCategories, incomeCategories, getCategoryInfo } from '../categor
 import { t } from '../i18n.js';
 import jsQR from 'jsqr';
 import { runLocalOCR, parseReceiptText, guessCategory, parseBankSlipAmount, detectIfBankSlip, parseBankSlipReceiver } from '../utils/ocrParser.js';
+import { alerts } from '../utils/alertHelper.js';
 
 let isIncome = false; // default to Expense
 let selectedCategory = 'Food';
@@ -286,9 +287,9 @@ function setupFormListeners(container) {
               container.querySelector('#switch-income').classList.remove('active');
               renderCategoryPicker(container);
               
-              alert(store.settings.language === 'en'
-                ? `Successfully scanned QR from ${parsed.title}!`
-                : `สแกน QR Code สำเร็จจาก ${parsed.title}!`);
+              alerts.success(store.settings.language === 'en'
+                ? `Successfully scanned QR!`
+                : `สแกน QR Code สำเร็จ!`, parsed.title);
               
               spinner.classList.add('hidden');
               return;
@@ -326,9 +327,9 @@ function setupFormListeners(container) {
             container.querySelector('#switch-income').classList.remove('active');
             renderCategoryPicker(container);
             
-            alert(store.settings.language === 'en'
-              ? `Successfully scanned bank slip from ${payeeName}!`
-              : `สแกนสลิปธนาคารจาก ${payeeName} สำเร็จ!`);
+            alerts.success(store.settings.language === 'en'
+              ? `Successfully scanned bank slip!`
+              : `สแกนสลิปธนาคารสำเร็จ!`, payeeName);
           } else {
             // It's a regular itemized receipt
             const parsed = parseReceiptText(rawText);
@@ -349,14 +350,14 @@ function setupFormListeners(container) {
             container.querySelector('#switch-income').classList.remove('active');
             renderCategoryPicker(container);
             
-            alert(store.settings.language === 'en'
-              ? `Successfully scanned receipt from ${parsed.payee}!`
-              : `สแกนใบเสร็จจาก ${parsed.payee} สำเร็จ!`);
+            alerts.success(store.settings.language === 'en'
+              ? `Successfully scanned receipt!`
+              : `สแกนใบเสร็จสำเร็จ!`, parsed.payee);
           }
             
         } catch (ocrErr) {
           console.error("Local OCR failed:", ocrErr);
-          alert(store.settings.language === 'en'
+          alerts.error(store.settings.language === 'en'
             ? 'No valid QR code or receipt text could be recognized.'
             : 'ไม่พบ QR Code หรือข้อมูลบิลที่ถูกต้องบนรูปภาพนี้');
         } finally {
@@ -369,8 +370,12 @@ function setupFormListeners(container) {
   // Delete transaction button (if editing)
   const delBtn = container.querySelector('#delete-trans-btn');
   if (delBtn) {
-    delBtn.addEventListener('click', () => {
-      if (confirm(t('deleteConfirm'))) {
+    delBtn.addEventListener('click', async () => {
+      const isConfirmed = await alerts.confirmDelete(
+        store.settings.language === 'en' ? 'Delete Transaction?' : 'ต้องการลบรายการใช่หรือไม่?',
+        t('deleteConfirm')
+      );
+      if (isConfirmed) {
         store.deleteTransaction(editingTransactionId);
         router.navigate('dashboard');
       }
@@ -386,7 +391,7 @@ function setupFormListeners(container) {
     const dateVal = new Date(container.querySelector('#date').value);
 
     if (isNaN(amountVal) || amountVal <= 0) {
-      alert(store.settings.language === 'en' ? 'Please enter a valid amount' : 'กรุณากรอกจำนวนเงินให้ถูกต้อง');
+      alerts.warning(store.settings.language === 'en' ? 'Please enter a valid amount' : 'กรุณากรอกจำนวนเงินให้ถูกต้อง');
       return;
     }
 
