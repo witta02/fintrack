@@ -20,19 +20,6 @@ export function renderSettings(container) {
       <h1 class="brand-title">${t('settingsTitle')}</h1>
     </div>
 
-    <!-- Premium Card Display -->
-    <div class="card premium-card-banner" style="margin-bottom: 24px; position: relative; overflow: hidden; background: linear-gradient(135deg, #FFB800 0%, #FF8F00 100%); color: #161B22; border: none; padding: 20px; border-radius: 18px; display: flex; flex-direction: column; gap: 8px;">
-      <!-- Glowing decoration -->
-      <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255, 255, 255, 0.15); filter: blur(20px);"></div>
-      
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2L2 22h20L12 2zm0 4.8L18.4 18H5.6L12 6.8z"/></svg>
-        <span style="font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 1px;">FinTrack Pro Member</span>
-      </div>
-      <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: #161B22;">${t('premiumTitle')}</h3>
-      <p style="margin: 0; font-size: 12px; opacity: 0.9; line-height: 1.4;">${t('premiumDesc')}</p>
-    </div>
-
     <!-- Settings Group -->
     <div class="card" style="margin-bottom: 16px; padding: 12px;">
       <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">${t('generalSettings')}</h3>
@@ -131,9 +118,6 @@ export function renderSettings(container) {
     <div style="text-align: center; color: var(--text-secondary); font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
       <div>FinTrack</div>
       <div>Version 2.5.5</div>
-    </div>
-
-    <div style="height: 100px;"></div>
   `;
 
   setupEventListeners(container);

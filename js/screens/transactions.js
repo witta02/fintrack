@@ -71,9 +71,6 @@ export function renderTransactions(container) {
 
     <div id="transactions-full-list" class="transactions-list-container">
       <!-- Dynamic list -->
-    </div>
-
-    <div style="height: 100px;"></div>
   `;
 
   setupEventListeners(container);

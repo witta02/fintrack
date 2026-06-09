@@ -22,15 +22,21 @@ export function renderSplitBill(container) {
 
   container.innerHTML = `
     <style>
+      .screen-container {
+        overflow: hidden !important;
+      }
       .split-bill-screen-container {
         position: relative;
         width: 100%;
-        min-height: 100%;
+        height: 100%;
+        overflow: hidden;
       }
       .split-bill-screen {
         padding: 20px;
         position: relative;
-        padding-bottom: 340px; /* Spacer for bottom sheet */
+        height: 100%;
+        overflow-y: auto;
+        padding-bottom: 350px; /* Spacer for bottom sheet */
       }
 
       .back-btn-row {
@@ -166,27 +172,32 @@ export function renderSplitBill(container) {
         background: #E5E7EB;
       }
       .pay-share-sheet {
-        position: fixed;
+        position: absolute;
         bottom: 0;
         left: 0;
         right: 0;
-        background: #151515;
+        background: rgba(19, 25, 41, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid var(--border);
         border-top-left-radius: 28px;
         border-top-right-radius: 28px;
-        box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
         padding: 16px 20px 24px 20px;
         display: flex;
         flex-direction: column;
         max-height: 330px;
-        z-index: 100;
+        z-index: 10;
+        transform: none;
+        width: 100%;
       }
-      @media (min-width: 600px) {
+      @media (min-width: 768px) {
         .pay-share-sheet {
-          left: 50%;
-          transform: translateX(-50%);
-          max-width: 640px;
-          border-bottom-left-radius: 0;
-          border-bottom-right-radius: 0;
+          max-width: 960px;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          right: auto !important;
+          width: 100% !important;
         }
       }
       .sheet-drag-handle {

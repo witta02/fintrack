@@ -17,7 +17,6 @@ export function renderDashboard(container) {
     <div class="screen-header" style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px;">
       <div class="brand-group" style="display: flex; align-items: center; gap: 8px;">
         <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -1px; background: linear-gradient(135deg, var(--gold), var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FinTrack</h1>
-        <span class="premium-badge" style="background: rgba(255, 193, 7, 0.1); color: var(--gold); padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; border: 1px solid rgba(255, 193, 7, 0.2);">PRO</span>
       </div>
       <button id="theme-toggle-btn" class="icon-btn" style="width: 40px; height: 40px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: all var(--transition);">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -169,9 +168,6 @@ export function renderDashboard(container) {
           </div>
         </div>
       </div>
-    </div>
-
-    <div style="height: 100px;"></div>
   `;
 
   // Setup Event Listeners

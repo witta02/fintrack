@@ -140,9 +140,6 @@ export function renderAddTransaction(container, params) {
           </button>
         ` : ''}
       </div>
-    </form>
-
-    <div style="height: 100px;"></div>
   `;
 
   // Initial category picker setup
