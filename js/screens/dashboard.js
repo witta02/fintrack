@@ -116,6 +116,17 @@ export function renderDashboard(container) {
             </button>
           </div>
         </div>
+      
+        <!-- Category Pie Chart Card -->
+        <div class="card pie-chart-card">
+          <div class="pie-chart-container" style="margin-top: 0; height: auto;">
+            <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text-secondary); text-align: center;">สัดส่วนรายจ่ายแยกตามหมวดหมู่</h4>
+            <div style="height: 200px; width: 100%;">
+              <canvas id="category-pie-chart-canvas"></canvas>
+            </div>
+            <div id="pie-chart-legend" class="pie-chart-legend"></div>
+          </div>
+        </div>
       </div>
 
       <div class="dashboard-col-right">
@@ -143,14 +154,6 @@ export function renderDashboard(container) {
 
           <div class="chart-container" style="height: 180px;">
             <canvas id="spending-chart-canvas"></canvas>
-          </div>
-
-          <div class="pie-chart-container">
-            <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text-secondary);">สัดส่วนรายจ่ายแยกตามหมวดหมู่</h4>
-            <div style="height: 200px; width: 100%;">
-              <canvas id="category-pie-chart-canvas"></canvas>
-            </div>
-            <div id="pie-chart-legend" class="pie-chart-legend"></div>
           </div>
         </div>
 

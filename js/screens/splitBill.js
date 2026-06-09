@@ -39,6 +39,8 @@ export function renderSplitBill(container) {
           gap: 30px;
           align-items: start;
           padding: 24px;
+          max-width: 1200px;
+          margin: 0 auto;
         }
         .split-bill-screen {
           padding: 0;
