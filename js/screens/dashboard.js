@@ -35,130 +35,134 @@ export function renderDashboard(container) {
     </div>
 
     <div class="dashboard-grid">
-      <!-- Balance Card -->
-      <div class="balance-card" id="balance-card-clickable" style="cursor: pointer;">
-        <div class="period-label">${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}</div>
-        <div class="balance-amount" id="card-balance">฿0.00</div>
-        <div class="balance-row">
-          <div class="balance-item income">
-            <div class="balance-item-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-            </div>
-            <div>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <div class="balance-item-label">${t('income')}</div>
-                <span style="font-size: 10px; color: var(--gold); font-weight: 800;">${t('tax')}</span>
+      <div class="dashboard-col-left">
+        <!-- Balance Card -->
+        <div class="balance-card" id="balance-card-clickable" style="cursor: pointer;">
+          <div class="period-label">${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}</div>
+          <div class="balance-amount" id="card-balance">฿0.00</div>
+          <div class="balance-row">
+            <div class="balance-item income">
+              <div class="balance-item-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </div>
-              <div class="balance-item-value" id="card-income">฿0.00</div>
-              <div class="balance-item-tax" id="card-income-tax" style="color: var(--gold); font-weight: 700; font-size: 11px;">ภาษี ฿0.00</div>
+              <div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <div class="balance-item-label">${t('income')}</div>
+                  <span style="font-size: 10px; color: var(--gold); font-weight: 800;">${t('tax')}</span>
+                </div>
+                <div class="balance-item-value" id="card-income">฿0.00</div>
+                <div class="balance-item-tax" id="card-income-tax" style="color: var(--gold); font-weight: 700; font-size: 11px;">ภาษี ฿0.00</div>
+              </div>
+            </div>
+            <div class="balance-item expense">
+              <div class="balance-item-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+              </div>
+              <div>
+                <div class="balance-item-label">${t('expense')}</div>
+                <div class="balance-item-value" id="card-expense">฿0.00</div>
+              </div>
             </div>
           </div>
-          <div class="balance-item expense">
-            <div class="balance-item-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        </div>
+
+        <!-- Split Bill Card -->
+        <div class="card split-bill-card-banner" id="split-bill-card" style="cursor: pointer; margin-bottom: 16px; border: 1px solid var(--border); padding: 18px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(255, 184, 0, 0.05) 0%, rgba(255, 143, 0, 0.02) 100%); transition: all var(--transition);">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 44px; height: 44px; background: rgba(255, 184, 0, 0.1); color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
             <div>
-              <div class="balance-item-label">${t('expense')}</div>
-              <div class="balance-item-value" id="card-expense">฿0.00</div>
+              <div style="font-size: 15px; font-weight: 700; color: var(--text-primary);">หารค่าใช้จ่าย (Split Bill)</div>
+              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">หารค่าอาหาร/ทริป เลือกจ่ายส่วนของคุณด้วย AI</div>
             </div>
           </div>
+          <div style="color: var(--text-secondary);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+
+        <div id="starter-guide" class="starter-guide hidden">
+          <div class="starter-guide-header">
+            <div>
+              <div class="eyebrow">${t('starterEyebrow')}</div>
+              <h2>${t('starterTitle')}</h2>
+            </div>
+            <button id="dismiss-starter-btn" class="icon-btn" title="ซ่อนคำแนะนำ">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+          <div class="starter-steps">
+            <button class="starter-step" data-screen-target="addTransaction">
+              <span class="step-icon income-bg">+</span>
+              <span>
+                <strong>${t('starterIncomeTitle')}</strong>
+                <small>${t('starterIncomeDesc')}</small>
+              </span>
+            </button>
+            <button class="starter-step" data-screen-target="addTransaction">
+              <span class="step-icon expense-bg">-</span>
+              <span>
+                <strong>${t('starterExpenseTitle')}</strong>
+                <small>${t('starterExpenseDesc')}</small>
+              </span>
+            </button>
+            <button class="starter-step" data-screen-target="planner">
+              <span class="step-icon planner-bg">÷</span>
+              <span>
+                <strong>${t('starterPlannerTitle')}</strong>
+                <small>${t('starterPlannerDesc')}</small>
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Split Bill Card -->
-      <div class="card split-bill-card-banner" id="split-bill-card" style="cursor: pointer; margin-bottom: 16px; border: 1px solid var(--border); padding: 18px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(255, 184, 0, 0.05) 0%, rgba(255, 143, 0, 0.02) 100%); transition: all var(--transition);">
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <div style="width: 44px; height: 44px; background: rgba(255, 184, 0, 0.1); color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <div class="dashboard-col-right">
+        <!-- Chart Section -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3 class="card-title">${t('analysis')}</h3>
+            <div class="chart-legends">
+              <span class="legend"><span class="dot dot-expense"></span>${t('chartExpense')}</span>
+              <span class="legend"><span class="dot dot-income"></span>${t('chartIncome')}</span>
+            </div>
           </div>
-          <div>
-            <div style="font-size: 15px; font-weight: 700; color: var(--text-primary);">หารค่าใช้จ่าย (Split Bill)</div>
-            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">หารค่าอาหาร/ทริป เลือกจ่ายส่วนของคุณด้วย AI</div>
+          
+          <div class="analysis-controls">
+            <select id="analysis-period-select" class="analysis-select">
+              <option value="monthly" ${analysisPeriod === 'monthly' ? 'selected' : ''}>รายเดือน</option>
+              <option value="yearly" ${analysisPeriod === 'yearly' ? 'selected' : ''}>รายปี</option>
+            </select>
+            <select id="analysis-month-select" class="analysis-select ${analysisPeriod !== 'monthly' ? 'hidden' : ''}">
+              ${Array.from({ length: 12 }, (_, i) => `
+                <option value="${i}" ${analysisMonth === i ? 'selected' : ''}>${new Date(2000, i).toLocaleString('th-TH', { month: 'long' })}</option>
+              `).join('')}
+            </select>
           </div>
-        </div>
-        <div style="color: var(--text-secondary);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>
-      </div>
 
-      <div id="starter-guide" class="starter-guide hidden">
-        <div class="starter-guide-header">
-          <div>
-            <div class="eyebrow">${t('starterEyebrow')}</div>
-            <h2>${t('starterTitle')}</h2>
+          <div class="chart-container" style="height: 180px;">
+            <canvas id="spending-chart-canvas"></canvas>
           </div>
-          <button id="dismiss-starter-btn" class="icon-btn" title="ซ่อนคำแนะนำ">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-          </button>
-        </div>
-        <div class="starter-steps">
-          <button class="starter-step" data-screen-target="addTransaction">
-            <span class="step-icon income-bg">+</span>
-            <span>
-              <strong>${t('starterIncomeTitle')}</strong>
-              <small>${t('starterIncomeDesc')}</small>
-            </span>
-          </button>
-          <button class="starter-step" data-screen-target="addTransaction">
-            <span class="step-icon expense-bg">-</span>
-            <span>
-              <strong>${t('starterExpenseTitle')}</strong>
-              <small>${t('starterExpenseDesc')}</small>
-            </span>
-          </button>
-          <button class="starter-step" data-screen-target="planner">
-            <span class="step-icon planner-bg">÷</span>
-            <span>
-              <strong>${t('starterPlannerTitle')}</strong>
-              <small>${t('starterPlannerDesc')}</small>
-            </span>
-          </button>
-        </div>
-      </div>
 
-      <!-- Chart Section -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3 class="card-title">${t('analysis')}</h3>
-          <div class="chart-legends">
-            <span class="legend"><span class="dot dot-expense"></span>${t('chartExpense')}</span>
-            <span class="legend"><span class="dot dot-income"></span>${t('chartIncome')}</span>
+          <div class="pie-chart-container">
+            <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text-secondary);">สัดส่วนรายจ่ายแยกตามหมวดหมู่</h4>
+            <div style="height: 200px; width: 100%;">
+              <canvas id="category-pie-chart-canvas"></canvas>
+            </div>
+            <div id="pie-chart-legend" class="pie-chart-legend"></div>
           </div>
         </div>
-        
-        <div class="analysis-controls">
-          <select id="analysis-period-select" class="analysis-select">
-            <option value="monthly" ${analysisPeriod === 'monthly' ? 'selected' : ''}>รายเดือน</option>
-            <option value="yearly" ${analysisPeriod === 'yearly' ? 'selected' : ''}>รายปี</option>
-          </select>
-          <select id="analysis-month-select" class="analysis-select ${analysisPeriod !== 'monthly' ? 'hidden' : ''}">
-            ${Array.from({ length: 12 }, (_, i) => `
-              <option value="${i}" ${analysisMonth === i ? 'selected' : ''}>${new Date(2000, i).toLocaleString('th-TH', { month: 'long' })}</option>
-            `).join('')}
-          </select>
-        </div>
 
-        <div class="chart-container" style="height: 180px;">
-          <canvas id="spending-chart-canvas"></canvas>
-        </div>
-
-        <div class="pie-chart-container">
-          <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text-secondary);">สัดส่วนรายจ่ายแยกตามหมวดหมู่</h4>
-          <div style="height: 200px; width: 100%;">
-            <canvas id="category-pie-chart-canvas"></canvas>
+        <div class="recent-section">
+          <!-- Recent Transactions -->
+          <div class="section-header" style="display: flex; align-items: center; justify-content: space-between;">
+            <h3 class="section-title" style="font-size: 16px; font-weight: 800; color: var(--text-primary);">${t('recentTransactions')}</h3>
+            <button id="view-all-transactions-btn" class="text-link-btn" style="color: var(--gold); font-size: 13px; font-weight: 600;">${t('viewAll')}</button>
           </div>
-          <div id="pie-chart-legend" class="pie-chart-legend"></div>
-        </div>
-      </div>
-
-      <div class="recent-section">
-        <!-- Recent Transactions -->
-        <div class="section-header" style="display: flex; align-items: center; justify-content: space-between;">
-          <h3 class="section-title" style="font-size: 16px; font-weight: 800; color: var(--text-primary);">${t('recentTransactions')}</h3>
-          <button id="view-all-transactions-btn" class="text-link-btn" style="color: var(--gold); font-size: 13px; font-weight: 600;">${t('viewAll')}</button>
-        </div>
-        <div id="recent-transactions-list" class="transactions-list-container" style="margin-top: 12px;">
-          <!-- Loaded dynamically -->
+          <div id="recent-transactions-list" class="transactions-list-container" style="margin-top: 12px;">
+            <!-- Loaded dynamically -->
+          </div>
         </div>
       </div>
     </div>

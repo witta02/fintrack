@@ -81,12 +81,6 @@ input, select { font-family: var(--font); background: var(--input-bg); border: 1
     align-items: start;
   }
   
-  .balance-card { grid-column: 1; }
-  .split-bill-card-banner { grid-column: 1; }
-  #starter-guide { grid-column: 1; }
-  .chart-card { grid-column: 2; grid-row: 1 / 3; }
-  .recent-section { grid-column: 2; }
-  
   .transaction-form, .settings-form, .export-form, .recurring-form {
     max-width: 560px;
     margin: 0 auto;
