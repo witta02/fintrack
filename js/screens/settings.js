@@ -101,49 +101,6 @@ export function renderSettings(container) {
           <button type="button" class="type-btn ${language === 'en' ? 'active income-btn' : ''}" id="language-en-btn">${t('english')}</button>
         </div>
       </div>
-      </div>
-    </div>
-
-    <!-- AI Settings Option -->
-    <div class="card" style="margin-bottom: 16px; padding: 12px;">
-      <h3 class="card-title" style="margin-bottom: 12px; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
-        ${store.settings.language === 'en' ? 'AI Receipt Scanner' : 'ระบบสแกนบิลด้วย AI'}
-      </h3>
-      
-      <div class="setting-item" style="display: flex; flex-direction: column; gap: 8px; padding: 6px 6px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="color: var(--gold); font-size: 18px; display: flex; align-items: center;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-          </div>
-          <div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Gemini API Key</div>
-            <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.4; margin-top: 2px;">
-              ${store.settings.language === 'en' 
-                ? 'Enter API Key to enable real-time receipt scanning. Get a free key at Google AI Studio.' 
-                : 'ใส่ API Key เพื่อเปิดใช้งานการสแกนบิลและสลิปจริง รับรหัสใช้งานฟรีได้ที่ Google AI Studio'}
-            </div>
-          </div>
-        </div>
-        <div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;">
-          <input 
-            type="password" 
-            id="setting-gemini-key-input" 
-            class="form-control" 
-            placeholder="AIzaSy..." 
-            value="${store.settings.geminiApiKey || ''}" 
-            style="font-family: monospace; font-size: 13px; flex: 1;"
-          />
-          <button id="save-gemini-key-btn" class="btn-primary" style="padding: 12px; width: auto; font-size: 13px; font-weight: 600; border-radius: var(--radius); flex-shrink: 0; margin-top: 0;">
-            ${store.settings.language === 'en' ? 'Save' : 'บันทึก'}
-          </button>
-        </div>
-        <small style="color: var(--text-secondary); font-size: 10.5px; margin-top: 4px; line-height: 1.4;">
-          ${store.settings.language === 'en' 
-            ? '* If left blank, scanning will use standard mock presets.' 
-            : '* หากเว้นว่างไว้ ระบบจะสแกนโดยใช้ชุดข้อมูลจำลองแทน'}
-        </small>
-      </div>
-    </div>
 
     <!-- Developer/Notifications settings -->
     <div class="card" style="margin-bottom: 24px; padding: 12px;">
@@ -191,16 +148,7 @@ function setupEventListeners(container) {
     store.setCurrency(e.target.value);
   });
 
-  const saveKeyBtn = container.querySelector('#save-gemini-key-btn');
-  const keyInput = container.querySelector('#setting-gemini-key-input');
-  if (saveKeyBtn && keyInput) {
-    saveKeyBtn.addEventListener('click', () => {
-      const keyVal = keyInput.value.trim();
-      store.settings.geminiApiKey = keyVal;
-      store.save();
-      alert(store.settings.language === 'en' ? 'Gemini API Key saved successfully!' : 'บันทึก Gemini API Key เรียบร้อยแล้ว!');
-    });
-  }
+
 
   container.querySelector('#language-th-btn').addEventListener('click', () => {
     store.setLanguage('th');
