@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "tesseract.js": "^7.0.0",
     "vite": "^6.0.0"
   },
   "dependencies": {

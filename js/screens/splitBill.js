@@ -22,11 +22,41 @@ export function renderSplitBill(container) {
 
   container.innerHTML = `
     <style>
+      .split-bill-screen-container {
+        position: relative;
+        width: 100%;
+        min-height: 100%;
+      }
       .split-bill-screen {
         padding: 20px;
-        min-height: 100vh;
         position: relative;
         padding-bottom: 340px; /* Spacer for bottom sheet */
+      }
+      @media (min-width: 992px) {
+        .split-bill-screen-container {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 30px;
+          align-items: start;
+          padding: 24px;
+        }
+        .split-bill-screen {
+          padding: 0;
+          padding-bottom: 0;
+        }
+        .pay-share-sheet {
+          position: sticky !important;
+          top: 24px;
+          bottom: auto !important;
+          left: auto !important;
+          right: auto !important;
+          transform: none !important;
+          max-width: none !important;
+          max-height: calc(100vh - 120px) !important;
+          border-radius: 24px !important;
+          margin-top: 0;
+          box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+        }
       }
       .back-btn-row {
         display: flex;
@@ -378,64 +408,66 @@ export function renderSplitBill(container) {
       }
     </style>
 
-    <div class="split-bill-screen">
-      <!-- Top header -->
-      <div class="back-btn-row">
-        <button id="split-back-btn" class="icon-btn" style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    <div class="split-bill-screen-container">
+      <div class="split-bill-screen">
+        <!-- Top header -->
+        <div class="back-btn-row">
+          <button id="split-back-btn" class="icon-btn" style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </button>
+          <h1>เครื่องมือหารค่าใช้จ่าย (Split Bill)</h1>
+        </div>
+
+        <!-- Action Panel -->
+        <div class="scanning-control-panel">
+          <button id="btn-snap-receipt" class="panel-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+            สแกนใบเสร็จ
+          </button>
+          <button id="btn-edit-bill-meta" class="panel-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            แต่งบิล
+          </button>
+          <button id="btn-reset-sample" class="panel-btn" style="color: var(--gold); border-color: rgba(255,184,0,0.2);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            ตัวอย่าง
+          </button>
+        </div>
+
+        <!-- Hidden File input for scanning -->
+        <input type="file" id="split-ocr-file-input" accept="image/*" class="hidden" />
+
+        <!-- Background paper receipt mockup -->
+        <div id="receipt-paper-container" class="paper-receipt">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Scanning Spinner -->
+      <div id="ocr-spinner-overlay" class="scanning-overlay hidden">
+        <div class="scanning-dialog">
+          <div class="scan-spinner"></div>
+          <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700;">ระบบกำลังอ่านและวิเคราะห์บิล...</h4>
+          <p style="margin: 0; font-size: 11px; opacity: 0.6;">ระบบดึงรายการอาหารและราคากำลังทำงาน</p>
+        </div>
+      </div>
+
+      <!-- Pay Your Share Bottom Sheet -->
+      <div class="pay-share-sheet">
+        <div class="sheet-drag-handle"></div>
+        <div class="sheet-header">
+          <h2 class="sheet-title">Pay Your Share</h2>
+          <div class="sheet-subtitle" id="selected-items-count-text">0 Item Selected</div>
+        </div>
+
+        <div class="sheet-checklist" id="sheet-items-checklist">
+          <!-- Checked list items rendered here -->
+        </div>
+
+        <button id="sheet-action-pay-btn" class="sheet-pay-btn" disabled>
+          Pay Molly Wiebe ฿0.00
         </button>
-        <h1>เครื่องมือหารค่าใช้จ่าย (Split Bill)</h1>
       </div>
-
-      <!-- Action Panel -->
-      <div class="scanning-control-panel">
-        <button id="btn-snap-receipt" class="panel-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-          สแกนใบเสร็จ
-        </button>
-        <button id="btn-edit-bill-meta" class="panel-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-          แต่งบิล
-        </button>
-        <button id="btn-reset-sample" class="panel-btn" style="color: var(--gold); border-color: rgba(255,184,0,0.2);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          ตัวอย่าง
-        </button>
-      </div>
-
-      <!-- Hidden File input for scanning -->
-      <input type="file" id="split-ocr-file-input" accept="image/*" class="hidden" />
-
-      <!-- Background paper receipt mockup -->
-      <div id="receipt-paper-container" class="paper-receipt">
-        <!-- Rendered dynamically -->
-      </div>
-    </div>
-
-    <!-- Scanning Spinner -->
-    <div id="ocr-spinner-overlay" class="scanning-overlay hidden">
-      <div class="scanning-dialog">
-        <div class="scan-spinner"></div>
-        <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700;">ระบบกำลังอ่านและวิเคราะห์บิล...</h4>
-        <p style="margin: 0; font-size: 11px; opacity: 0.6;">ระบบดึงรายการอาหารและราคากำลังทำงาน</p>
-      </div>
-    </div>
-
-    <!-- Pay Your Share Bottom Sheet -->
-    <div class="pay-share-sheet">
-      <div class="sheet-drag-handle"></div>
-      <div class="sheet-header">
-        <h2 class="sheet-title">Pay Your Share</h2>
-        <div class="sheet-subtitle" id="selected-items-count-text">0 Item Selected</div>
-      </div>
-
-      <div class="sheet-checklist" id="sheet-items-checklist">
-        <!-- Checked list items rendered here -->
-      </div>
-
-      <button id="sheet-action-pay-btn" class="sheet-pay-btn" disabled>
-        Pay Molly Wiebe ฿0.00
-      </button>
     </div>
   `;
 
@@ -1056,7 +1088,7 @@ function scanImageQR(file) {
 }
 
 function parseSlipQR(qrData) {
-  if (!qrData.startsWith('000201')) return null;
+  if (!qrData.startsWith('00')) return null;
   
   // Helper to parse TLV
   const parseTLV = (s) => {

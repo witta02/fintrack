@@ -1,5 +1,11 @@
 import { store } from '../store.js';
 
+// Preprocesses text to normalize spaces incorrectly inserted between Thai characters by OCR diacritics/segments
+export function normalizeThaiText(text) {
+  if (!text) return "";
+  return text.replace(/(?<=[\u0E00-\u0E7F])\s+(?=[\u0E00-\u0E7F])/g, '');
+}
+
 // Dynamic script loader for Tesseract.js
 export function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -17,6 +23,7 @@ export function loadScript(src) {
 
 // Regex-based receipt parser
 export function parseReceiptText(text) {
+  text = normalizeThaiText(text);
   const lines = text.split('\n');
   let detectedPayee = "";
   const detectedItems = [];
@@ -198,6 +205,7 @@ export async function runLocalOCR(file, progressCallback) {
 // Parses bank slip amount from OCR text (Thai e-slip specific)
 export function parseBankSlipAmount(text) {
   if (!text) return null;
+  text = normalizeThaiText(text);
   const lines = text.split('\n');
   
   // Strategy 1: Look for final payment amount keywords (ชำระ, สุทธิ, net, paid) to avoid subtotal/discount lines
@@ -259,6 +267,19 @@ export function parseBankSlipAmount(text) {
     const matches = line.match(/(\d+[\.,]\d{2})/g);
     if (matches) {
       for (const m of matches) {
+        // Check if this match is part of a time representation (e.g., "14:20" or "69,14:20")
+        const index = line.indexOf(m);
+        if (index !== -1) {
+          const charAfter = line.charAt(index + m.length);
+          const charBefore = index > 0 ? line.charAt(index - 1) : '';
+          if (charAfter === ':' || charBefore === ':') {
+            continue;
+          }
+          if (/^\d/.test(line.substring(index + m.length))) {
+            continue;
+          }
+        }
+        
         const val = parseFloat(m.replace(',', '.'));
         if (val > 0 && val < 1000000) {
           decimals.push(val);
@@ -288,6 +309,7 @@ export function parseBankSlipAmount(text) {
 // Detects if the OCR text represents a bank transfer slip or e-wallet transaction
 export function detectIfBankSlip(text) {
   if (!text) return false;
+  text = normalizeThaiText(text);
   const lowerText = text.toLowerCase();
   
   const keywords = [
@@ -310,15 +332,25 @@ export function detectIfBankSlip(text) {
 // Extracts receiver's name from bank/e-wallet slips
 export function parseBankSlipReceiver(text) {
   if (!text) return "โอนเงินสำเร็จ";
+  text = normalizeThaiText(text);
   const lines = text.split('\n');
   
   // Look for lines that indicate receiver
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (line.includes('ไปยัง') || line.includes('ไปที่') || line.toLowerCase().includes('to:')) {
+      // Try to extract from the same line after the keyword first
+      let rest = "";
+      if (line.includes('ไปยัง')) rest = line.substring(line.indexOf('ไปยัง') + 5).trim();
+      else if (line.includes('ไปที่')) rest = line.substring(line.indexOf('ไปที่') + 5).trim();
+      else if (line.toLowerCase().includes('to:')) rest = line.substring(line.toLowerCase().indexOf('to:') + 3).trim();
+      
+      rest = rest.replace(/^[@\s_]+/g, '').replace(/[\d\-*]+/g, '').trim();
+      if (rest.length > 2) return rest;
+
+      // Fall back to next line if same line is empty
       if (i + 1 < lines.length) {
         let name = lines[i + 1].trim();
-        // Clean name
         name = name.replace(/[\d\-*]+/g, '').trim();
         if (name.length > 2) return name;
       }
@@ -329,7 +361,6 @@ export function parseBankSlipReceiver(text) {
   for (let i = Math.floor(lines.length / 4); i < lines.length; i++) {
     const line = lines[i].trim();
     if (line.includes('ร้าน') || line.includes('บริษัท') || line.includes('นาย') || line.includes('นาง') || line.includes('น.ส.')) {
-      // Clean names from prefixes/suffixes
       return line.replace(/[^\w\s\u0E00-\u0E7F]/g, '').trim();
     }
   }

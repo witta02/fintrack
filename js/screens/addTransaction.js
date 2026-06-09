@@ -470,7 +470,7 @@ function scanImageQR(file) {
 }
 
 function parseSlipQR(qrData) {
-  if (!qrData.startsWith('000201')) return null;
+  if (!qrData.startsWith('00')) return null;
   
   // Helper to parse TLV
   const parseTLV = (s) => {
