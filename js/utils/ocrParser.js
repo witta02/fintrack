@@ -178,3 +178,43 @@ export async function runLocalOCR(file, progressCallback) {
     throw err;
   }
 }
+
+// Parses bank slip amount from OCR text (Thai e-slip specific)
+export function parseBankSlipAmount(text) {
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].toLowerCase();
+    
+    // Check if the line mentions "จำนวนเงิน" or "amount" but NOT "ค่าธรรมเนียม" or "fee"
+    if ((line.includes('จำนวนเงิน') || line.includes('amount')) && !line.includes('ค่าธรรมเนียม') && !line.includes('fee')) {
+      // Search for price pattern in this line first (e.g. 155.00)
+      let priceMatch = line.match(/(\d+[\.,]\d{2})/);
+      if (priceMatch) {
+        return parseFloat(priceMatch[1].replace(',', '.')) || null;
+      }
+      
+      // If not on the same line, check the next line
+      if (i + 1 < lines.length) {
+        const nextLine = lines[i + 1].trim();
+        priceMatch = nextLine.match(/(\d+[\.,]\d{2})/);
+        if (priceMatch) {
+          return parseFloat(priceMatch[1].replace(',', '.')) || null;
+        }
+      }
+    }
+  }
+
+  // Fallback: search for any line that contains a number followed by "บาท" or "thb" (excluding 0.00 fee)
+  for (const line of lines) {
+    const lowerLine = line.toLowerCase();
+    if ((lowerLine.includes('บาท') || lowerLine.includes('thb')) && !lowerLine.includes('ค่าธรรมเนียม') && !lowerLine.includes('fee')) {
+      const match = line.match(/(\d+[\.,]\d{2})/);
+      if (match) {
+        const val = parseFloat(match[1].replace(',', '.')) || 0.0;
+        if (val > 0) return val;
+      }
+    }
+  }
+
+  return null;
+}

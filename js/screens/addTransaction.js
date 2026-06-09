@@ -3,7 +3,7 @@ import { router } from '../router.js';
 import { expenseCategories, incomeCategories, getCategoryInfo } from '../categories.js';
 import { t } from '../i18n.js';
 import jsQR from 'jsqr';
-import { runLocalOCR, parseReceiptText, guessCategory } from '../utils/ocrParser.js';
+import { runLocalOCR, parseReceiptText, guessCategory, parseBankSlipAmount } from '../utils/ocrParser.js';
 
 let isIncome = false; // default to Expense
 let selectedCategory = 'Food';
@@ -249,8 +249,31 @@ function setupFormListeners(container) {
               if (parsed.amount) {
                 container.querySelector('#amount').value = parsed.amount.toFixed(2);
               } else {
-                // Focus on amount input if not found in QR
-                setTimeout(() => container.querySelector('#amount').focus(), 150);
+                // Try to extract amount from the slip using OCR
+                try {
+                  const originalText = statusSubtitle.textContent;
+                  if (statusSubtitle) {
+                    statusSubtitle.textContent = store.settings.language === 'en' 
+                      ? 'Reading transaction amount from slip...' 
+                      : 'กำลังอ่านยอดเงินจากสลิป...';
+                  }
+                  
+                  const rawText = await runLocalOCR(file, (msg) => {
+                    if (statusSubtitle) statusSubtitle.textContent = msg;
+                  });
+                  
+                  if (statusSubtitle) statusSubtitle.textContent = originalText;
+                  
+                  const extractedAmount = parseBankSlipAmount(rawText);
+                  if (extractedAmount) {
+                    container.querySelector('#amount').value = extractedAmount.toFixed(2);
+                  } else {
+                    setTimeout(() => container.querySelector('#amount').focus(), 150);
+                  }
+                } catch (ocrErr) {
+                  console.error("Failed to read amount from slip via OCR:", ocrErr);
+                  setTimeout(() => container.querySelector('#amount').focus(), 150);
+                }
               }
               if (parsed.date) {
                 container.querySelector('#date').value = parsed.date;

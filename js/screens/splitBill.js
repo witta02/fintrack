@@ -2,7 +2,7 @@ import { store } from '../store.js';
 import { router } from '../router.js';
 import { t } from '../i18n.js';
 import jsQR from 'jsqr';
-import { runLocalOCR, parseReceiptText } from '../utils/ocrParser.js';
+import { runLocalOCR, parseReceiptText, parseBankSlipAmount } from '../utils/ocrParser.js';
 
 // State variables
 let payee = "Molly Wiebe";
@@ -735,12 +735,34 @@ function setupScreenListeners(container) {
             tax = 0.0;
             tip = 0.0;
             
+            let amountVal = parsed.amount;
+            if (!amountVal) {
+              try {
+                const originalText = statusSubtitle.textContent;
+                if (statusSubtitle) {
+                  statusSubtitle.textContent = store.settings.language === 'en' 
+                    ? 'Reading transaction amount from slip...' 
+                    : 'กำลังอ่านยอดเงินจากสลิป...';
+                }
+                
+                const rawText = await runLocalOCR(file, (msg) => {
+                  if (statusSubtitle) statusSubtitle.textContent = msg;
+                });
+                
+                if (statusSubtitle) statusSubtitle.textContent = originalText;
+                
+                amountVal = parseBankSlipAmount(rawText);
+              } catch (ocrErr) {
+                console.error("Failed to read amount from slip via OCR:", ocrErr);
+              }
+            }
+            
             // Create a single item list for the parsed bank slip/payment details
             items = [
               {
                 id: Math.random().toString(36).substring(2, 11),
                 name: parsed.type === 'slip' ? 'รายการโอนเงิน' : 'ชำระเงินพร้อมเพย์',
-                price: parsed.amount || 0.0,
+                price: amountVal || 0.0,
                 qty: 1
               }
             ];
