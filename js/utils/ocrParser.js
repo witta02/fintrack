@@ -76,14 +76,30 @@ export function parseReceiptText(text) {
       continue;
     }
 
+    // Skip metadata lines that contain numbers but are not transaction items
+    const isMetadataLine = /tel|phone|mobile|date|time|ref|check|table|id|no|#|xxx|เลขที่|วันที่|เวลา|อ้างอิง|เบอร์|โทร|บัญชี|account|โอนเงิน|สำเร็จ|ไปยัง|จาก|พร้อมเพย์|ธนาคาร/i.test(line);
+    if (isMetadataLine) continue;
+
     // Try to extract an item
-    // Pattern: Name followed by a price at the end of the line
-    const priceMatch = line.match(/(\d+[\.,]\d{2})\s*$/) || line.match(/(\d+)\s*$/);
+    // Pattern: Name followed by a decimal price (\d+.\d{2}) at the end of the line.
+    // If not found, look for a small integer (less than 5 digits) not preceded by time/date punctuation.
+    let priceMatch = line.match(/(\d+[\.,]\d{2})\s*$/);
+    if (!priceMatch) {
+      const intMatch = line.match(/\b(\d+)\s*$/);
+      if (intMatch && intMatch[1].length < 5) {
+        const beforeNum = line.substring(0, intMatch.index).trim();
+        // Check it's not part of a date/time (like 12:27 or 09/06)
+        if (!/[:\-\/]$/.test(beforeNum)) {
+          priceMatch = intMatch;
+        }
+      }
+    }
+
     if (priceMatch) {
       const priceStr = priceMatch[1].replace(',', '.');
       const price = parseFloat(priceStr);
 
-      if (price > 0 && price < 100000) { // filter out ridiculously large numbers like phone numbers or serials
+      if (price > 0 && price < 100000) {
         let name = line.substring(0, priceMatch.index).trim();
         
         // Clean up symbols often misread by OCR
