@@ -69,40 +69,21 @@ input, select { font-family: var(--font); background: var(--input-bg); border: 1
 /* --- Layout --- */
 .app { display: flex; flex-direction: column; height: 100vh; width: 100%; margin: 0 auto; position: relative; }
 /* --- Responsive Widescreen & Desktop Styles --- */
-@media (min-width: 992px) {
+@media (min-width: 600px) {
   .screen {
-    padding: 32px 40px;
-    max-width: 1200px;
+    max-width: 640px;
     margin: 0 auto;
+    padding: 30px 20px;
   }
   
-  .balance-card {
-    max-width: 800px;
-    margin: 0 auto 30px auto !important;
-    padding: 30px 40px !important;
-  }
-  
-  .balance-card .balance-amount {
-    font-size: 48px !important;
-    text-align: center;
-    margin: 12px 0 24px 0 !important;
-  }
-  
-  .balance-card .period-label {
-    text-align: center;
-    font-size: 15px;
-  }
-  
-  .balance-card .balance-row {
-    max-width: 600px;
+  .bottom-nav {
+    max-width: 640px;
     margin: 0 auto;
-  }
-  
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    gap: 24px;
-    align-items: start;
+    width: 100%;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
   }
   
   .transaction-form, .settings-form, .export-form, .recurring-form {
@@ -111,7 +92,7 @@ input, select { font-family: var(--font); background: var(--input-bg); border: 1
   }
   
   .chat-container {
-    max-width: 850px;
+    max-width: 640px;
     margin: 0 auto;
     border-left: 1px solid var(--border);
     border-right: 1px solid var(--border);

@@ -32,34 +32,7 @@ export function renderSplitBill(container) {
         position: relative;
         padding-bottom: 340px; /* Spacer for bottom sheet */
       }
-      @media (min-width: 992px) {
-        .split-bill-screen-container {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 30px;
-          align-items: start;
-          padding: 24px;
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-        .split-bill-screen {
-          padding: 0;
-          padding-bottom: 0;
-        }
-        .pay-share-sheet {
-          position: sticky !important;
-          top: 24px;
-          bottom: auto !important;
-          left: auto !important;
-          right: auto !important;
-          transform: none !important;
-          max-width: none !important;
-          max-height: calc(100vh - 120px) !important;
-          border-radius: 24px !important;
-          margin-top: 0;
-          box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
-        }
-      }
+
       .back-btn-row {
         display: flex;
         align-items: center;
@@ -211,9 +184,9 @@ export function renderSplitBill(container) {
         .pay-share-sheet {
           left: 50%;
           transform: translateX(-50%);
-          max-width: 480px;
-          border-bottom-left-radius: 36px;
-          border-bottom-right-radius: 36px;
+          max-width: 640px;
+          border-bottom-left-radius: 0;
+          border-bottom-right-radius: 0;
         }
       }
       .sheet-drag-handle {
