@@ -68,79 +68,8 @@ input, select { font-family: var(--font); background: var(--input-bg); border: 1
 
 /* --- Layout --- */
 .app { display: flex; flex-direction: column; height: 100vh; width: 100%; margin: 0 auto; position: relative; }
-@media (min-width: 600px) {
-  body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 16px;
-    background: #090d16;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(255, 193, 7, 0.04) 0px, transparent 50%), 
-      radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.04) 0px, transparent 50%);
-  }
-  .app { 
-    max-width: 480px; 
-    height: min(880px, 94vh);
-    border: 1.5px solid var(--border);
-    border-radius: 36px;
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 50px rgba(255, 193, 7, 0.03);
-    overflow: hidden;
-    position: relative;
-    background: var(--bg);
-  }
-  .bottom-nav {
-    border-bottom-left-radius: 34px;
-    border-bottom-right-radius: 34px;
-  }
-}
-
 /* --- Responsive Widescreen & Desktop Styles --- */
 @media (min-width: 992px) {
-  .app {
-    max-width: 1200px;
-    height: min(900px, 94vh);
-    flex-direction: row;
-    border-radius: 24px;
-  }
-  
-  .bottom-nav {
-    flex-direction: column;
-    width: 240px;
-    height: 100%;
-    padding: 30px 16px;
-    justify-content: flex-start;
-    gap: 12px;
-    border-top: none;
-    border-right: 1px solid var(--border);
-    backdrop-filter: none;
-    background: var(--surface);
-    border-bottom-left-radius: 22px;
-    border-bottom-right-radius: 0;
-  }
-  
-  .nav-item {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
-    padding: 12px 18px;
-    border-radius: 14px;
-    gap: 12px;
-    font-size: 14px;
-    min-width: 0;
-  }
-  
-  .nav-item span {
-    font-size: 14px;
-    font-weight: 500;
-  }
-  
-  .nav-add-btn {
-    padding: 6px;
-  }
-  
   .screen {
     padding: 32px 40px;
   }
