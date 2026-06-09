@@ -3,6 +3,7 @@ import { router } from '../router.js';
 import { expenseCategories, incomeCategories, getCategoryInfo } from '../categories.js';
 import { t } from '../i18n.js';
 import jsQR from 'jsqr';
+import { runLocalOCR, parseReceiptText, guessCategory } from '../utils/ocrParser.js';
 
 let isIncome = false; // default to Expense
 let selectedCategory = 'Food';
@@ -62,7 +63,7 @@ export function renderAddTransaction(container, params) {
     <div id="ocr-spinner-overlay" class="scanning-overlay hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 200;">
       <div class="scanning-dialog" style="background: #1C2128; border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; max-width: 280px; color: white; font-family: sans-serif;">
         <div class="scan-spinner" style="width: 48px; height: 48px; border: 3px solid rgba(255, 184, 0, 0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 16px auto;"></div>
-        <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: white;">AI กำลังอ่านและวิเคราะห์บิล...</h4>
+        <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: white;">ระบบกำลังอ่านและวิเคราะห์บิล...</h4>
         <p style="margin: 0; font-size: 11px; opacity: 0.6; color: #9CA3AF;">ระบบดึงราคาและชื่อร้านค้ากำลังทำงาน</p>
       </div>
     </div>
@@ -234,6 +235,7 @@ function setupFormListeners(container) {
       const file = e.target.files[0];
       if (file) {
         const spinner = container.querySelector('#ocr-spinner-overlay');
+        const statusSubtitle = container.querySelector('#ocr-spinner-overlay p') || spinner;
         spinner.classList.remove('hidden');
         
         try {
@@ -270,14 +272,48 @@ function setupFormListeners(container) {
             }
           }
         } catch (qrErr) {
-          console.error("Local QR Scan failed, falling back to AI:", qrErr);
+          console.error("Local QR Scan failed, falling back to OCR:", qrErr);
         }
         
-        // 2. If no QR code found, show warning
-        spinner.classList.add('hidden');
-        alert(store.settings.language === 'en'
-          ? 'No valid QR code found on this image.'
-          : 'ไม่พบ QR Code หรือข้อมูลที่ถูกต้องบนรูปภาพนี้');
+        // 2. Fallback to Local OCR scanner
+        try {
+          const originalText = statusSubtitle.textContent;
+          const rawText = await runLocalOCR(file, (msg) => {
+            if (statusSubtitle) statusSubtitle.textContent = msg;
+          });
+          
+          if (statusSubtitle) statusSubtitle.textContent = originalText;
+          
+          const parsed = parseReceiptText(rawText);
+          
+          // Pre-fill form fields
+          container.querySelector('#title').value = parsed.payee || "ร้านค้า";
+          if (parsed.total > 0) {
+            container.querySelector('#amount').value = parsed.total.toFixed(2);
+          } else {
+            setTimeout(() => container.querySelector('#amount').focus(), 150);
+          }
+          
+          // Guess category
+          selectedCategory = guessCategory(rawText, parsed.payee);
+          isIncome = false; // receipts are typically expense
+          
+          container.querySelector('#switch-expense').classList.add('active');
+          container.querySelector('#switch-income').classList.remove('active');
+          renderCategoryPicker(container);
+          
+          alert(store.settings.language === 'en'
+            ? `Successfully scanned receipt from ${parsed.payee}!`
+            : `สแกนใบเสร็จจาก ${parsed.payee} สำเร็จ!`);
+            
+        } catch (ocrErr) {
+          console.error("Local OCR failed:", ocrErr);
+          alert(store.settings.language === 'en'
+            ? 'No valid QR code or receipt text could be recognized.'
+            : 'ไม่พบ QR Code หรือข้อมูลบิลที่ถูกต้องบนรูปภาพนี้');
+        } finally {
+          spinner.classList.add('hidden');
+        }
       }
     });
   }

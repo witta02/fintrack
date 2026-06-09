@@ -2,6 +2,7 @@ import { store } from '../store.js';
 import { router } from '../router.js';
 import { t } from '../i18n.js';
 import jsQR from 'jsqr';
+import { runLocalOCR, parseReceiptText } from '../utils/ocrParser.js';
 
 // State variables
 let payee = "Molly Wiebe";
@@ -414,7 +415,7 @@ export function renderSplitBill(container) {
     <div id="ocr-spinner-overlay" class="scanning-overlay hidden">
       <div class="scanning-dialog">
         <div class="scan-spinner"></div>
-        <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700;">AI กำลังอ่านและวิเคราะห์บิล...</h4>
+        <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700;">ระบบกำลังอ่านและวิเคราะห์บิล...</h4>
         <p style="margin: 0; font-size: 11px; opacity: 0.6;">ระบบดึงรายการอาหารและราคากำลังทำงาน</p>
       </div>
     </div>
@@ -721,6 +722,7 @@ function setupScreenListeners(container) {
     const file = e.target.files[0];
     if (file) {
       const spinner = container.querySelector('#ocr-spinner-overlay');
+      const statusSubtitle = container.querySelector('#ocr-spinner-overlay p') || spinner;
       spinner.classList.remove('hidden');
       
       try {
@@ -757,14 +759,57 @@ function setupScreenListeners(container) {
           }
         }
       } catch (qrErr) {
-        console.error("Local QR Scan failed, falling back to AI:", qrErr);
+        console.error("Local QR Scan failed, falling back to OCR:", qrErr);
       }
       
-      // 2. If no QR code found, show warning
-      spinner.classList.add('hidden');
-      alert(store.settings.language === 'en'
-        ? 'No valid QR code found on this image.'
-        : 'ไม่พบ QR Code หรือข้อมูลที่ถูกต้องบนรูปภาพนี้');
+      // 2. Fallback to Local OCR scanner
+      try {
+        const originalText = statusSubtitle.textContent;
+        const rawText = await runLocalOCR(file, (msg) => {
+          if (statusSubtitle) statusSubtitle.textContent = msg;
+        });
+        
+        if (statusSubtitle) statusSubtitle.textContent = originalText;
+        
+        const parsed = parseReceiptText(rawText);
+        
+        payee = parsed.payee || "ร้านค้า";
+        tax = parsed.tax || 0.0;
+        tip = parsed.tip || 0.0;
+        
+        if (parsed.items.length > 0) {
+          items = parsed.items;
+          alert(store.settings.language === 'en'
+            ? `Successfully scanned receipt from ${payee}!`
+            : `สแกนใบเสร็จจาก ${payee} สำเร็จ!`);
+        } else {
+          // If no items, we add one manual placeholder item
+          items = [
+            {
+              id: Math.random().toString(36).substring(2, 11),
+              name: "อาหาร / เครื่องดื่ม (ระบุข้อมูลเอง)",
+              price: parsed.total > 0 ? (parsed.total - tax - tip) : 100.0,
+              qty: 1
+            }
+          ];
+          alert(store.settings.language === 'en'
+            ? "Could not auto-extract items. You can add them manually."
+            : "ระบบไม่สามารถดึงข้อมูลรายการอาหารได้อัตโนมัติ คุณสามารถเพิ่มและแก้ไขรายการเองได้เลยค่ะ");
+        }
+        
+        selectedItems = {};
+        selectedQuantities = {};
+        
+      } catch (ocrErr) {
+        console.error("Local OCR failed:", ocrErr);
+        alert(store.settings.language === 'en'
+          ? 'Failed to scan receipt. Please enter items manually.'
+          : 'สแกนใบเสร็จล้มเหลว ขออภัยในความไม่สะดวกค่ะ คุณสามารถเพิ่มรายการเองได้เลย');
+      } finally {
+        spinner.classList.add('hidden');
+        renderReceiptPaper(container);
+        renderShareSheetChecklist(container);
+      }
     }
   });
 
