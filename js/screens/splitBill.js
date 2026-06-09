@@ -1,6 +1,7 @@
 import { store } from '../store.js';
 import { router } from '../router.js';
 import { t } from '../i18n.js';
+import jsQR from 'jsqr';
 
 // State variables
 let payee = "Molly Wiebe";
@@ -716,9 +717,51 @@ function setupScreenListeners(container) {
     fileInput.click();
   });
 
-  fileInput.addEventListener('change', (e) => {
+  fileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (file) {
+      const spinner = container.querySelector('#ocr-spinner-overlay');
+      spinner.classList.remove('hidden');
+      
+      try {
+        // 1. Try local QR scanner first
+        const qrData = await scanImageQR(file);
+        if (qrData) {
+          const parsed = parseSlipQR(qrData);
+          if (parsed) {
+            payee = parsed.title;
+            tax = 0.0;
+            tip = 0.0;
+            
+            // Create a single item list for the parsed bank slip/payment details
+            items = [
+              {
+                id: Math.random().toString(36).substring(2, 11),
+                name: parsed.type === 'slip' ? 'รายการโอนเงิน' : 'ชำระเงินพร้อมเพย์',
+                price: parsed.amount || 0.0,
+                qty: 1
+              }
+            ];
+            
+            selectedItems = { [items[0].id]: true };
+            selectedQuantities = { [items[0].id]: 1 };
+            
+            alert(store.settings.language === 'en'
+              ? `Successfully scanned QR from ${parsed.title}!`
+              : `สแกน QR Code สำเร็จจาก ${parsed.title}!`);
+            
+            spinner.classList.add('hidden');
+            renderReceiptPaper(container);
+            renderShareSheetChecklist(container);
+            return;
+          }
+        }
+      } catch (qrErr) {
+        console.error("Local QR Scan failed, falling back to AI:", qrErr);
+      }
+      
+      // 2. Fallback to Gemini AI OCR
+      spinner.classList.add('hidden');
       if (!store.settings.geminiApiKey) {
         showGeminiKeyModal(container, file, (key) => {
           processImageOCR(container, file, key);
@@ -1052,4 +1095,107 @@ function escapeHTML(str) {
       '"': '&quot;'
     }[tag] || tag)
   );
+}
+
+function scanImageQR(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        try {
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imgData.data, imgData.width, imgData.height);
+          resolve(code ? code.data : null);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.onerror = (err) => reject(err);
+      img.src = e.target.result;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+function parseSlipQR(qrData) {
+  if (!qrData.startsWith('000201')) return null;
+  
+  // Helper to parse TLV
+  const parseTLV = (s) => {
+    const res = {};
+    let idx = 0;
+    while (idx < s.length) {
+      const tag = s.substr(idx, 2);
+      const len = parseInt(s.substr(idx + 2, 2));
+      if (isNaN(len)) break;
+      const val = s.substr(idx + 4, len);
+      res[tag] = val;
+      idx += 4 + len;
+    }
+    return res;
+  };
+
+  const outerTags = parseTLV(qrData);
+  
+  // Detect if it is a Slip Verification QR (Mini QR)
+  if (outerTags['00'] && outerTags['00'].length > 10) {
+    const subTags = parseTLV(outerTags['00']);
+    const sendingBankCode = subTags['01'] || '';
+    const ref = subTags['02'] || '';
+    const amountVal = subTags['04'] ? parseFloat(subTags['04']) : null;
+    
+    // Map bank code to name
+    const bankMap = {
+      '002': 'ธนาคารกรุงเทพ',
+      '004': 'ธนาคารกสิกรไทย',
+      '006': 'ธนาคารกรุงไทย',
+      '011': 'ธนาคารทหารไทยธนชาต',
+      '014': 'ธนาคารไทยพาณิชย์',
+      '025': 'ธนาคารกรุงศรีอยุธยา',
+      '030': 'ธนาคารออมสิน',
+      '034': 'ธ.ก.ส.',
+      '065': 'ธนาคารอาคารสงเคราะห์',
+      '073': 'ธนาคารแลนด์ แอนด์ เฮ้าส์'
+    };
+    const bankName = bankMap[sendingBankCode] || 'ธนาคาร';
+
+    // Parse date from ref (YYYYMMDDHHmm)
+    let parsedDate = '';
+    if (ref.length >= 12) {
+      const match = ref.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/);
+      if (match) {
+        parsedDate = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}`;
+      }
+    }
+
+    return {
+      type: 'slip',
+      title: `โอนเงินผ่าน${bankName}`,
+      amount: amountVal,
+      date: parsedDate,
+      bankCode: sendingBankCode,
+      ref: ref
+    };
+  }
+  
+  // Detect if it is a Payment PromptPay QR
+  if (outerTags['29'] || outerTags['30']) {
+    const amountVal = outerTags['54'] ? parseFloat(outerTags['54']) : null;
+    return {
+      type: 'payment',
+      title: 'สแกนจ่ายพร้อมเพย์',
+      amount: amountVal,
+      date: '',
+      ref: ''
+    };
+  }
+
+  return null;
 }
