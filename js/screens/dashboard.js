@@ -64,6 +64,22 @@ export function renderDashboard(container) {
         </div>
       </div>
 
+      <!-- Split Bill Card -->
+      <div class="card split-bill-card-banner" id="split-bill-card" style="cursor: pointer; margin-bottom: 16px; border: 1px solid var(--border); padding: 18px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(255, 184, 0, 0.05) 0%, rgba(255, 143, 0, 0.02) 100%); transition: all var(--transition);">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 44px; height: 44px; background: rgba(255, 184, 0, 0.1); color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <div style="font-size: 15px; font-weight: 700; color: var(--text-primary);">หารค่าใช้จ่าย (Split Bill)</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">หารค่าอาหาร/ทริป เลือกจ่ายส่วนของคุณด้วย AI</div>
+          </div>
+        </div>
+        <div style="color: var(--text-secondary);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+
       <div id="starter-guide" class="starter-guide hidden">
         <div class="starter-guide-header">
           <div>
@@ -252,6 +268,14 @@ function setupEventListeners(container) {
   if (balanceCard) {
     balanceCard.addEventListener('click', () => {
       showBalancePopup(container);
+    });
+  }
+
+  // Split bill card click
+  const splitBillCard = container.querySelector('#split-bill-card');
+  if (splitBillCard) {
+    splitBillCard.addEventListener('click', () => {
+      router.navigate('splitBill');
     });
   }
 }

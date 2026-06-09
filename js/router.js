@@ -5,6 +5,7 @@ import { renderRecurring } from './screens/recurring.js';
 import { renderSettings } from './screens/settings.js';
 import { renderPlanner } from './screens/planner.js';
 import { renderExport } from './screens/export.js';
+import { renderSplitBill } from './screens/splitBill.js';
 
 let currentScreen = 'dashboard';
 let currentParams = null;
@@ -17,6 +18,7 @@ const screens = {
   settings: renderSettings,
   planner: renderPlanner,
   export: renderExport,
+  splitBill: renderSplitBill,
 };
 
 export const router = {

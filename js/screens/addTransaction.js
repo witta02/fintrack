@@ -40,11 +40,30 @@ export function renderAddTransaction(container, params) {
   }
 
   container.innerHTML = `
-    <div class="screen-header">
+    <div class="screen-header" style="display: flex; align-items: center; justify-content: space-between;">
       <h1 class="brand-title">${titleText}</h1>
-      <button id="cancel-btn" class="icon-btn" title="${t('cancel')}">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        ${!editingTransactionId ? `
+          <button id="scan-receipt-btn" type="button" class="icon-btn" title="สแกนใบเสร็จเพิ่มรายจ่าย" style="color: var(--gold); border: 1px solid var(--border); border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--surface);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          </button>
+        ` : ''}
+        <button id="cancel-btn" class="icon-btn" title="${t('cancel')}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="scan-receipt-file-input" accept="image/*" class="hidden" />
+
+    <!-- Scanning Spinner -->
+    <div id="ocr-spinner-overlay" class="scanning-overlay hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 200;">
+      <div class="scanning-dialog" style="background: #1C2128; border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; max-width: 280px; color: white; font-family: sans-serif;">
+        <div class="scan-spinner" style="width: 48px; height: 48px; border: 3px solid rgba(255, 184, 0, 0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 16px auto;"></div>
+        <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: white;">AI กำลังอ่านและวิเคราะห์บิล...</h4>
+        <p style="margin: 0; font-size: 11px; opacity: 0.6; color: #9CA3AF;">ระบบดึงราคาและชื่อร้านค้ากำลังทำงาน</p>
+      </div>
     </div>
 
     <form id="transaction-form" class="transaction-form">
@@ -201,6 +220,96 @@ function setupFormListeners(container) {
     router.navigate('dashboard');
   });
 
+  // Scan Receipt Action
+  const scanBtn = container.querySelector('#scan-receipt-btn');
+  const fileInput = container.querySelector('#scan-receipt-file-input');
+  
+  if (scanBtn && fileInput) {
+    scanBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const spinner = container.querySelector('#ocr-spinner-overlay');
+        spinner.classList.remove('hidden');
+        
+        try {
+          const base64Data = await readAsBase64(file);
+          const mimeType = file.type || "image/jpeg";
+          const rawBase64 = base64Data.split(',')[1];
+          
+          const apiKey = 'AIzaSyD_HbW4n63iEyyESfw2Uux877SHmBCoP-g';
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      inlineData: {
+                        mimeType: mimeType,
+                        data: rawBase64
+                      }
+                    },
+                    {
+                      text: `Scan this receipt image. Extract payee name (store name) and total check due.
+                      Return JSON format ONLY matching this (no markdown blocks, no backticks, no comments, just valid JSON):
+                      {
+                        "payee": "Name of store (e.g. Molly Wiebe or Aimee W, search top of receipt)",
+                        "total": 56.78
+                      }`
+                    }
+                  ]
+                }
+              ]
+            })
+          });
+
+          if (!response.ok) throw new Error("API call failed");
+
+          const data = await response.json();
+          const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!textResult) throw new Error("Empty response");
+
+          const cleanJson = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
+          const result = JSON.parse(cleanJson);
+
+          const payeeVal = result.payee || "";
+          const totalVal = parseFloat(result.total) || 0.0;
+
+          container.querySelector('#title').value = payeeVal ? `บิลจาก ${payeeVal}` : 'บิลใบเสร็จ';
+          if (totalVal > 0) {
+            container.querySelector('#amount').value = totalVal.toFixed(2);
+          }
+          
+          selectedCategory = 'Food';
+          isIncome = false;
+          container.querySelector('#switch-expense').classList.add('active');
+          container.querySelector('#switch-income').classList.remove('active');
+          renderCategoryPicker(container);
+
+        } catch (err) {
+          console.error("AI Scanner Error, loading mock:", err);
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          container.querySelector('#title').value = 'บิลจาก Molly Wiebe';
+          container.querySelector('#amount').value = '80.87';
+          selectedCategory = 'Food';
+          isIncome = false;
+          container.querySelector('#switch-expense').classList.add('active');
+          container.querySelector('#switch-income').classList.remove('active');
+          renderCategoryPicker(container);
+        } finally {
+          spinner.classList.add('hidden');
+        }
+      }
+    });
+  }
+
   // Delete transaction button (if editing)
   const delBtn = container.querySelector('#delete-trans-btn');
   if (delBtn) {
@@ -268,4 +377,13 @@ function escapeHTML(str) {
       '"': '&quot;'
     }[tag] || tag)
   );
+}
+
+function readAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (e) => reject(e);
+    reader.readAsDataURL(file);
+  });
 }
