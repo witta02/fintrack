@@ -67,14 +67,17 @@ export function renderDashboard(container) {
       <div class="dashboard-col-left">
 
         <!-- Split Bill Card -->
-        <div class="card split-bill-card-banner" id="split-bill-card" style="cursor: pointer; margin-bottom: 16px; border: 1px solid var(--border); padding: 18px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(255, 184, 0, 0.05) 0%, rgba(255, 143, 0, 0.02) 100%); transition: all var(--transition);">
+        <div class="card split-bill-card-banner" id="split-bill-card" style="cursor: pointer; margin-bottom: 16px; border: 1px solid var(--border); padding: 18px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%); opacity: 0.6; transition: all var(--transition);">
           <div style="display: flex; align-items: center; gap: 14px;">
-            <div style="width: 44px; height: 44px; background: rgba(255, 184, 0, 0.1); color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+            <div style="width: 44px; height: 44px; background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
             <div>
-              <div style="font-size: 15px; font-weight: 700; color: var(--text-primary);">หารค่าใช้จ่าย (Split Bill)</div>
-              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">หารค่าอาหาร/ทริป เลือกจ่ายส่วนของคุณด้วย AI</div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="font-size: 15px; font-weight: 700; color: var(--text-primary);">หารค่าใช้จ่าย (Split Bill)</div>
+                <span style="font-size: 9px; font-weight: 800; background: rgba(255, 255, 255, 0.08); color: var(--text-secondary); padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border);">ปิดระบบชั่วคราว</span>
+              </div>
+              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">ฟีเจอร์นี้ปิดปรับปรุงเพื่อการพัฒนาประสิทธิภาพ OCR ชั่วคราว</div>
             </div>
           </div>
           <div style="color: var(--text-secondary);">
@@ -280,7 +283,12 @@ function setupEventListeners(container) {
   const splitBillCard = container.querySelector('#split-bill-card');
   if (splitBillCard) {
     splitBillCard.addEventListener('click', () => {
-      router.navigate('splitBill');
+      alerts.warning(
+        store.settings.language === 'en' ? 'Feature Disabled' : 'ปิดใช้งานระบบชั่วคราว',
+        store.settings.language === 'en'
+          ? 'The Split Bill feature is temporarily disabled for maintenance.'
+          : 'ฟีเจอร์หารค่าใช้จ่าย (Split Bill) ปิดปรับปรุงชั่วคราว ขออภัยในความไม่สะดวกค่ะ'
+      );
     });
   }
 }
