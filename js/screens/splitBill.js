@@ -14,6 +14,14 @@ let selectedItems = {};
 let selectedQuantities = {};
 let isScanning = false;
 
+// Metadata state variables
+let receiptAddress = "";
+let receiptServer = "";
+let receiptTable = "";
+let receiptCheck = "";
+let receiptDate = "";
+let isTaxIncluded = false;
+
 export function renderSplitBill(container) {
 
   container.innerHTML = `
@@ -465,6 +473,12 @@ function loadMockupTemplate() {
   payee = "Molly Wiebe";
   tax = 6.87;
   tip = 0.0;
+  receiptAddress = "50 S. Livermore Ave\nLivermore, California 94550";
+  receiptServer = "Aimee W";
+  receiptTable = "67";
+  receiptCheck = "322";
+  receiptDate = "4/1/26 9:04 AM";
+  isTaxIncluded = false;
   items = [
     { id: "1", name: "Egg Sandwich", price: 14.00, qty: 1 },
     { id: "2", name: "Biscuits & Gravy", price: 18.00, qty: 1 },
@@ -482,7 +496,7 @@ function getSubtotal() {
 }
 
 function getTotalDue() {
-  return getSubtotal() + tax + tip;
+  return getSubtotal() + (isTaxIncluded ? 0.0 : tax) + tip;
 }
 
 function getUserShare() {
@@ -504,7 +518,7 @@ function getUserShare() {
   const userTax = tax * ratio;
   const userTip = tip * ratio;
 
-  return userSubtotal + userTax + userTip;
+  return userSubtotal + (isTaxIncluded ? 0.0 : userTax) + userTip;
 }
 
 function renderReceiptPaper(container) {
@@ -532,22 +546,31 @@ function renderReceiptPaper(container) {
     `).join('');
   }
 
+  // Build metadata HTML rows dynamically based on parsed values
+  const addressHTML = receiptAddress ? `<div class="receipt-address">${escapeHTML(receiptAddress).replace(/\n/g, '<br/>')}</div>` : '';
+  
+  let metaHTML = '';
+  if (receiptServer || receiptTable) {
+    metaHTML += `
+      <div class="receipt-meta-row">
+        <span>${receiptServer ? `Server: ${escapeHTML(receiptServer)}` : ''}</span>
+        <span>${receiptTable ? `Table: ${escapeHTML(receiptTable)}` : ''}</span>
+      </div>
+    `;
+  }
+  if (receiptCheck || receiptDate) {
+    metaHTML += `
+      <div class="receipt-meta-row">
+        <span>${receiptCheck ? `Check #${escapeHTML(receiptCheck)}` : ''}</span>
+        <span>${receiptDate ? `${escapeHTML(receiptDate)}` : ''}</span>
+      </div>
+    `;
+  }
+
   paper.innerHTML = `
     <div class="receipt-title">${escapeHTML(payee || "ร้านค้า")}</div>
-    <div class="receipt-address">50 S. Livermore Ave<br/>Livermore, California 94550</div>
-    
-    <div class="receipt-meta-row">
-      <span>Server: Aimee W</span>
-      <span>Table 67</span>
-    </div>
-    <div class="receipt-meta-row">
-      <span>Check #322</span>
-      <span>Guest Count: 3</span>
-    </div>
-    <div class="receipt-meta-row">
-      <span>Ordered: 4/1/26 9:04 AM</span>
-      <span>Due: 4/1/26 9:04 AM</span>
-    </div>
+    ${addressHTML}
+    ${metaHTML}
     
     <div class="dotted-divider"></div>
     
@@ -562,7 +585,7 @@ function renderReceiptPaper(container) {
       </div>
       ${tax > 0 ? `
         <div class="receipt-total-row">
-          <span>Tax</span>
+          <span>Tax${isTaxIncluded ? ' (Included)' : ''}</span>
           <span>${symbol}${tax.toFixed(2)}</span>
         </div>
       ` : ''}
@@ -749,6 +772,12 @@ function setupScreenListeners(container) {
             payee = parsed.title;
             tax = 0.0;
             tip = 0.0;
+            receiptAddress = "";
+            receiptServer = "";
+            receiptTable = "";
+            receiptCheck = parsed.ref || "";
+            receiptDate = parsed.date || new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+            isTaxIncluded = false;
             
             let amountVal = parsed.amount;
             if (!amountVal) {
@@ -813,6 +842,13 @@ function setupScreenListeners(container) {
           payee = parseBankSlipReceiver(rawText);
           tax = 0.0;
           tip = 0.0;
+          receiptAddress = "";
+          receiptServer = "";
+          receiptTable = "";
+          receiptCheck = "";
+          receiptDate = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+          isTaxIncluded = false;
+          
           const amountVal = parseBankSlipAmount(rawText);
           
           items = [
@@ -834,6 +870,12 @@ function setupScreenListeners(container) {
           payee = parsed.payee || "ร้านค้า";
           tax = parsed.tax || 0.0;
           tip = parsed.tip || 0.0;
+          receiptAddress = parsed.address || "";
+          receiptServer = parsed.server || "";
+          receiptTable = parsed.table || "";
+          receiptCheck = parsed.check || "";
+          receiptDate = parsed.date || new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+          isTaxIncluded = parsed.taxIncluded || false;
           
           if (parsed.items.length > 0) {
             items = parsed.items;
@@ -846,7 +888,7 @@ function setupScreenListeners(container) {
               {
                 id: Math.random().toString(36).substring(2, 11),
                 name: "อาหาร / เครื่องดื่ม (ระบุข้อมูลเอง)",
-                price: parsed.total > 0 ? (parsed.total - tax - tip) : 100.0,
+                price: parsed.total > 0 ? (parsed.total - (parsed.taxIncluded ? 0.0 : tax) - tip) : 100.0,
                 qty: 1
               }
             ];
@@ -883,15 +925,39 @@ function showEditMetaModal(container) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.innerHTML = `
-    <div class="modal-dialog" style="background: ${isDark ? '#1C2128' : '#FFFFFF'}; color: var(--text-primary);">
+    <div class="modal-dialog" style="background: ${isDark ? '#1C2128' : '#FFFFFF'}; color: var(--text-primary); max-width: 440px;">
       <div class="modal-header">
         <h3 class="modal-title">แก้ไขข้อมูลใบเสร็จ</h3>
         <button class="modal-close-btn">&times;</button>
       </div>
-      <div class="modal-body" style="padding-top: 10px; display: flex; flex-direction: column; gap: 16px;">
+      <div class="modal-body" style="padding-top: 10px; display: flex; flex-direction: column; gap: 12px; max-height: 480px; overflow-y: auto;">
         <div class="form-group">
           <label class="form-label">ชื่อผู้รับเงิน / ร้านค้า</label>
           <input type="text" id="edit-payee-name" class="form-control" value="${escapeHTML(payee)}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">ที่อยู่ / สาขา</label>
+          <input type="text" id="edit-receipt-address" class="form-control" value="${escapeHTML(receiptAddress)}" placeholder="เช่น 123 ถ.สุขุมวิท กรุงเทพฯ" />
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">ผู้ให้บริการ (Server)</label>
+            <input type="text" id="edit-receipt-server" class="form-control" value="${escapeHTML(receiptServer)}" placeholder="เช่น Aimee W" />
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">โต๊ะ (Table)</label>
+            <input type="text" id="edit-receipt-table" class="form-control" value="${escapeHTML(receiptTable)}" placeholder="เช่น 67" />
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">เลขที่บิล (Check #)</label>
+            <input type="text" id="edit-receipt-check" class="form-control" value="${escapeHTML(receiptCheck)}" placeholder="เช่น #322" />
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">วันที่สั่งซื้อ (Date)</label>
+            <input type="text" id="edit-receipt-date" class="form-control" value="${escapeHTML(receiptDate)}" placeholder="เช่น 4/1/26 9:04 AM" />
+          </div>
         </div>
         <div style="display: flex; gap: 12px;">
           <div class="form-group" style="flex: 1;">
@@ -903,8 +969,12 @@ function showEditMetaModal(container) {
             <input type="number" step="0.01" id="edit-tip-val" class="form-control" value="${tip.toFixed(2)}" />
           </div>
         </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+          <input type="checkbox" id="edit-tax-included" style="width: 18px; height: 18px; cursor: pointer;" ${isTaxIncluded ? 'checked' : ''} />
+          <label for="edit-tax-included" style="font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-secondary);">ภาษีรวมในราคาแล้ว (Tax Included / VAT)</label>
+        </div>
       </div>
-      <div style="display: flex; gap: 10px; margin-top: 24px;">
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
         <button class="btn modal-cancel-btn" style="flex: 1; border: 1px solid var(--border); padding: 12px; border-radius: 12px; font-weight: 700;">ยกเลิก</button>
         <button class="btn-primary modal-save-btn" style="flex: 1; padding: 12px; border-radius: 12px;">บันทึก</button>
       </div>
@@ -918,8 +988,14 @@ function showEditMetaModal(container) {
   modal.querySelector('.modal-cancel-btn').onclick = close;
   modal.querySelector('.modal-save-btn').onclick = () => {
     payee = modal.querySelector('#edit-payee-name').value.trim() || "ร้านค้า";
+    receiptAddress = modal.querySelector('#edit-receipt-address').value.trim();
+    receiptServer = modal.querySelector('#edit-receipt-server').value.trim();
+    receiptTable = modal.querySelector('#edit-receipt-table').value.trim();
+    receiptCheck = modal.querySelector('#edit-receipt-check').value.trim();
+    receiptDate = modal.querySelector('#edit-receipt-date').value.trim();
     tax = parseFloat(modal.querySelector('#edit-tax-val').value) || 0.0;
     tip = parseFloat(modal.querySelector('#edit-tip-val').value) || 0.0;
+    isTaxIncluded = modal.querySelector('#edit-tax-included').checked;
     
     close();
     renderReceiptPaper(container);

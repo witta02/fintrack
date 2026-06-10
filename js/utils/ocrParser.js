@@ -31,6 +31,14 @@ export function parseReceiptText(text) {
   let detectedTip = 0.0;
   let detectedTotal = 0.0;
 
+  // Metadata fields
+  let detectedAddress = "";
+  let detectedDate = "";
+  let detectedServer = "";
+  let detectedTable = "";
+  let detectedCheck = "";
+  let detectedTaxIncluded = false;
+
   // Helper to normalize payee names
   const normalizePayeeName = (name) => {
     if (!name) return "";
@@ -60,6 +68,7 @@ export function parseReceiptText(text) {
   };
 
   // 1. Detect Payee (usually first few lines that contain store names and not just numbers/dates)
+  let payeeLineIndex = -1;
   for (let i = 0; i < Math.min(lines.length, 5); i++) {
     const line = lines[i].trim();
     if (
@@ -72,6 +81,7 @@ export function parseReceiptText(text) {
     ) {
       detectedPayee = line.replace(/[^\w\s\u0E00-\u0E7F]/g, '').trim(); // clean special chars
       if (detectedPayee.length > 2) {
+        payeeLineIndex = i;
         break;
       }
     }
@@ -80,19 +90,83 @@ export function parseReceiptText(text) {
   const rawPayee = detectedPayee;
   detectedPayee = normalizePayeeName(detectedPayee);
 
-  // 2. Parse lines to look for items, tax, tip, total
-  for (let line of lines) {
-    line = line.trim();
+  // Detect Tax Included
+  if (/vat included|tax included|รวมภาษี|รวม vat|incl\.?\s*tax/i.test(text)) {
+    detectedTaxIncluded = true;
+  }
+
+  // Extract metadata fields
+  const dateRegex = /\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})\b/;
+  
+  for (let idx = 0; idx < lines.length; idx++) {
+    const line = lines[idx].trim();
     if (line.length < 4) continue;
+
+    // Address/Tel detection
+    if (!detectedAddress && /tel\b|phone\b|mobile\b|branch\b|สาขา\b|ถนน\b|ซอย\b|ชั้น\b|road\b|street\b|st\b|rd\b|ave\b|avenue\b|bldg\b|building\b|town\b|city\b|prov\b|district\b|ตำบล\b|อำเภอ\b|จังหวัด\b/i.test(line)) {
+      if (!line.toLowerCase().includes("payee") && !line.toLowerCase().includes("total")) {
+        detectedAddress = line.replace(/[#_*|]/g, '').trim();
+      }
+    }
+
+    // Date detection
+    if (!detectedDate) {
+      const dMatch = line.match(dateRegex);
+      if (dMatch) {
+        detectedDate = dMatch[0];
+        const tMatch = line.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\b/);
+        if (tMatch) {
+          detectedDate += " " + tMatch[0];
+        }
+      }
+    }
+
+    // Server detection
+    if (!detectedServer && (/\b(?:server|cashier|crew|staff|waiter|cashier\d*|พนักงาน|ผู้ขาย|แคชเชียร์)\b/i.test(line) || line.toLowerCase().includes("crew id"))) {
+      const serverMatch = line.match(/(?:server|cashier|crew|staff|waiter|พนักงาน|ผู้ขาย|แคชเชียร์)(?:\s*id)?\s*[:\-\d]*\s+(.+)/i);
+      if (serverMatch) {
+        detectedServer = serverMatch[1].replace(/[#_*|]/g, '').replace(/^[^\w\u0E00-\u0E7F]+/g, '').trim();
+      } else {
+        detectedServer = line.replace(/[#_*|]/g, '').replace(/^[^\w\u0E00-\u0E7F]+/g, '').trim();
+      }
+    }
+
+    // Table detection
+    if (!detectedTable && /\b(?:table|tbl|โต๊ะ)\b/i.test(line)) {
+      const match = line.match(/(?:table|tbl|โต๊ะ)\s*[:\-\s]*\s*(\w+)/i);
+      if (match) {
+        detectedTable = match[1].trim();
+      }
+    }
+
+    // Check / Order / Inv detection
+    if (!detectedCheck && /\b(?:check|chk|order|ord|inv|bill|receipt)\b|เลขที่|ใบเสร็จ|อ้างอิง/i.test(line)) {
+      const match = line.match(/(?:\b(?:check|chk|order|ord|inv|bill|receipt)\b|เลขที่|ใบเสร็จ|อ้างอิง)\s*#?[:\-\s]*\s*([A-Z0-9\-\/]+)/i);
+      if (match) {
+        if (match[1].length > 2 && !/^\d{2}[\/\-]\d{2}/.test(match[1])) {
+          detectedCheck = match[1].trim();
+        }
+      }
+    }
+  }
+
+  // 2. Parse lines to look for items, tax, tip, total
+  for (let idx = 0; idx < lines.length; idx++) {
+    let line = lines[idx].trim();
+    if (line.length < 4) continue;
+
+    // Skip the detected payee line index
+    if (idx === payeeLineIndex) continue;
 
     const lowerLine = line.toLowerCase();
 
-    // Check if line represents Totals (Tax, Tip, Total)
+    // Check if line represents Totals (Tax, Tip, Total, Discount, Rounding)
     const isTotalLine = lowerLine.includes("total") || lowerLine.includes("subtotal") || lowerLine.includes("net") ||
       lowerLine.includes("รวม") || lowerLine.includes("ยอดรวม") || lowerLine.includes("รวมเงิน") ||
       lowerLine.includes("ภาษี") || lowerLine.includes("tax") || lowerLine.includes("vat") ||
       lowerLine.includes("tip") || lowerLine.includes("service charge") || lowerLine.includes("ค่าบริการ") ||
-      lowerLine.includes("ทิป");
+      lowerLine.includes("ทิป") || lowerLine.includes("discount") || lowerLine.includes("ส่วนลด") ||
+      lowerLine.includes("rounding") || lowerLine.includes("adjustment");
 
     if (isTotalLine) {
       // Find all decimal numbers in the line
@@ -114,16 +188,27 @@ export function parseReceiptText(text) {
       continue;
     }
 
-    // Skip metadata lines (using word boundary for English keys to prevent false positives on words like Noodle or Side)
-    const isMetadataLine = /\b(?:tel|phone|mobile|date|time|ref|check|table|id|no|card|cash|change|grab|lineman|foodpanda|shopeefood|delivery|visa|mastercard|credit|debit|payment)\b|#|xxx|เลขที่|วันที่|เวลา|อ้างอิง|เบอร์|โทร|บัญชี|account|โอนเงิน|สำเร็จ|ไปยัง|จาก|พร้อมเพย์|ธนาคาร/i.test(line);
+    // Skip metadata lines (using word boundary for English keys to prevent false positives)
+    const isMetadataLine = /\b(?:tel|phone|mobile|date|time|ref|check|table|id|no|card|cash|change|visa|mastercard|credit|debit|payment|coupon|serial|type|crew|cashier|staff|waiter|member|loyalty|rounding|adjustment)\b|grabpay|shopeepay|truemoney|promptpay|\b(?:grab|lineman|foodpanda|shopeefood|delivery)\b|#|xxx|เลขที่|วันที่|เวลา|อ้างอิง|เบอร์|โทร|บัญชี|account|โอนเงิน|สำเร็จ|ไปยัง|จาก|พร้อมเพย์|ธนาคาร|สาขา|คูปอง/i.test(line);
     if (isMetadataLine) continue;
 
-    // Skip payee name line to prevent matching the payee line itself as an item
-    const lineCleaned = line.replace(/[^\w\s\u0E00-\u0E7F]/g, '').trim();
-    if (rawPayee && lineCleaned.toLowerCase() === rawPayee.toLowerCase()) {
-      continue;
-    }
-    if (detectedPayee && lineCleaned.toLowerCase() === detectedPayee.toLowerCase()) {
+    // Skip payee name line to prevent matching the payee line itself as an item (using helper)
+    const isPayeeLine = (l, raw, norm) => {
+      if (!l) return false;
+      const cleanLine = l.toLowerCase().replace(/[^\w\u0E00-\u0E7F]/g, '').replace(/0/g, 'o');
+      const cleanRaw = (raw || "").toLowerCase().replace(/[^\w\u0E00-\u0E7F]/g, '').replace(/0/g, 'o');
+      const cleanNorm = (norm || "").toLowerCase().replace(/[^\w\u0E00-\u0E7F]/g, '').replace(/0/g, 'o');
+      
+      if (cleanRaw && (cleanLine === cleanRaw || cleanLine.includes(cleanRaw) || cleanRaw.includes(cleanLine))) {
+        return true;
+      }
+      if (cleanNorm && (cleanLine === cleanNorm || cleanLine.includes(cleanNorm) || cleanNorm.includes(cleanLine))) {
+        return true;
+      }
+      return false;
+    };
+
+    if (isPayeeLine(line, rawPayee, detectedPayee)) {
       continue;
     }
 
@@ -133,16 +218,23 @@ export function parseReceiptText(text) {
     cleanedLine = cleanedLine.replace(/\s*(?:บาท|baht|thb|฿|b|B)\.?\s*$/i, "");
     cleanedLine = cleanedLine.replace(/[\s\.\*\|_#,:!\-\/\\=+@]+$/, "");
 
+    // Normalize common OCR typos in prices before matching
+    let normalizedLine = cleanedLine;
+    normalizedLine = normalizedLine.replace(/[\.,\s]([oO0])([oO0])\s*$/g, '.00');
+    if (/(\d+)\s+(\d{2})\s*$/.test(normalizedLine)) {
+      normalizedLine = normalizedLine.replace(/(\d+)\s+(\d{2})\s*$/, '$1.$2');
+    }
+
     // Try to extract an item price
     // Pattern: Name followed by a decimal price (\d+.\d{2}) at the end of the line.
     // If not found, look for a small integer (less than 5 digits) not preceded by time/date punctuation, and require it to be >= 10 to filter out indexes/quantities.
-    let priceMatch = cleanedLine.match(/(\d+[\.,]\d{2})\s*$/);
+    let priceMatch = normalizedLine.match(/(\d+[\.,]\d{2})\s*$/);
     if (!priceMatch) {
-      const intMatch = cleanedLine.match(/\b(\d+)\s*$/);
+      const intMatch = normalizedLine.match(/\b(\d+)\s*$/);
       if (intMatch && intMatch[1].length < 5) {
         const val = parseInt(intMatch[1]);
         if (val >= 10) { // Filter out small integers like table index or single qty numbers
-          const beforeNum = cleanedLine.substring(0, intMatch.index).trim();
+          const beforeNum = normalizedLine.substring(0, intMatch.index).trim();
           // Check it's not part of a date/time (like 12:27 or 09/06)
           if (!/[:\-\/]$/.test(beforeNum)) {
             priceMatch = intMatch;
@@ -156,7 +248,7 @@ export function parseReceiptText(text) {
       const price = parseFloat(priceStr);
 
       if (price > 0 && price < 100000) {
-        let name = cleanedLine.substring(0, priceMatch.index).trim();
+        let name = normalizedLine.substring(0, priceMatch.index).trim();
         
         // Clean up symbols often misread by OCR at the end of the name
         name = name.replace(/[\.\-\*_#:@|\\/]+$/g, '').trim();
@@ -202,15 +294,21 @@ export function parseReceiptText(text) {
 
   // If detectedTotal is 0 or less than the items sum, set it to items sum + tax + tip
   if (detectedTotal <= 0 || detectedTotal < itemsSum) {
-    detectedTotal = itemsSum + detectedTax + detectedTip;
+    detectedTotal = itemsSum + (detectedTaxIncluded ? 0.0 : (detectedTax + detectedTip));
   }
 
   return {
     payee: detectedPayee || "ร้านค้า",
+    address: detectedAddress,
+    date: detectedDate,
+    server: detectedServer,
+    table: detectedTable,
+    check: detectedCheck,
     items: detectedItems,
     tax: detectedTax,
     tip: detectedTip,
-    total: detectedTotal
+    total: detectedTotal,
+    taxIncluded: detectedTaxIncluded
   };
 }
 
