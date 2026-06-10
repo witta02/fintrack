@@ -6,8 +6,8 @@ import { runLocalOCR, parseReceiptText, parseBankSlipAmount, detectIfBankSlip, p
 import { alerts } from '../utils/alertHelper.js';
 
 // State variables
-let payee = "Molly Wiebe";
-let tax = 6.87;
+let payee = "";
+let tax = 0.0;
 let tip = 0.0;
 let items = [];
 let selectedItems = {};
@@ -15,10 +15,6 @@ let selectedQuantities = {};
 let isScanning = false;
 
 export function renderSplitBill(container) {
-  // Reset state to mockup template if empty
-  if (items.length === 0) {
-    loadMockupTemplate();
-  }
 
   container.innerHTML = `
     <style>
