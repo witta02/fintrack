@@ -31,6 +31,34 @@ export function parseReceiptText(text) {
   let detectedTip = 0.0;
   let detectedTotal = 0.0;
 
+  // Helper to normalize payee names
+  const normalizePayeeName = (name) => {
+    if (!name) return "";
+    const clean = name.toLowerCase().replace(/[^\w\s\u0E00-\u0E7F]/g, '');
+    if (clean.includes("mcthai") || clean.includes("ncthat") || clean.includes("mcdonald")) {
+      return "McDonald's";
+    }
+    if (clean.includes("711") || clean.includes("seven") || clean.includes("cpall") || clean.includes("cp all")) {
+      return "7-Eleven";
+    }
+    if (clean.includes("starbuck")) {
+      return "Starbucks";
+    }
+    if (clean.includes("cafe amazon") || clean.includes("amazon cafe") || clean.includes("อเมซอน")) {
+      return "Café Amazon";
+    }
+    if (clean.includes("grab")) {
+      return "Grab";
+    }
+    if (clean.includes("swensen")) {
+      return "Swensen's";
+    }
+    if (clean.includes("kfc")) {
+      return "KFC";
+    }
+    return name;
+  };
+
   // 1. Detect Payee (usually first few lines that contain store names and not just numbers/dates)
   for (let i = 0; i < Math.min(lines.length, 5); i++) {
     const line = lines[i].trim();
@@ -48,6 +76,9 @@ export function parseReceiptText(text) {
       }
     }
   }
+
+  const rawPayee = detectedPayee;
+  detectedPayee = normalizePayeeName(detectedPayee);
 
   // 2. Parse lines to look for items, tax, tip, total
   for (let line of lines) {
@@ -83,9 +114,18 @@ export function parseReceiptText(text) {
       continue;
     }
 
-    // Skip metadata lines that contain numbers but are not transaction items
-    const isMetadataLine = /tel|phone|mobile|date|time|ref|check|table|id|no|#|xxx|เลขที่|วันที่|เวลา|อ้างอิง|เบอร์|โทร|บัญชี|account|โอนเงิน|สำเร็จ|ไปยัง|จาก|พร้อมเพย์|ธนาคาร/i.test(line);
+    // Skip metadata lines (using word boundary for English keys to prevent false positives on words like Noodle or Side)
+    const isMetadataLine = /\b(?:tel|phone|mobile|date|time|ref|check|table|id|no|card|cash|change|grab|lineman|foodpanda|shopeefood|delivery|visa|mastercard|credit|debit|payment)\b|#|xxx|เลขที่|วันที่|เวลา|อ้างอิง|เบอร์|โทร|บัญชี|account|โอนเงิน|สำเร็จ|ไปยัง|จาก|พร้อมเพย์|ธนาคาร/i.test(line);
     if (isMetadataLine) continue;
+
+    // Skip payee name line to prevent matching the payee line itself as an item
+    const lineCleaned = line.replace(/[^\w\s\u0E00-\u0E7F]/g, '').trim();
+    if (rawPayee && lineCleaned.toLowerCase() === rawPayee.toLowerCase()) {
+      continue;
+    }
+    if (detectedPayee && lineCleaned.toLowerCase() === detectedPayee.toLowerCase()) {
+      continue;
+    }
 
     // Clean trailing noise like B., THB, Baht, บาท, *, |, or trailing spaces/periods to help match price
     let cleanedLine = line;
@@ -93,17 +133,20 @@ export function parseReceiptText(text) {
     cleanedLine = cleanedLine.replace(/\s*(?:บาท|baht|thb|฿|b|B)\.?\s*$/i, "");
     cleanedLine = cleanedLine.replace(/[\s\.\*\|_#,:!\-\/\\=+@]+$/, "");
 
-    // Try to extract an item
+    // Try to extract an item price
     // Pattern: Name followed by a decimal price (\d+.\d{2}) at the end of the line.
-    // If not found, look for a small integer (less than 5 digits) not preceded by time/date punctuation.
+    // If not found, look for a small integer (less than 5 digits) not preceded by time/date punctuation, and require it to be >= 10 to filter out indexes/quantities.
     let priceMatch = cleanedLine.match(/(\d+[\.,]\d{2})\s*$/);
     if (!priceMatch) {
       const intMatch = cleanedLine.match(/\b(\d+)\s*$/);
       if (intMatch && intMatch[1].length < 5) {
-        const beforeNum = cleanedLine.substring(0, intMatch.index).trim();
-        // Check it's not part of a date/time (like 12:27 or 09/06)
-        if (!/[:\-\/]$/.test(beforeNum)) {
-          priceMatch = intMatch;
+        const val = parseInt(intMatch[1]);
+        if (val >= 10) { // Filter out small integers like table index or single qty numbers
+          const beforeNum = cleanedLine.substring(0, intMatch.index).trim();
+          // Check it's not part of a date/time (like 12:27 or 09/06)
+          if (!/[:\-\/]$/.test(beforeNum)) {
+            priceMatch = intMatch;
+          }
         }
       }
     }
