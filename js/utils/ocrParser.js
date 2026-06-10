@@ -87,14 +87,20 @@ export function parseReceiptText(text) {
     const isMetadataLine = /tel|phone|mobile|date|time|ref|check|table|id|no|#|xxx|เลขที่|วันที่|เวลา|อ้างอิง|เบอร์|โทร|บัญชี|account|โอนเงิน|สำเร็จ|ไปยัง|จาก|พร้อมเพย์|ธนาคาร/i.test(line);
     if (isMetadataLine) continue;
 
+    // Clean trailing noise like B., THB, Baht, บาท, *, |, or trailing spaces/periods to help match price
+    let cleanedLine = line;
+    cleanedLine = cleanedLine.replace(/[\s\.\*\|_#,:!\-\/\\=+@]+$/, "");
+    cleanedLine = cleanedLine.replace(/\s*(?:บาท|baht|thb|฿|b|B)\.?\s*$/i, "");
+    cleanedLine = cleanedLine.replace(/[\s\.\*\|_#,:!\-\/\\=+@]+$/, "");
+
     // Try to extract an item
     // Pattern: Name followed by a decimal price (\d+.\d{2}) at the end of the line.
     // If not found, look for a small integer (less than 5 digits) not preceded by time/date punctuation.
-    let priceMatch = line.match(/(\d+[\.,]\d{2})\s*$/);
+    let priceMatch = cleanedLine.match(/(\d+[\.,]\d{2})\s*$/);
     if (!priceMatch) {
-      const intMatch = line.match(/\b(\d+)\s*$/);
+      const intMatch = cleanedLine.match(/\b(\d+)\s*$/);
       if (intMatch && intMatch[1].length < 5) {
-        const beforeNum = line.substring(0, intMatch.index).trim();
+        const beforeNum = cleanedLine.substring(0, intMatch.index).trim();
         // Check it's not part of a date/time (like 12:27 or 09/06)
         if (!/[:\-\/]$/.test(beforeNum)) {
           priceMatch = intMatch;
@@ -107,27 +113,34 @@ export function parseReceiptText(text) {
       const price = parseFloat(priceStr);
 
       if (price > 0 && price < 100000) {
-        let name = line.substring(0, priceMatch.index).trim();
+        let name = cleanedLine.substring(0, priceMatch.index).trim();
         
-        // Clean up symbols often misread by OCR
-        name = name.replace(/[\.\-\*_#:@]/g, '').trim();
+        // Clean up symbols often misread by OCR at the end of the name
+        name = name.replace(/[\.\-\*_#:@|\\/]+$/g, '').trim();
 
         // Parse quantity if present (e.g. "2x Latte", "Latte x3", "Latte 2 120.00")
         let qty = 1;
-        const qtyMatchBegin = name.match(/^(\d+)\s*[xX*]\s+/);
-        const qtyMatchEnd = name.match(/\s+(\d+)\s*[xX*]\s*$/);
-        const qtyMatchXBegin = name.match(/^[xX]\s*(\d+)\s+/);
+        const qtyMatchBegin = name.match(/^(\d+)\s*[xX*]?\s+/);
+        const qtyMatchEnd = name.match(/\s+[xX*]?\s*(\d+)$/);
+        const qtyMatchXEnd = name.match(/\s+(\d+)\s*[xX*]\s*$/);
+        const qtyMatchPlainEnd = name.match(/\s+(\d+)$/);
 
-        if (qtyMatchBegin) {
+        if (qtyMatchBegin && parseInt(qtyMatchBegin[1]) < 100) {
           qty = parseInt(qtyMatchBegin[1]) || 1;
           name = name.substring(qtyMatchBegin[0].length).trim();
-        } else if (qtyMatchEnd) {
+        } else if (qtyMatchEnd && parseInt(qtyMatchEnd[1]) < 100) {
           qty = parseInt(qtyMatchEnd[1]) || 1;
           name = name.substring(0, qtyMatchEnd.index).trim();
-        } else if (qtyMatchXBegin) {
-          qty = parseInt(qtyMatchXBegin[1]) || 1;
-          name = name.substring(qtyMatchXBegin[0].length).trim();
+        } else if (qtyMatchXEnd && parseInt(qtyMatchXEnd[1]) < 100) {
+          qty = parseInt(qtyMatchXEnd[1]) || 1;
+          name = name.substring(0, qtyMatchXEnd.index).trim();
+        } else if (qtyMatchPlainEnd && parseInt(qtyMatchPlainEnd[1]) < 100) {
+          qty = parseInt(qtyMatchPlainEnd[1]) || 1;
+          name = name.substring(0, qtyMatchPlainEnd.index).trim();
         }
+
+        // Clean up leading/trailing symbols in name
+        name = name.replace(/^[^\w\u0E00-\u0E7F]+|[^\w\u0E00-\u0E7F]+$/g, '').trim();
 
         if (name.length > 2) {
           detectedItems.push({
