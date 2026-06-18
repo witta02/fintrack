@@ -2,27 +2,34 @@ import { getCategoryInfo } from '../categories.js';
 
 export function createTransactionTile(transaction, symbol, displayAmount, onEdit, onDelete) {
   const cat = getCategoryInfo(transaction.category);
-  
-  // Format Date to: "21 May 2026, 22:30" or Thai: "21 พ.ค. 2026, 22:30"
+
+  // Format Date: "21 พ.ค. 2026, 22:30"
   const dateObj = new Date(transaction.date);
-  const options = { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-  const dateStr = dateObj.toLocaleDateString('th-TH', options);
+  const dateStr = dateObj.toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
   const amountSign = transaction.isIncome ? '+' : '-';
-  const amountClass = transaction.isIncome ? 'amount-income' : 'amount-expense';
 
   const tile = document.createElement('div');
   tile.className = 'transaction-tile';
   tile.dataset.id = transaction.id;
-  
+
+  // Set CSS custom property for the left accent bar color
+  tile.style.setProperty('--accent-color', cat.color);
+
   tile.innerHTML = `
-    <div class="cat-icon" style="background: ${cat.color}15; color: ${cat.color}; border: 1px solid ${cat.color}30;">
-      <span class="cat-emoji">${cat.emoji}</span>
+    <div class="cat-icon" style="background: ${cat.color}18; color: ${cat.color}; border-color: ${cat.color}28;">
+      <span style="font-size: 20px; line-height: 1;">${cat.emoji}</span>
     </div>
     <div class="tile-info">
-      <div class="tile-title" style="color: var(--text-primary);">${escapeHTML(transaction.title)}</div>
-      <div class="tile-meta" style="color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
-        <span class="cat-name" style="color: ${cat.color};">${cat.label}</span>
+      <div class="tile-title">${escapeHTML(transaction.title)}</div>
+      <div class="tile-meta">
+        <span style="color: ${cat.color}; font-weight: 600; font-size: 10px;">${cat.label}</span>
         <span style="opacity: 0.3;">•</span>
         <span>${dateStr}</span>
       </div>
@@ -30,18 +37,21 @@ export function createTransactionTile(transaction, symbol, displayAmount, onEdit
     <div class="tile-amount ${transaction.isIncome ? 'income' : 'expense'}">
       ${amountSign}${symbol}${displayAmount}
     </div>
-    <button class="tile-delete" title="ลบรายการ">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+    <button class="tile-delete" title="ลบรายการ" aria-label="ลบ">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+      </svg>
     </button>
   `;
 
-  // Attach event listeners
+  // Delete button
   tile.querySelector('.tile-delete').addEventListener('click', (e) => {
     e.stopPropagation();
     onDelete(transaction.id);
   });
 
-  // Make tile clickable to edit too
+  // Tile click → edit
   tile.addEventListener('click', () => {
     onEdit(transaction);
   });
@@ -50,7 +60,7 @@ export function createTransactionTile(transaction, symbol, displayAmount, onEdit
 }
 
 function escapeHTML(str) {
-  return str.replace(/[&<>'"]/g, 
+  return str.replace(/[&<>'\"]/g,
     tag => ({
       '&': '&amp;',
       '<': '&lt;',

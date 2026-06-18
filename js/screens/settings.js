@@ -4,188 +4,206 @@ import { t } from '../i18n.js';
 import { alerts } from '../utils/alertHelper.js';
 import { exportData, importData } from '../utils/dataTransfer.js';
 
+// Reusable setting row helper
+function settingRow(iconSvg, iconBg, title, subtitle, rightSlot, extras = '') {
+  return `
+    <div class="setting-item" style="display: flex; align-items: center; gap: 14px;">
+      <div class="setting-icon-badge" style="background: ${iconBg};">
+        ${iconSvg}
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${title}</div>
+        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">${subtitle}</div>
+        ${extras}
+      </div>
+      ${rightSlot}
+    </div>
+  `;
+}
+
 export function renderSettings(container) {
   const selectedCurrency = store.getSelectedCurrency();
   const isDarkMode = store.settings.isDarkMode;
   const language = store.settings.language === 'en' ? 'en' : 'th';
 
-  // Build the list of currencies for the select option
   const currencyOptions = Object.values(currencies).map(curr => `
     <option value="${curr.code}" ${selectedCurrency === curr.code ? 'selected' : ''}>
-      ${curr.symbol} — ${curr.name} (Rate: ${curr.rate})
+      ${curr.symbol} — ${curr.name}
     </option>
   `).join('');
 
   container.innerHTML = `
     <div class="screen-header">
-      <h1 class="brand-title">${t('settingsTitle')}</h1>
+      <div>
+        <div class="section-eyebrow">${t('settingsTitle')}</div>
+        <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">${t('settingsTitle')}</h1>
+      </div>
+      <span class="premium-badge">v2.5.5</span>
     </div>
 
-    <!-- Settings Group -->
-    <div class="card" style="margin-bottom: 16px; padding: 12px;">
-      <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">${t('generalSettings')}</h3>
-      
-      <!-- Theme Switch Option -->
-      <div class="setting-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 6px; border-bottom: 1px solid var(--border);">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="color: var(--gold); font-size: 18px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>
-          </div>
-          <div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('darkMode')}</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">${t('swhtodarktxt')}</div>
-          </div>
-        </div>
-        <label class="switch-toggle">
-          <input type="checkbox" id="setting-darkmode-chk" ${isDarkMode ? 'checked' : ''} />
-          <span class="switch-slider"></span>
-        </label>
-      </div>
+    <!-- ── General ───────────────────────────────── -->
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('generalSettings')}</div>
+    <div class="card" style="padding: 8px 14px; margin-bottom: 20px;">
 
-      <div class="setting-item" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 6px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="color: var(--gold); font-size: 18px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('currency')}</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">${t('chgcurtxt')}</div>
-          </div>
-        </div>
-        <div class="select-wrapper" style="width: 100%; margin-top: 4px;">
-          <select id="setting-currency-select" class="form-control">
-            ${currencyOptions}
-          </select>
-        </div>
-      </div>
+      <!-- Dark Mode -->
+      ${settingRow(
+        `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>`,
+        'rgba(245,200,66,0.15)',
+        t('darkMode'),
+        t('swhtodarktxt'),
+        `<label class="switch-toggle">
+           <input type="checkbox" id="setting-darkmode-chk" ${isDarkMode ? 'checked' : ''} />
+           <span class="switch-slider"></span>
+         </label>`
+      )}
 
-      <!-- Tax Settings Option -->
-      <div class="setting-item" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 6px; border-top: 1px solid var(--border);">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="color: var(--gold); font-size: 18px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/><path d="M12 10h3"/></svg>
-          </div>
-          <div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('taxSettings')}</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">${t('taxSettingsDesc')}</div>
-          </div>
-        </div>
-        <button id="setting-tax-btn" class="btn" style="background: rgba(255, 184, 0, 0.1); color: var(--gold); border: 1px solid rgba(255, 184, 0, 0.2); padding: 10px; font-size: 13px; font-weight: 600; width: 100%; margin-top: 4px;">
-          ${t('manageTaxDeductions')}
-        </button>
-      </div>
+      <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
 
-            <div class="setting-item" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 6px; border-top: 1px solid var(--border);">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="color: var(--gold); font-size: 18px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
-          </div>
-          <div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('language')}</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">${t('languageHint')}</div>
-          </div>
+      <!-- Language -->
+      ${settingRow(
+        `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>`,
+        'rgba(124,92,252,0.15)',
+        t('language'),
+        t('languageHint'),
+        `<div style="display: flex; gap: 6px;">
+           <button type="button" id="language-th-btn" style="padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid ${language === 'th' ? 'var(--gold)' : 'var(--border)'}; background: ${language === 'th' ? 'rgba(245,200,66,0.12)' : 'var(--surface)'}; color: ${language === 'th' ? 'var(--gold)' : 'var(--text-secondary)'}; transition: all var(--transition);">🇹🇭 TH</button>
+           <button type="button" id="language-en-btn" style="padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid ${language === 'en' ? 'var(--gold)' : 'var(--border)'}; background: ${language === 'en' ? 'rgba(245,200,66,0.12)' : 'var(--surface)'}; color: ${language === 'en' ? 'var(--gold)' : 'var(--text-secondary)'}; transition: all var(--transition);">🇬🇧 EN</button>
+         </div>`
+      )}
+    </div>
+
+    <!-- ── Currency ───────────────────────────────── -->
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('currency')}</div>
+    <div class="card" style="padding: 14px; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div class="setting-icon-badge" style="background: rgba(52,211,153,0.15);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--income);"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         </div>
-        <div class="type-switcher" style="margin-bottom: 0;">
-          <button type="button" class="type-btn ${language === 'th' ? 'active income-btn' : ''}" id="language-th-btn">${t('thai')}</button>
-          <button type="button" class="type-btn ${language === 'en' ? 'active income-btn' : ''}" id="language-en-btn">${t('english')}</button>
+        <div>
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('currency')}</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">${t('chgcurtxt')}</div>
         </div>
       </div>
+      <select id="setting-currency-select" class="form-control" style="font-size: 14px;">
+        ${currencyOptions}
+      </select>
+    </div>
 
-    <!-- Developer/Notifications settings -->
-    <div class="card" style="margin-bottom: 16px; padding: 12px;">
-      <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
-        ${t('dataTransferTitle')}
-      </h3>
-      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.6;">
-        ${t('dataTransferDesc')}
-      </p>
+    <!-- ── Tax ───────────────────────────────── -->
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('taxSettings')}</div>
+    <div class="card" style="padding: 14px; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+        <div class="setting-icon-badge" style="background: rgba(248,113,113,0.15);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--expense);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/><path d="M12 10h3"/></svg>
+        </div>
+        <div>
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('taxSettings')}</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">${t('taxSettingsDesc')}</div>
+        </div>
+      </div>
+      <button id="setting-tax-btn" style="
+        width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+        background: rgba(245,200,66,0.08); color: var(--gold);
+        border: 1px solid rgba(245,200,66,0.22); padding: 11px;
+        border-radius: 12px; font-size: 13px; font-weight: 700;
+        transition: all var(--transition);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        ${t('manageTaxDeductions')}
+      </button>
+    </div>
+
+    <!-- ── Data Transfer ───────────────────────────────── -->
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('dataTransferTitle')}</div>
+    <div class="card" style="
+      padding: 16px;
+      margin-bottom: 20px;
+      border-color: rgba(124,92,252,0.20);
+      background: linear-gradient(135deg, rgba(124,92,252,0.06), var(--card));
+    ">
+      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.65;">${t('dataTransferDesc')}</p>
       <div style="display: flex; flex-direction: column; gap: 10px;">
-
-        <!-- Export Button -->
-        <button id="data-export-btn" class="btn" style="
-          display: flex; align-items: center; gap: 12px;
-          background: linear-gradient(135deg, rgba(255,184,0,0.12), rgba(255,184,0,0.06));
-          border: 1px solid rgba(255,184,0,0.35);
+        <button id="data-export-btn" style="
+          display: flex; align-items: center; gap: 14px;
+          background: rgba(245,200,66,0.08);
+          border: 1px solid rgba(245,200,66,0.25);
           color: var(--text-primary);
-          padding: 14px 16px;
-          border-radius: 14px;
-          text-align: left;
-          width: 100%;
-          cursor: pointer;
-          transition: background 0.2s, transform 0.15s;
-        ">
-          <span style="font-size: 22px; line-height:1;">📤</span>
+          padding: 14px 16px; border-radius: 14px;
+          text-align: left; width: 100%; cursor: pointer;
+          transition: all var(--transition);">
+          <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(245,200,66,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">📤</div>
           <div>
-            <div style="font-weight: 700; font-size: 14px;">${t('exportBtn').replace('📤 ', '')}</div>
+            <div style="font-weight: 700; font-size: 13px;">${t('exportBtn').replace('📤 ', '')}</div>
             <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${t('exportBtnDesc')}</div>
           </div>
         </button>
-
-        <!-- Import Button -->
-        <button id="data-import-btn" class="btn" style="
-          display: flex; align-items: center; gap: 12px;
-          background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(99,102,241,0.06));
-          border: 1px solid rgba(99,102,241,0.35);
+        <button id="data-import-btn" style="
+          display: flex; align-items: center; gap: 14px;
+          background: rgba(124,92,252,0.08);
+          border: 1px solid rgba(124,92,252,0.25);
           color: var(--text-primary);
-          padding: 14px 16px;
-          border-radius: 14px;
-          text-align: left;
-          width: 100%;
-          cursor: pointer;
-          transition: background 0.2s, transform 0.15s;
-        ">
-          <span style="font-size: 22px; line-height:1;">📥</span>
+          padding: 14px 16px; border-radius: 14px;
+          text-align: left; width: 100%; cursor: pointer;
+          transition: all var(--transition);">
+          <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(124,92,252,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">📥</div>
           <div>
-            <div style="font-weight: 700; font-size: 14px;">${t('importBtn').replace('📥 ', '')}</div>
+            <div style="font-weight: 700; font-size: 13px;">${t('importBtn').replace('📥 ', '')}</div>
             <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${t('importBtnDesc')}</div>
           </div>
         </button>
-
       </div>
     </div>
 
-    <!-- Developer/Notifications settings -->
-    <div class="card" style="margin-bottom: 24px; padding: 12px;">
-      <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">${t('notificationSystem')}</h3>
-      
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button id="test-notify-btn" class="btn" style="background: rgba(255, 184, 0, 0.1); color: var(--gold); border: 1px solid rgba(255, 184, 0, 0.2); padding: 10px; font-size: 13px; font-weight: 600;">
-        ${t('notitestbtn')}
+    <!-- ── Notifications ───────────────────────────────── -->
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('notificationSystem')}</div>
+    <div class="card" style="padding: 14px; margin-bottom: 20px;">
+      <div style="display: flex; gap: 10px;">
+        <button id="test-notify-btn" style="
+          flex: 1; background: rgba(245,200,66,0.08); color: var(--gold);
+          border: 1px solid rgba(245,200,66,0.22); padding: 11px;
+          border-radius: 12px; font-size: 13px; font-weight: 700; transition: all var(--transition);">
+          🔔 ${t('notitestbtn')}
         </button>
-        <button id="clear-notify-btn" class="btn" style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 10px; font-size: 13px;">
-        ${t('clearbtn')}
+        <button id="clear-notify-btn" style="
+          flex: 1; background: rgba(248,113,113,0.07); color: var(--expense);
+          border: 1px solid rgba(248,113,113,0.22); padding: 11px;
+          border-radius: 12px; font-size: 13px; font-weight: 700; transition: all var(--transition);">
+          🗑 ${t('clearbtn')}
         </button>
       </div>
     </div>
 
-    <!-- PWA Installation -->
-    <div class="card" style="margin-bottom: 24px; padding: 12px; border: 1px dashed var(--gold);">
-      <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.5px;">${t('installbtn')}</h3>
-      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${t('installtxt')}</p>
-      <button id="install-app-btn" class="btn-primary" style="padding: 12px; font-size: 14px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <!-- ── Install ───────────────────────────────── -->
+    <div class="card" style="
+      padding: 18px; margin-bottom: 20px;
+      border: 1.5px dashed rgba(245,200,66,0.35);
+      background: linear-gradient(135deg, rgba(245,200,66,0.05), var(--card));
+    ">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div class="setting-icon-badge" style="background: rgba(245,200,66,0.15); font-size: 20px;">📲</div>
+        <div>
+          <div style="font-size: 14px; font-weight: 700; color: var(--gold);">${t('installbtn')}</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px; line-height: 1.5;">${t('installtxt')}</div>
+        </div>
+      </div>
+      <button id="install-app-btn" class="btn-primary" style="padding: 12px; font-size: 13px; border-radius: 12px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         ${t('installbtn')}
       </button>
     </div>
 
-    <!-- App details -->
-    <div style="text-align: center; color: var(--text-secondary); font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
-      <div>FinTrack</div>
-      <div>Version 2.5.5</div>
+    <!-- Footer -->
+    <div style="text-align: center; padding: 8px 0 4px; display: flex; flex-direction: column; gap: 4px;">
+      <div style="font-family: var(--font-heading); font-weight: 800; font-size: 14px; background: linear-gradient(135deg, var(--gold-light), var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FinTrack</div>
+      <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;">Version 2.5.5 · Premium Edition</div>
+    </div>
   `;
 
   setupEventListeners(container);
 }
 
 function setupEventListeners(container) {
-
-  container.querySelector('#data-export-btn').addEventListener('click', () => {
-    exportData();
-  });
-
-  container.querySelector('#data-import-btn').addEventListener('click', () => {
-    importData();
-  });
+  container.querySelector('#data-export-btn').addEventListener('click', () => exportData());
+  container.querySelector('#data-import-btn').addEventListener('click', () => importData());
 
   container.querySelector('#setting-darkmode-chk').addEventListener('change', () => {
     store.toggleTheme();
@@ -194,8 +212,6 @@ function setupEventListeners(container) {
   container.querySelector('#setting-currency-select').addEventListener('change', (e) => {
     store.setCurrency(e.target.value);
   });
-
-
 
   container.querySelector('#language-th-btn').addEventListener('click', () => {
     store.setLanguage('th');
@@ -209,14 +225,10 @@ function setupEventListeners(container) {
     renderSettings(container);
   });
 
-  const installBtn = container.querySelector('#install-app-btn');
-  installBtn.addEventListener('click', () => {
+  container.querySelector('#install-app-btn').addEventListener('click', () => {
     if (window.deferredPrompt) {
       window.deferredPrompt.prompt();
-      window.deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-        }
+      window.deferredPrompt.userChoice.then(() => {
         window.deferredPrompt = null;
       });
     } else {
@@ -227,10 +239,7 @@ function setupEventListeners(container) {
   container.querySelector('#test-notify-btn').addEventListener('click', () => {
     if ('Notification' in window) {
       if (Notification.permission === 'granted') {
-        store.triggerNotification(
-          t('notiTestTitle'),
-          t('notiTestBody')
-        );
+        store.triggerNotification(t('notiTestTitle'), t('notiTestBody'));
       } else {
         Notification.requestPermission().then(perm => {
           if (perm === 'granted') {
@@ -249,7 +258,6 @@ function setupEventListeners(container) {
     showTaxSettings(container);
   });
 
-  // Reset localstorage handler
   container.querySelector('#clear-notify-btn').addEventListener('click', async () => {
     const isConfirmed = await alerts.confirmReset(
       store.settings.language === 'en' ? 'Reset App Data?' : 'ยืนยันการรีเซ็ตข้อมูล?',
@@ -269,24 +277,20 @@ function showTaxSettings(container) {
     <div class="modal-dialog">
       <div class="modal-header">
         <h3 class="modal-title">${t('taxSettingsTitle')}</h3>
-        <button class="modal-close-btn">&times;</button>
+        <button class="modal-close-btn">×</button>
       </div>
-      <div class="modal-body" style="padding-top: 10px;">
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+      <div style="padding-top: 6px;">
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6;">
           ${t('taxSettingsContext')}
         </p>
-        
         <div class="form-group">
           <label class="form-label">${t('annualDeduction')}</label>
           <input type="number" id="tax-deduction-input" class="form-control" value="${store.settings.taxDeduction || 60000}" placeholder="e.g. 60000" />
-          <small style="display: block; margin-top: 6px; color: var(--text-secondary); font-size: 11px;">
-            ${t('personalDeductionHint')}
-          </small>
+          <small style="display: block; margin-top: 6px; color: var(--text-secondary); font-size: 11px;">${t('personalDeductionHint')}</small>
         </div>
-
-        <div style="background: var(--surface); padding: 14px; border-radius: 14px; border: 1px solid var(--border); margin-top: 10px;">
+        <div style="background: var(--surface); padding: 14px; border-radius: 14px; border: 1px solid var(--border); margin-top: 6px;">
           <h4 style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--gold);">${t('taxKnowledge')}</h4>
-          <ul style="font-size: 11px; color: var(--text-secondary); padding-left: 16px; line-height: 1.6;">
+          <ul style="font-size: 11px; color: var(--text-secondary); padding-left: 16px; line-height: 1.7;">
             <li>${t('taxStep1')}</li>
             <li>${t('taxStep2')}</li>
             <li>${t('taxStep3')}</li>
@@ -294,18 +298,16 @@ function showTaxSettings(container) {
         </div>
       </div>
       <div style="display: flex; gap: 10px; margin-top: 24px;">
-        <button class="btn modal-cancel-btn" style="flex: 1; border: 1px solid var(--border); padding: 12px; border-radius: 12px;">${t('cancel')}</button>
-        <button class="btn-primary modal-save-btn" style="flex: 1; padding: 12px; border-radius: 12px;">${t('save')}</button>
+        <button class="modal-cancel-btn" style="flex:1; border:1px solid var(--border); padding:12px; border-radius:12px; color: var(--text-secondary); font-weight: 600;">${t('cancel')}</button>
+        <button class="btn-primary modal-save-btn" style="flex:1; padding:12px; border-radius:12px;">${t('save')}</button>
       </div>
     </div>
   `;
 
   document.body.appendChild(modal);
-
   const close = () => document.body.removeChild(modal);
   modal.querySelector('.modal-close-btn').onclick = close;
   modal.querySelector('.modal-cancel-btn').onclick = close;
-  
   modal.querySelector('.modal-save-btn').onclick = () => {
     const val = modal.querySelector('#tax-deduction-input').value;
     store.updateTaxDeduction(val);
@@ -323,7 +325,6 @@ function updateNavLabels() {
     recurring: t('navRecurring'),
     settings: t('navSettings')
   };
-
   document.querySelectorAll('[data-screen]').forEach(btn => {
     const screen = btn.getAttribute('data-screen');
     const label = btn.querySelector('span');
