@@ -115,6 +115,17 @@ const dictionary = {
     confirmdel: "แน่ใจแล้วนะ ที่จะลบ?",
     emptyrecur: "ยังไม่มีรายการประจำ",
     installtxt:'ติดตั้ง FinTrack ลงบนเครื่องของคุณเพื่อการเข้าถึงที่รวดเร็วและใช้งานแบบออฟไลน์ได้',
+    dataTransferTitle: 'ย้ายข้อมูลระหว่างอุปกรณ์',
+    dataTransferDesc: 'ส่งออกข้อมูลเป็นไฟล์ .fintrack แล้วนำเข้าในเบราว์เซอร์หรืออุปกรณ์อื่น',
+    exportBtn: '📤 ส่งออกข้อมูล (.fintrack)',
+    exportBtnDesc: 'บันทึกข้อมูลทั้งหมดลงไฟล์สำรอง',
+    importBtn: '📥 นำเข้าข้อมูล',
+    importBtnDesc: 'โหลดข้อมูลจากไฟล์ .fintrack ที่มีอยู่',
+    exportSuccessTitle: 'ส่งออกสำเร็จ!',
+    exportSuccessDesc: 'ไฟล์ .fintrack ถูกดาวน์โหลดแล้ว นำไฟล์นี้ไปนำเข้าในอุปกรณ์อื่นได้เลย',
+    importErrorTitle: 'นำเข้าไม่สำเร็จ',
+    importErrorInvalidFile: 'ไฟล์ที่เลือกไม่ใช่ไฟล์ FinTrack ที่ถูกต้อง',
+    importErrorParseError: 'อ่านไฟล์ไม่ได้ กรุณาตรวจสอบว่าไฟล์ไม่เสียหาย',
   },
   en: {
     emptyrecur: "Still empty",
@@ -231,7 +242,18 @@ const dictionary = {
     notiWelcomeTitle: 'Welcome!',
     notiWelcomeBody: 'You have enabled FinTrack notifications',
     notiDenied: 'Notification permission denied. Please check your browser settings.',
-    notiUnsupported: 'This browser does not support in-app notifications'
+    notiUnsupported: 'This browser does not support in-app notifications',
+    dataTransferTitle: 'Move Data Between Devices',
+    dataTransferDesc: 'Export your data as a .fintrack file, then import it on any other browser or device.',
+    exportBtn: '📤 Export Data (.fintrack)',
+    exportBtnDesc: 'Save all your data to a backup file',
+    importBtn: '📥 Import Data',
+    importBtnDesc: 'Load data from an existing .fintrack file',
+    exportSuccessTitle: 'Export Successful!',
+    exportSuccessDesc: 'Your .fintrack file has been downloaded. Import it on any other device to sync your data.',
+    importErrorTitle: 'Import Failed',
+    importErrorInvalidFile: 'The selected file is not a valid FinTrack backup file.',
+    importErrorParseError: 'Could not read the file. Please make sure it is not corrupted.',
   }
 };
 

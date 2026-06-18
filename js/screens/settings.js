@@ -2,6 +2,7 @@ import { store } from '../store.js';
 import { currencies } from '../currency.js';
 import { t } from '../i18n.js';
 import { alerts } from '../utils/alertHelper.js';
+import { exportData, importData } from '../utils/dataTransfer.js';
 
 export function renderSettings(container) {
   const selectedCurrency = store.getSelectedCurrency();
@@ -91,6 +92,59 @@ export function renderSettings(container) {
       </div>
 
     <!-- Developer/Notifications settings -->
+    <div class="card" style="margin-bottom: 16px; padding: 12px;">
+      <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+        ${t('dataTransferTitle')}
+      </h3>
+      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.6;">
+        ${t('dataTransferDesc')}
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+
+        <!-- Export Button -->
+        <button id="data-export-btn" class="btn" style="
+          display: flex; align-items: center; gap: 12px;
+          background: linear-gradient(135deg, rgba(255,184,0,0.12), rgba(255,184,0,0.06));
+          border: 1px solid rgba(255,184,0,0.35);
+          color: var(--text-primary);
+          padding: 14px 16px;
+          border-radius: 14px;
+          text-align: left;
+          width: 100%;
+          cursor: pointer;
+          transition: background 0.2s, transform 0.15s;
+        ">
+          <span style="font-size: 22px; line-height:1;">📤</span>
+          <div>
+            <div style="font-weight: 700; font-size: 14px;">${t('exportBtn').replace('📤 ', '')}</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${t('exportBtnDesc')}</div>
+          </div>
+        </button>
+
+        <!-- Import Button -->
+        <button id="data-import-btn" class="btn" style="
+          display: flex; align-items: center; gap: 12px;
+          background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(99,102,241,0.06));
+          border: 1px solid rgba(99,102,241,0.35);
+          color: var(--text-primary);
+          padding: 14px 16px;
+          border-radius: 14px;
+          text-align: left;
+          width: 100%;
+          cursor: pointer;
+          transition: background 0.2s, transform 0.15s;
+        ">
+          <span style="font-size: 22px; line-height:1;">📥</span>
+          <div>
+            <div style="font-weight: 700; font-size: 14px;">${t('importBtn').replace('📥 ', '')}</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${t('importBtnDesc')}</div>
+          </div>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Developer/Notifications settings -->
     <div class="card" style="margin-bottom: 24px; padding: 12px;">
       <h3 class="card-title" style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">${t('notificationSystem')}</h3>
       
@@ -124,6 +178,14 @@ export function renderSettings(container) {
 }
 
 function setupEventListeners(container) {
+
+  container.querySelector('#data-export-btn').addEventListener('click', () => {
+    exportData();
+  });
+
+  container.querySelector('#data-import-btn').addEventListener('click', () => {
+    importData();
+  });
 
   container.querySelector('#setting-darkmode-chk').addEventListener('change', () => {
     store.toggleTheme();
