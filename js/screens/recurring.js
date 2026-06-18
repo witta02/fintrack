@@ -87,11 +87,12 @@ function updateUI(container) {
 
     const card = document.createElement('div');
     card.className = `recurring-card ${!rule.isActive ? 'inactive' : ''}`;
+    card.style.setProperty('--accent-color', cat.color);
     card.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div class="tile-icon" style="background: ${cat.color}15; color: ${cat.color}; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-            ${cat.emoji}
+          <div class="cat-icon" style="background: ${cat.color}18; color: ${cat.color}; border-color: ${cat.color}28; width: 38px; height: 38px; border-radius: 10px; font-size: 18px; margin-right: 0;">
+            <span style="line-height: 1;">${cat.emoji}</span>
           </div>
           <div>
             <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">${escapeHTML(rule.title)}</h4>
@@ -116,8 +117,8 @@ function updateUI(container) {
           <div style="font-size: 15px; font-weight: 700; color: ${rule.isIncome ? 'var(--income)' : 'var(--expense)'};">
             ${rule.isIncome ? '+' : '-'}${symbol}${amountVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <button class="rule-delete-btn" style="background: none; border: none; padding: 4px; color: var(--text-secondary); cursor: pointer;" title="ลบ">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          <button class="rule-delete-btn" title="ลบ">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
           </button>
         </div>
       </div>

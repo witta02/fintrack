@@ -889,6 +889,71 @@ input:focus, select:focus, textarea:focus {
   opacity: 1;
 }
 
+/* ─── Recurring Cards ─────────────────────────────────────────────────── */
+.recurring-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recurring-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 16px 20px;
+  background: var(--card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255,255,255,0.04) inset;
+}
+
+.recurring-card:hover {
+  border-color: var(--border-strong);
+  background: var(--card-elevated);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.06) inset;
+}
+
+.recurring-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 4px 0 0 4px;
+  background: var(--accent-color, var(--border));
+  opacity: 0.8;
+}
+
+.recurring-card.inactive {
+  opacity: 0.55;
+  filter: grayscale(0.35);
+}
+
+.rule-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--expense);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  transition: all var(--transition-fast);
+}
+
+.rule-delete-btn:hover {
+  background: var(--expense);
+  color: #fff;
+  border-color: var(--expense);
+  transform: scale(1.05);
+}
+
 /* ─── Forms ───────────────────────────────────────────────────────────── */
 .form-group { margin-bottom: 18px; }
 .form-label {
