@@ -299,6 +299,10 @@ function updateUI(container) {
       balance = metrics.totalBalance; income = metrics.totalIncome; expense = metrics.totalExpense; break;
   }
 
+  const labelText = activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll');
+  const periodLabel = container.querySelector('#period-label-text');
+  if (periodLabel) periodLabel.textContent = labelText;
+
   const formatVal = (val) => `${symbol}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   container.querySelector('#card-balance').textContent = formatVal(balance);
