@@ -175,8 +175,9 @@ export function renderSettings(container) {
     </div>
 
     <!-- ── Real-Time Sync ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('syncSectionTitle')}</div>
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; display: none;">${t('syncSectionTitle')}</div>
     <div class="card" style="
+      display: none;
       padding: 18px 16px;
       margin-bottom: 20px;
       border-color: rgba(52,211,153,0.25);
