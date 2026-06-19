@@ -274,7 +274,7 @@ const dictionary = {
     importErrorTitle: 'Import Failed',
     importErrorInvalidFile: 'The selected file is not a valid FinTrack backup file.',
     importErrorParseError: 'Could not read the file. Please make sure it is not corrupted.',
-    cloudSyncSectionTitle: '5-Digit Code Transfer (Temporary Cloud)',
+    cloudSyncSectionTitle: '5-Digit Code Transfer',
     cloudSyncSectionDesc: 'Upload your data temporarily to the cloud and get a 5-digit code. Enter this code on another device to pull and merge the data.',
     exportCloudBtn: '📤 Share via 5-Digit Code',
     importCloudBtn: '📥 Pull via 5-Digit Code',
