@@ -134,6 +134,14 @@ const dictionary = {
     importErrorTitle: 'นำเข้าไม่สำเร็จ',
     importErrorInvalidFile: 'ไฟล์ที่เลือกไม่ใช่ไฟล์ FinTrack ที่ถูกต้อง',
     importErrorParseError: 'อ่านไฟล์ไม่ได้ กรุณาตรวจสอบว่าไฟล์ไม่เสียหาย',
+    syncSectionTitle: 'เชื่อมต่ออุปกรณ์เรียลไทม์ (P2P Sync)',
+    syncSectionDesc: 'ซิงค์ข้อมูลกับอีกอุปกรณ์ของคุณแบบเรียลไทม์ (เมื่ออุปกรณ์หนึ่งเปลี่ยนข้อมูล อีกเครื่องจะเปลี่ยนตามทันทีโดยอัตโนมัติ)',
+    syncHostBtn: 'สร้างรหัสการเชื่อมต่อ (Host)',
+    syncJoinBtn: 'เชื่อมต่อ (Connect)',
+    syncInputPlaceholder: 'รหัส 5 หลัก',
+    syncConnectedStatus: 'เชื่อมต่อเรียลไทม์สำเร็จแล้ว',
+    syncConnectedDesc: 'ข้อมูลระหว่างสองอุปกรณ์จะซิงค์กันตลอดเวลาเมื่อเปิดหน้าเว็บนี้ไว้คู่กัน',
+    syncDisconnectBtn: 'ยกเลิกการเชื่อมต่อ',
   },
   en: {
     emptyrecur: "Still empty",
@@ -270,6 +278,14 @@ const dictionary = {
     importErrorTitle: 'Import Failed',
     importErrorInvalidFile: 'The selected file is not a valid FinTrack backup file.',
     importErrorParseError: 'Could not read the file. Please make sure it is not corrupted.',
+    syncSectionTitle: 'Real-Time Device Sync (P2P)',
+    syncSectionDesc: 'Synchronize data with another device in real-time. Any changes on one device instantly update the other.',
+    syncHostBtn: 'Create Connection Code (Host)',
+    syncJoinBtn: 'Connect',
+    syncInputPlaceholder: '5-digit code',
+    syncConnectedStatus: 'Real-Time Sync Connected',
+    syncConnectedDesc: 'Data is now syncing in real-time across both devices.',
+    syncDisconnectBtn: 'Disconnect',
   }
 };
 

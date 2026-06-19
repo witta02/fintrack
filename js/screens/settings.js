@@ -3,6 +3,7 @@ import { currencies } from '../currency.js';
 import { t } from '../i18n.js';
 import { alerts } from '../utils/alertHelper.js';
 import { exportData, importData, exportToText, importFromText } from '../utils/dataTransfer.js';
+import { syncHelper } from '../utils/syncHelper.js';
 
 // Reusable setting row helper
 function settingRow(iconSvg, iconBg, title, subtitle, rightSlot, extras = '') {
@@ -173,6 +174,58 @@ export function renderSettings(container) {
       </div>
     </div>
 
+    <!-- ── Real-Time Sync ───────────────────────────────── -->
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('syncSectionTitle')}</div>
+    <div class="card" style="
+      padding: 18px 16px;
+      margin-bottom: 20px;
+      border-color: rgba(52,211,153,0.25);
+      background: linear-gradient(135deg, rgba(52,211,153,0.06), var(--card));
+    ">
+      <p id="sync-status-desc" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.65;">
+        ${t('syncSectionDesc')}
+      </p>
+
+      <div id="sync-setup-area" style="display: flex; flex-direction: column; gap: 12px;">
+        <button id="sync-host-btn" class="btn-primary" style="
+          background: linear-gradient(135deg, #10b981, #059669); color: #fff;
+          box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); border: none; padding: 12px;
+          border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition);">
+          📡 ${t('syncHostBtn')}
+        </button>
+        
+        <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+          <input type="text" id="sync-code-input" placeholder="${t('syncInputPlaceholder')}" style="
+            flex: 1; height: 42px; text-align: center; font-size: 14px; font-weight: 700;
+            letter-spacing: 2px; border-radius: 10px; border: 1.5px solid var(--border);" maxLength="5" />
+          <button id="sync-join-btn" style="
+            height: 42px; padding: 0 16px; border-radius: 10px;
+            background: rgba(245,200,66,0.08); border: 1.5px solid rgba(245,200,66,0.22);
+            color: var(--gold); font-weight: 700; font-size: 13px; cursor: pointer; transition: all var(--transition);">
+            🔌 ${t('syncJoinBtn')}
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Connection Status UI (hidden by default) -->
+      <div id="sync-active-area" class="hidden" style="
+        display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; padding: 8px 0;">
+        <div style="display: flex; align-items: center; gap: 8px; color: var(--income); font-weight: 700; font-size: 14px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--income); display: inline-block; animation: typingBounce 1s infinite alternate;"></span>
+          ${t('syncConnectedStatus')}
+        </div>
+        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
+          ${t('syncConnectedDesc')}
+        </p>
+        <button id="sync-disconnect-btn" style="
+          padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 700;
+          background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.22);
+          color: var(--expense); cursor: pointer; transition: all var(--transition);">
+          ❌ ${t('syncDisconnectBtn')}
+        </button>
+      </div>
+    </div>
+
     <!-- ── Notifications ───────────────────────────────── -->
     <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('notificationSystem')}</div>
     <div class="card" style="padding: 14px; margin-bottom: 20px;">
@@ -222,6 +275,97 @@ export function renderSettings(container) {
 }
 
 function setupEventListeners(container) {
+  // Sync Helper Status Callback
+  const handleSyncStatus = (status, code) => {
+    const setupArea = container.querySelector('#sync-setup-area');
+    const activeArea = container.querySelector('#sync-active-area');
+    const statusDesc = container.querySelector('#sync-status-desc');
+    const hostBtn = container.querySelector('#sync-host-btn');
+    const codeInput = container.querySelector('#sync-code-input');
+    const joinBtn = container.querySelector('#sync-join-btn');
+
+    if (!setupArea || !activeArea) return;
+
+    if (status === 'hosting') {
+      setupArea.classList.remove('hidden');
+      activeArea.classList.add('hidden');
+      statusDesc.innerHTML = `<span style="color: var(--gold); font-weight: 700; font-size: 15px; display: block; margin-bottom: 8px;">📡 รหัสเชื่อมต่อ: <span style="font-size: 20px; font-family: monospace; letter-spacing: 2px;">${code}</span></span> นำรหัสนี้ไปป้อนในปุ่มเชื่อมต่อของอีกเครื่องเพื่อเริ่มการซิงค์`;
+      hostBtn.textContent = '🛑 ' + (store.settings.language === 'en' ? 'Cancel Hosting' : 'ยกเลิกการเปิดห้อง');
+      hostBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+      hostBtn.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.3)';
+      hostBtn.disabled = false;
+      codeInput.disabled = true;
+      joinBtn.disabled = true;
+    } else if (status === 'connecting') {
+      setupArea.classList.remove('hidden');
+      activeArea.classList.add('hidden');
+      statusDesc.textContent = store.settings.language === 'en' ? 'Connecting to device...' : 'กำลังเชื่อมต่อไปยังอุปกรณ์...';
+      hostBtn.disabled = true;
+      codeInput.disabled = true;
+      joinBtn.disabled = true;
+    } else if (status === 'connected') {
+      setupArea.classList.add('hidden');
+      activeArea.classList.remove('hidden');
+      statusDesc.textContent = store.settings.language === 'en' 
+        ? 'Real-time database sync is active. Any changes will instantly replicate across devices.' 
+        : 'ระบบซิงค์แบบเรียลไทม์กำลังทำงาน ทุกการเปลี่ยนแปลงจะอัปเดตไปอีกเครื่องทันที';
+    } else { // idle
+      setupArea.classList.remove('hidden');
+      activeArea.classList.add('hidden');
+      statusDesc.textContent = t('syncSectionDesc');
+      
+      hostBtn.disabled = false;
+      hostBtn.textContent = '📡 ' + t('syncHostBtn');
+      hostBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+      hostBtn.style.boxShadow = '0 4px 14px rgba(16, 185, 129, 0.3)';
+      
+      codeInput.disabled = false;
+      codeInput.value = '';
+      joinBtn.disabled = false;
+    }
+  };
+
+  syncHelper.init(handleSyncStatus);
+
+  // Initialize UI based on current sync status
+  if (syncHelper.isConnected()) {
+    handleSyncStatus('connected');
+  } else if (syncHelper.getSyncCode()) {
+    handleSyncStatus('hosting', syncHelper.getSyncCode());
+  } else {
+    handleSyncStatus('idle');
+  }
+
+  // Click listeners for Sync
+  const hostBtn = container.querySelector('#sync-host-btn');
+  const joinBtn = container.querySelector('#sync-join-btn');
+  const disconnectBtn = container.querySelector('#sync-disconnect-btn');
+  const codeInput = container.querySelector('#sync-code-input');
+
+  hostBtn.addEventListener('click', () => {
+    if (hostBtn.textContent.includes('Cancel') || hostBtn.textContent.includes('ยกเลิก')) {
+      syncHelper.disconnect();
+    } else {
+      syncHelper.hostSession();
+    }
+  });
+
+  joinBtn.addEventListener('click', () => {
+    const code = codeInput.value.trim();
+    if (code.length !== 5 || isNaN(code)) {
+      alerts.warning(
+        store.settings.language === 'en' ? 'Invalid Code' : 'รหัสไม่ถูกต้อง',
+        store.settings.language === 'en' ? 'Please enter a 5-digit connection code.' : 'กรุณากรอกรหัสเชื่อมต่อ 5 หลักที่เป็นตัวเลข'
+      );
+      return;
+    }
+    syncHelper.connectToSession(code);
+  });
+
+  disconnectBtn.addEventListener('click', () => {
+    syncHelper.disconnect();
+  });
+
   container.querySelector('#data-export-btn').addEventListener('click', () => exportData());
   container.querySelector('#data-import-btn').addEventListener('click', () => importData());
   container.querySelector('#data-export-code-btn').addEventListener('click', () => exportToText());

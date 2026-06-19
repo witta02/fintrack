@@ -2,6 +2,7 @@ import '../css/styles.css';
 import { store } from './store.js';
 import { router } from './router.js';
 import { t } from './i18n.js';
+import { syncHelper } from './utils/syncHelper.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('FinTrack: Initializing...');
