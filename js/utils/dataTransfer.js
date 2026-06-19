@@ -491,11 +491,12 @@ export async function exportToCloud() {
     // Generate random 5-digit code
     const code = Math.floor(10000 + Math.random() * 90000).toString();
 
-    // Upload to ntfy topic: fintrack-cloud-sync-<code>
+    // Upload to ntfy topic as an attachment: fintrack-cloud-sync-<code>
     const response = await fetch(`https://ntfy.sh/fintrack-cloud-sync-${code}`, {
-      method: 'POST',
+      method: 'PUT',
       body: base64Text,
       headers: {
+        'X-Filename': 'backup.fintrack',
         'Title': 'FinTrack Backup',
         'Priority': '5'
       }
@@ -591,20 +592,34 @@ export async function importFromCloud() {
     const text = await res.text();
     const lines = text.trim().split('\n');
     let base64Text = null;
+    let attachmentUrl = null;
 
     for (const line of lines) {
       if (!line) continue;
       const obj = JSON.parse(line);
-      if (obj.event === 'message' && obj.message) {
-        base64Text = obj.message;
+      if (obj.event === 'message') {
+        if (obj.attachment && obj.attachment.url) {
+          attachmentUrl = obj.attachment.url;
+        } else if (obj.message) {
+          base64Text = obj.message;
+        }
       }
+    }
+
+    if (attachmentUrl) {
+      const fileRes = await fetch(attachmentUrl);
+      if (!fileRes.ok) {
+        throw new Error(lang === 'en' ? 'Failed to download attachment file.' : 'ไม่สามารถดาวน์โหลดไฟล์แนบได้');
+      }
+      base64Text = await fileRes.text();
     }
 
     if (!base64Text) {
       throw new Error(lang === 'en' ? 'No backup found for this code.' : 'ไม่พบข้อมูลสำรองสำหรับรหัสนี้ หรือรหัสหมดอายุแล้ว');
     }
 
-    const decodedJson = decodeURIComponent(escape(atob(base64Text.trim())));
+    const cleanedBase64 = base64Text.trim().replace(/\s/g, '');
+    const decodedJson = decodeURIComponent(escape(atob(cleanedBase64)));
     let payload = JSON.parse(decodedJson);
 
     // If compact format, inflate
