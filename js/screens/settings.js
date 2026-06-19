@@ -66,8 +66,24 @@ export function renderSettings(container) {
         t('language'),
         t('languageHint'),
         `<div style="display: flex; gap: 6px;">
-           <button type="button" id="language-th-btn" style="padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid ${language === 'th' ? 'var(--gold)' : 'var(--border)'}; background: ${language === 'th' ? 'rgba(245,200,66,0.12)' : 'var(--surface)'}; color: ${language === 'th' ? 'var(--gold)' : 'var(--text-secondary)'}; transition: all var(--transition);">🇹🇭 TH</button>
-           <button type="button" id="language-en-btn" style="padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid ${language === 'en' ? 'var(--gold)' : 'var(--border)'}; background: ${language === 'en' ? 'rgba(245,200,66,0.12)' : 'var(--surface)'}; color: ${language === 'en' ? 'var(--gold)' : 'var(--text-secondary)'}; transition: all var(--transition);">🇬🇧 EN</button>
+           <button type="button" id="language-th-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid ${language === 'th' ? 'var(--gold)' : 'var(--border)'}; background: ${language === 'th' ? 'rgba(245,200,66,0.12)' : 'var(--surface)'}; color: ${language === 'th' ? 'var(--gold)' : 'var(--text-secondary)'}; transition: all var(--transition);">
+             <svg width="16" height="12" viewBox="0 0 9 6" style="border-radius: 2px;">
+               <rect width="9" height="6" fill="#A51931"/>
+               <rect y="1" width="9" height="4" fill="#F4F5F8"/>
+               <rect y="2" width="9" height="2" fill="#2D2A4A"/>
+             </svg>
+             TH
+           </button>
+           <button type="button" id="language-en-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid ${language === 'en' ? 'var(--gold)' : 'var(--border)'}; background: ${language === 'en' ? 'rgba(245,200,66,0.12)' : 'var(--surface)'}; color: ${language === 'en' ? 'var(--gold)' : 'var(--text-secondary)'}; transition: all var(--transition);">
+             <svg width="16" height="12" viewBox="0 0 50 30" style="border-radius: 2px;">
+               <rect width="50" height="30" fill="#012169"/>
+               <path d="M0 0 L50 30 M50 0 L0 30" stroke="#FFF" stroke-width="6"/>
+               <path d="M0 0 L50 30 M50 0 L0 30" stroke="#C8102E" stroke-width="4"/>
+               <path d="M25 0 V30 M0 15 H50" stroke="#FFF" stroke-width="10"/>
+               <path d="M25 0 V30 M0 15 H50" stroke="#C8102E" stroke-width="6"/>
+             </svg>
+             EN
+           </button>
          </div>`
       )}
     </div>
@@ -130,17 +146,28 @@ export function renderSettings(container) {
         <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('cloudSyncSectionDesc')}</p>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <button id="data-export-cloud-btn" class="btn-primary" style="
+            display: flex; align-items: center; justify-content: center; gap: 6px;
             background: linear-gradient(135deg, #10b981, #059669); color: #fff;
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); border: none;
             padding: 12px 10px; border-radius: 12px;
             font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
             ${t('exportCloudBtn')}
           </button>
           <button id="data-import-cloud-btn" style="
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
             background: rgba(16,185,129,0.08); border: 1.5px solid rgba(16,185,129,0.22);
             color: #34d399; padding: 12px 10px; border-radius: 12px;
             font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
             ${t('importCloudBtn')}
           </button>
         </div>
@@ -152,16 +179,28 @@ export function renderSettings(container) {
     <div class="card" style="padding: 14px; margin-bottom: 20px;">
       <div style="display: flex; gap: 10px;">
         <button id="test-notify-btn" style="
-          flex: 1; background: rgba(245,200,66,0.08); color: var(--gold);
+          flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+          background: rgba(245,200,66,0.08); color: var(--gold);
           border: 1px solid rgba(245,200,66,0.22); padding: 11px;
           border-radius: 12px; font-size: 13px; font-weight: 700; transition: all var(--transition);">
-          🔔 ${t('notitestbtn')}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          ${t('notitestbtn')}
         </button>
         <button id="clear-notify-btn" style="
-          flex: 1; background: rgba(248,113,113,0.07); color: var(--expense);
+          flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+          background: rgba(248,113,113,0.07); color: var(--expense);
           border: 1px solid rgba(248,113,113,0.22); padding: 11px;
           border-radius: 12px; font-size: 13px; font-weight: 700; transition: all var(--transition);">
-          🗑 ${t('clearbtn')}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            <line x1="10" y1="11" x2="10" y2="17"/>
+            <line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>
+          ${t('clearbtn')}
         </button>
       </div>
     </div>
@@ -173,7 +212,14 @@ export function renderSettings(container) {
       background: linear-gradient(135deg, rgba(245,200,66,0.05), var(--card));
     ">
       <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-        <div class="setting-icon-badge" style="background: rgba(245,200,66,0.15); font-size: 20px;">📲</div>
+        <div class="setting-icon-badge" style="background: rgba(245,200,66,0.15); display: flex; align-items: center; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+            <line x1="12" y1="18" x2="12.01" y2="18"/>
+            <polyline points="8 12 12 16 16 12"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+          </svg>
+        </div>
         <div>
           <div style="font-size: 14px; font-weight: 700; color: var(--gold);">${t('installbtn')}</div>
           <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px; line-height: 1.5;">${t('installtxt')}</div>

@@ -136,8 +136,8 @@ const dictionary = {
     importErrorParseError: 'อ่านไฟล์ไม่ได้ กรุณาตรวจสอบว่าไฟล์ไม่เสียหาย',
     cloudSyncSectionTitle: 'ย้ายข้อมูลผ่านรหัส 5 หลัก',
     cloudSyncSectionDesc: 'อัปโหลดข้อมูลของคุณขึ้นคลาวด์ชั่วคราว แล้วรับรหัส 5 หลักไปป้อนในอีกเครื่องเพื่อดึงข้อมูลมาผสานกันได้อย่างง่ายดาย',
-    exportCloudBtn: '📤 แชร์ข้อมูลผ่านรหัส 5 หลัก',
-    importCloudBtn: '📥 ดึงข้อมูลผ่านรหัส 5 หลัก',
+    exportCloudBtn: 'แชร์ข้อมูลผ่านรหัส 5 หลัก',
+    importCloudBtn: 'ดึงข้อมูลผ่านรหัส 5 หลัก',
   },
   en: {
     emptyrecur: "Still empty",
@@ -276,8 +276,8 @@ const dictionary = {
     importErrorParseError: 'Could not read the file. Please make sure it is not corrupted.',
     cloudSyncSectionTitle: '5-Digit Code Transfer',
     cloudSyncSectionDesc: 'Upload your data temporarily to the cloud and get a 5-digit code. Enter this code on another device to pull and merge the data.',
-    exportCloudBtn: '📤 Share via 5-Digit Code',
-    importCloudBtn: '📥 Pull via 5-Digit Code',
+    exportCloudBtn: 'Share via 5-Digit Code',
+    importCloudBtn: 'Pull via 5-Digit Code',
   }
 };
 
