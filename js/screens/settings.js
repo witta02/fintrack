@@ -33,16 +33,13 @@ export function renderSettings(container) {
   `).join('');
 
   container.innerHTML = `
-    <div class="screen-header">
-      <div>
-        <div class="section-eyebrow">${t('settingsTitle')}</div>
-        <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">${t('settingsTitle')}</h1>
-      </div>
+    <div style="text-align: center; margin-bottom: 22px;">
+      <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px;">${t('settingsTitle')}</h1>
       <span class="premium-badge">v2.5.5</span>
     </div>
 
     <!-- ── General ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('generalSettings')}</div>
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('generalSettings')}</div>
     <div class="card" style="padding: 8px 14px; margin-bottom: 20px;">
 
       <!-- Dark Mode -->
@@ -89,7 +86,7 @@ export function renderSettings(container) {
     </div>
 
     <!-- ── Currency ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('currency')}</div>
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('currency')}</div>
     <div class="card" style="padding: 14px; margin-bottom: 20px;">
       <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
         <div class="setting-icon-badge" style="background: rgba(52,211,153,0.15);">
@@ -106,7 +103,7 @@ export function renderSettings(container) {
     </div>
 
     <!-- ── Tax ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('taxSettings')}</div>
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('taxSettings')}</div>
     <div class="card" style="padding: 8px 14px; margin-bottom: 20px;">
       <div id="tax-row-wrapper" style="cursor: pointer;">
         ${settingRow(
@@ -127,7 +124,7 @@ export function renderSettings(container) {
     </div>
 
     <!-- ── Data Transfer ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('dataTransferTitle')}</div>
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('dataTransferTitle')}</div>
     <div class="card" style="padding: 14px; margin-bottom: 20px;">
       ${settingRow(
         `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #34d399;"><path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.42-1.89-1.78-3.5-3.5-3.5a5.5 5.5 0 0 0-5.5 5.5c0 .34.02.68.06 1A4.5 4.5 0 0 0 7.5 19Z"/></svg>`,
@@ -171,7 +168,7 @@ export function renderSettings(container) {
     </div>
 
     <!-- ── Notifications ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('notificationSystem')}</div>
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('notificationSystem')}</div>
     <div class="card" style="padding: 14px; margin-bottom: 20px;">
       <div style="display: flex; gap: 10px;">
         <button id="test-notify-btn" style="
