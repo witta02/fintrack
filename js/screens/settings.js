@@ -140,9 +140,6 @@ export function renderSettings(container) {
       
       <!-- Option 1: 5-Digit Cloud Code -->
       <div style="margin-bottom: 18px;">
-        <h4 style="font-size: 13px; font-weight: 700; color: #10b981; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-          ${t('cloudSyncSectionTitle')}
-        </h4>
         <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('cloudSyncSectionDesc')}</p>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <button id="data-export-cloud-btn" class="btn-primary" style="
