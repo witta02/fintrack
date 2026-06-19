@@ -276,8 +276,8 @@ const dictionary = {
     importErrorParseError: 'Could not read the file. Please make sure it is not corrupted.',
     cloudSyncSectionTitle: '5-Digit Code Transfer',
     cloudSyncSectionDesc: 'Upload your data temporarily to the cloud and get a 5-digit code. Enter this code on another device to pull and merge the data.',
-    exportCloudBtn: 'Share via 5-Digit Code',
-    importCloudBtn: 'Pull via 5-Digit Code',
+    exportCloudBtn: 'Share by 5-Digit Code',
+    importCloudBtn: 'Pull by 5-Digit Code',
   }
 };
 

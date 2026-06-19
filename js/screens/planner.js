@@ -145,7 +145,7 @@ function renderTransactionNotice(t) {
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
         <div style="width: 32px; height: 32px; background: ${cat.color}20; color: ${cat.color}; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
-          ${cat.emoji}
+          <span style="display: flex; align-items: center; justify-content: center; width: 16px; height: 16px;">${cat.svg}</span>
         </div>
         <div style="flex: 1; min-width: 0;">
           <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHTML(t.title)}</div>

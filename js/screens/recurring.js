@@ -91,8 +91,8 @@ function updateUI(container) {
     card.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div class="cat-icon" style="background: ${cat.color}18; color: ${cat.color}; border-color: ${cat.color}28; width: 38px; height: 38px; border-radius: 10px; font-size: 18px; margin-right: 0;">
-            <span style="line-height: 1;">${cat.emoji}</span>
+          <div class="cat-icon" style="background: ${cat.color}18; color: ${cat.color}; border-color: ${cat.color}28; width: 38px; height: 38px; border-radius: 10px; font-size: 18px; margin-right: 0; display: flex; align-items: center; justify-content: center;">
+            <span style="display: flex; align-items: center; justify-content: center; width: 18px; height: 18px;">${cat.svg}</span>
           </div>
           <div>
             <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">${escapeHTML(rule.title)}</h4>
@@ -243,8 +243,8 @@ function showAddRecurringModal() {
       }
 
       item.innerHTML = `
-        <div class="category-picker-icon" style="font-size: 18px; color: ${info.color}; display: flex; align-items: center; justify-content: center; margin-bottom: 2px;">
-          ${info.emoji}
+        <div class="category-picker-icon" style="font-size: 18px; color: ${info.color}; display: flex; align-items: center; justify-content: center; margin-bottom: 2px; height: 26px;">
+          <span style="display: flex; align-items: center; justify-content: center; width: 18px; height: 18px;">${info.svg}</span>
         </div>
         <div class="category-picker-label" style="font-size: 11px;">${info.label}</div>
       `;

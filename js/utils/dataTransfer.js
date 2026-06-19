@@ -549,7 +549,7 @@ export async function importFromCloud() {
   const lang = store.settings.language;
 
   const { value: code } = await Swal.fire({
-    title: lang === 'en' ? 'Import via 5-Digit Code' : 'นำเข้าผ่านรหัส 5 หลัก',
+    title: lang === 'en' ? 'Import by 5-Digit Code' : 'นำเข้าผ่านรหัส 5 หลัก',
     input: 'text',
     inputPlaceholder: 'e.g. 12345',
     inputAttributes: {

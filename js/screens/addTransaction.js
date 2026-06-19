@@ -176,7 +176,7 @@ function renderCategoryPicker(container) {
 
     item.innerHTML = `
       <div class="category-picker-icon" style="background: ${info.color}15; color: ${info.color};">
-        ${info.emoji}
+        <span style="display: flex; align-items: center; justify-content: center; width: 22px; height: 22px;">${info.svg}</span>
       </div>
       <div class="category-picker-label">${info.label}</div>
     `;
