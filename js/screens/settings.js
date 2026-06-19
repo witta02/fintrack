@@ -2,7 +2,7 @@ import { store } from '../store.js';
 import { currencies } from '../currency.js';
 import { t } from '../i18n.js';
 import { alerts } from '../utils/alertHelper.js';
-import { exportData, importData } from '../utils/dataTransfer.js';
+import { exportData, importData, exportToText, importFromText } from '../utils/dataTransfer.js';
 
 // Reusable setting row helper
 function settingRow(iconSvg, iconBg, title, subtitle, rightSlot, extras = '') {
@@ -115,41 +115,61 @@ export function renderSettings(container) {
     <!-- ── Data Transfer ───────────────────────────────── -->
     <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('dataTransferTitle')}</div>
     <div class="card" style="
-      padding: 16px;
+      padding: 18px 16px;
       margin-bottom: 20px;
-      border-color: rgba(124,92,252,0.20);
+      border-color: rgba(124,92,252,0.25);
       background: linear-gradient(135deg, rgba(124,92,252,0.06), var(--card));
     ">
-      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.65;">${t('dataTransferDesc')}</p>
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button id="data-export-btn" style="
-          display: flex; align-items: center; gap: 14px;
-          background: rgba(245,200,66,0.08);
-          border: 1px solid rgba(245,200,66,0.25);
-          color: var(--text-primary);
-          padding: 14px 16px; border-radius: 14px;
-          text-align: left; width: 100%; cursor: pointer;
-          transition: all var(--transition);">
-          <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(245,200,66,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">📤</div>
-          <div>
-            <div style="font-weight: 700; font-size: 13px;">${t('exportBtn').replace('📤 ', '')}</div>
-            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${t('exportBtnDesc')}</div>
-          </div>
-        </button>
-        <button id="data-import-btn" style="
-          display: flex; align-items: center; gap: 14px;
-          background: rgba(124,92,252,0.08);
-          border: 1px solid rgba(124,92,252,0.25);
-          color: var(--text-primary);
-          padding: 14px 16px; border-radius: 14px;
-          text-align: left; width: 100%; cursor: pointer;
-          transition: all var(--transition);">
-          <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(124,92,252,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">📥</div>
-          <div>
-            <div style="font-weight: 700; font-size: 13px;">${t('importBtn').replace('📥 ', '')}</div>
-            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${t('importBtnDesc')}</div>
-          </div>
-        </button>
+      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.65;">${t('dataTransferDesc')}</p>
+      
+      <!-- Option 1: Quick Code -->
+      <div style="margin-bottom: 18px;">
+        <h4 style="font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+          ${t('easyTransferTitle')}
+        </h4>
+        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('easyTransferDesc')}</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <button id="data-export-code-btn" style="
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: rgba(245,200,66,0.08); border: 1.5px solid rgba(245,200,66,0.22);
+            color: var(--text-primary); padding: 12px 10px; border-radius: 12px;
+            font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
+            ${t('copyCodeBtn')}
+          </button>
+          <button id="data-import-code-btn" style="
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: rgba(124,92,252,0.08); border: 1.5px solid rgba(124,92,252,0.22);
+            color: var(--text-primary); padding: 12px 10px; border-radius: 12px;
+            font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
+            ${t('pasteCodeBtn')}
+          </button>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: var(--border); margin: 18px 0;"></div>
+
+      <!-- Option 2: Backup File -->
+      <div>
+        <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
+          ${t('fileTransferTitle')}
+        </h4>
+        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('fileTransferDesc')}</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <button id="data-export-btn" style="
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: rgba(255,255,255,0.04); border: 1.5px solid var(--border);
+            color: var(--text-secondary); padding: 12px 10px; border-radius: 12px;
+            font-weight: 600; font-size: 11px; cursor: pointer; transition: all var(--transition);">
+            ${t('exportBtn')}
+          </button>
+          <button id="data-import-btn" style="
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: rgba(255,255,255,0.04); border: 1.5px solid var(--border);
+            color: var(--text-secondary); padding: 12px 10px; border-radius: 12px;
+            font-weight: 600; font-size: 11px; cursor: pointer; transition: all var(--transition);">
+            ${t('importBtn')}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -204,6 +224,8 @@ export function renderSettings(container) {
 function setupEventListeners(container) {
   container.querySelector('#data-export-btn').addEventListener('click', () => exportData());
   container.querySelector('#data-import-btn').addEventListener('click', () => importData());
+  container.querySelector('#data-export-code-btn').addEventListener('click', () => exportToText());
+  container.querySelector('#data-import-code-btn').addEventListener('click', () => importFromText());
 
   container.querySelector('#setting-darkmode-chk').addEventListener('change', () => {
     store.toggleTheme();
