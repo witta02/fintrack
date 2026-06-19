@@ -2,16 +2,12 @@ import '../css/styles.css';
 import { store } from './store.js';
 import { router } from './router.js';
 import { t } from './i18n.js';
-import { syncHelper } from './utils/syncHelper.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('FinTrack: Initializing...');
   
   // Initialize the store
   store.init();
-
-  // Auto-connect P2P sync if previously configured (Disabled)
-  // syncHelper.autoConnect();
 
   // Initialize the router
   router.init();

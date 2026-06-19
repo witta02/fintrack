@@ -444,3 +444,236 @@ export async function importFromText() {
     );
   }
 }
+
+// ─── 5-DIGIT CLOUD TRANSFER ──────────────────────────────────────────────
+
+/**
+ * Exports all user data to a temporary public ntfy topic and provides a 5-digit code.
+ */
+export async function exportToCloud() {
+  const isDark = store.settings.isDarkMode;
+  const lang = store.settings.language;
+
+  // Show a loading alert
+  Swal.fire({
+    title: lang === 'en' ? 'Generating Code...' : 'กำลังสร้างรหัส...',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+    background: isDark ? '#161B22' : '#FFFFFF',
+    color: isDark ? '#F9FAFB' : '#1F2937',
+  });
+
+  try {
+    const payload = {
+      _fintrack: true,
+      version: FINTRACK_VERSION,
+      exportedAt: new Date().toISOString(),
+      data: {
+        transactions: store.transactions.map(t => ({
+          ...t,
+          date: t.date instanceof Date ? t.date.toISOString() : t.date,
+        })),
+        recurringRules: store.recurringRules.map(r => ({
+          ...r,
+          nextDueDate: r.nextDueDate instanceof Date ? r.nextDueDate.toISOString() : r.nextDueDate,
+          createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : r.createdAt,
+        })),
+        settings: { ...store.settings },
+      },
+    };
+
+    const compactPayload = deflateToCompact(payload);
+    const json = JSON.stringify(compactPayload);
+    const base64Text = btoa(unescape(encodeURIComponent(json)));
+
+    // Generate random 5-digit code
+    const code = Math.floor(10000 + Math.random() * 90000).toString();
+
+    // Upload to ntfy topic: fintrack-cloud-sync-<code>
+    const response = await fetch(`https://ntfy.sh/fintrack-cloud-sync-${code}`, {
+      method: 'POST',
+      body: base64Text,
+      headers: {
+        'Title': 'FinTrack Backup',
+        'Priority': '5'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(lang === 'en' ? 'Failed to upload backup' : 'ไม่สามารถอัปโหลดข้อมูลสำรองได้');
+    }
+
+    // Close loading and show success
+    Swal.fire({
+      title: lang === 'en' ? 'Backup Ready!' : 'ข้อมูลสำรองพร้อมแล้ว!',
+      html: `
+        <p style="font-size:13px; color:${isDark ? '#9CA3AF' : '#6B7280'}; margin-bottom:16px;">
+          ${lang === 'en'
+            ? 'Your 5-digit temporary backup code is:'
+            : 'รหัสสำรองข้อมูลชั่วคราว 5 หลักของคุณคือ:'
+          }
+        </p>
+        <div style="font-size:32px; font-family:monospace; font-weight:800; color:var(--gold); letter-spacing:4px; margin-bottom:16px; background:${isDark ? '#1C2128' : '#F9FAFB'}; padding:12px; border-radius:10px; border:1px solid ${isDark ? '#374151' : '#E5E7EB'};">
+          ${code}
+        </div>
+        <p style="font-size:11px; color:#ef4444; line-height:1.5;">
+          ${lang === 'en'
+            ? '⚠️ This code is valid for 12 hours. Enter this code on your other device to pull and restore the data.'
+            : '⚠️ รหัสนี้มีอายุการใช้งาน 12 ชั่วโมง นำรหัสไปป้อนในอีกเครื่องเพื่อดึงข้อมูลกลับมาและเชื่อมโยงข้อมูลให้ตรงกัน'
+          }
+        </p>
+      `,
+      confirmButtonColor: '#FFB800',
+      confirmButtonText: lang === 'en' ? 'Done' : 'เสร็จสิ้น',
+      background: isDark ? '#161B22' : '#FFFFFF',
+      color: isDark ? '#F9FAFB' : '#1F2937',
+    });
+
+  } catch (err) {
+    console.error('Cloud export error:', err);
+    alerts.error(
+      lang === 'en' ? 'Cloud Backup Failed' : 'สำรองข้อมูลบนคลาวด์ไม่สำเร็จ',
+      err.message
+    );
+  }
+}
+
+/**
+ * Prompts the user to enter a 5-digit code, downloads data from public ntfy topic, and restores.
+ */
+export async function importFromCloud() {
+  const isDark = store.settings.isDarkMode;
+  const lang = store.settings.language;
+
+  const { value: code } = await Swal.fire({
+    title: lang === 'en' ? 'Import via 5-Digit Code' : 'นำเข้าผ่านรหัส 5 หลัก',
+    input: 'text',
+    inputPlaceholder: 'e.g. 12345',
+    inputAttributes: {
+      maxlength: '5',
+      autofocus: 'true',
+      style: `text-align:center; font-size:24px; font-weight:700; letter-spacing:4px; border-radius:10px; border:1px solid ${isDark ? '#374151' : '#E5E7EB'}; background:${isDark ? '#1F2937' : '#F9FAFB'}; color:${isDark ? '#F9FAFB' : '#1F2937'};`
+    },
+    showCancelButton: true,
+    confirmButtonColor: '#FFB800',
+    cancelButtonColor: '#6B7280',
+    confirmButtonText: lang === 'en' ? 'Retrieve Data' : 'ดึงข้อมูล',
+    cancelButtonText: lang === 'en' ? 'Cancel' : 'ยกเลิก',
+    background: isDark ? '#161B22' : '#FFFFFF',
+    color: isDark ? '#F9FAFB' : '#1F2937',
+    preConfirm: (value) => {
+      if (!value || value.trim().length !== 5 || isNaN(value.trim())) {
+        Swal.showValidationMessage(lang === 'en' ? 'Please enter a 5-digit number' : 'กรุณากรอกตัวเลข 5 หลัก');
+      }
+      return value.trim();
+    }
+  });
+
+  if (!code) return;
+
+  // Show a loading alert
+  Swal.fire({
+    title: lang === 'en' ? 'Downloading Data...' : 'กำลังดาวน์โหลดข้อมูล...',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+    background: isDark ? '#161B22' : '#FFFFFF',
+    color: isDark ? '#F9FAFB' : '#1F2937',
+  });
+
+  try {
+    const res = await fetch(`https://ntfy.sh/fintrack-cloud-sync-${code}/json?poll=1`);
+    if (!res.ok) throw new Error();
+
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    let base64Text = null;
+
+    for (const line of lines) {
+      if (!line) continue;
+      const obj = JSON.parse(line);
+      if (obj.event === 'message' && obj.message) {
+        base64Text = obj.message;
+      }
+    }
+
+    if (!base64Text) {
+      throw new Error(lang === 'en' ? 'No backup found for this code.' : 'ไม่พบข้อมูลสำรองสำหรับรหัสนี้ หรือรหัสหมดอายุแล้ว');
+    }
+
+    const decodedJson = decodeURIComponent(escape(atob(base64Text.trim())));
+    let payload = JSON.parse(decodedJson);
+
+    // If compact format, inflate
+    if (payload && payload.ft === 1) {
+      payload = inflateFromCompact(payload);
+    }
+
+    if (!payload._fintrack || !payload.data) {
+      throw new Error(lang === 'en' ? 'Invalid backup data format.' : 'ข้อมูลสำรองมีรูปแบบไม่ถูกต้อง');
+    }
+
+    // Close loading and show Merge/Replace Swal
+    const result = await Swal.fire({
+      title: lang === 'en' ? 'Import Mode' : 'โหมดนำเข้า',
+      html: `
+        <p style="font-size:13px; margin-bottom:16px; color: ${isDark ? '#9CA3AF' : '#6B7280'}">
+          ${lang === 'en'
+            ? `<strong>Backup Data Found</strong><br>Exported: ${new Date(payload.exportedAt).toLocaleString()}<br>${payload.data.transactions?.length ?? 0} transactions · ${payload.data.recurringRules?.length ?? 0} recurring rules`
+            : `<strong>พบข้อมูลสำรอง</strong><br>ส่งออกเมื่อ: ${new Date(payload.exportedAt).toLocaleString('th-TH')}<br>${payload.data.transactions?.length ?? 0} รายการ · ${payload.data.recurringRules?.length ?? 0} รายการประจำ`
+          }
+        </p>
+        <div style="display:flex; flex-direction:column; gap:10px; text-align:left;">
+          <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; padding:12px; border-radius:10px; border: 1px solid ${isDark ? '#374151' : '#E5E7EB'}; background: ${isDark ? '#1C2128' : '#F9FAFB'};">
+            <input type="radio" name="import-mode" value="merge" checked style="margin-top:3px; accent-color:#FFB800;" />
+            <div>
+              <div style="font-weight:600; font-size:13px; color: ${isDark ? '#F9FAFB' : '#1F2937'}">
+                ${lang === 'en' ? '🔀 Merge' : '🔀 รวมข้อมูล (Merge)'}
+              </div>
+              <div style="font-size:11px; color: ${isDark ? '#9CA3AF' : '#6B7280'}; margin-top:2px;">
+                ${lang === 'en' ? 'Keeps your existing data and adds new records from the code. Duplicates are skipped.' : 'เก็บข้อมูลเดิมไว้ แล้วเพิ่มรายการใหม่จากรหัส รายการซ้ำจะถูกข้ามโดยอัตโนมัติ'}
+              </div>
+            </div>
+          </label>
+          <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; padding:12px; border-radius:10px; border: 1px solid ${isDark ? '#374151' : '#E5E7EB'}; background: ${isDark ? '#1C2128' : '#F9FAFB'};">
+            <input type="radio" name="import-mode" value="replace" style="margin-top:3px; accent-color:#FFB800;" />
+            <div>
+              <div style="font-weight:600; font-size:13px; color: ${isDark ? '#F9FAFB' : '#1F2937'}">
+                ${lang === 'en' ? '🔄 Replace' : '🔄 แทนที่ข้อมูล (Replace)'}
+              </div>
+              <div style="font-size:11px; color: ${isDark ? '#9CA3AF' : '#6B7280'}; margin-top:2px;">
+                ${lang === 'en' ? 'Wipes all current data and loads the code backup. This cannot be undone.' : 'ลบข้อมูลปัจจุบันทั้งหมดและโหลดข้อมูลใหม่ทดแทน ไม่สามารถย้อนกลับได้'}
+              </div>
+            </div>
+          </label>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonColor: '#FFB800',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: lang === 'en' ? 'Import' : 'นำเข้า',
+      cancelButtonText: lang === 'en' ? 'Cancel' : 'ยกเลิก',
+      background: isDark ? '#161B22' : '#FFFFFF',
+      color: isDark ? '#F9FAFB' : '#1F2937',
+      preConfirm: () => {
+        const selected = document.querySelector('input[name="import-mode"]:checked');
+        return selected ? selected.value : 'merge';
+      }
+    });
+
+    if (!result.isConfirmed) return;
+
+    const mode = result.value; // 'merge' or 'replace'
+    applyImport(payload.data, mode);
+
+  } catch (err) {
+    console.error('Cloud import error:', err);
+    alerts.error(
+      lang === 'en' ? 'Download Failed' : 'ดาวน์โหลดข้อมูลไม่สำเร็จ',
+      err.message || (lang === 'en' ? 'Could not retrieve data. Please check the code.' : 'ไม่สามารถดึงข้อมูลได้ โปรดตรวจสอบรหัสเชื่อมโยงอีกครั้ง')
+    );
+  }
+}
