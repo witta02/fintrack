@@ -140,6 +140,12 @@ export function renderSettings(container) {
       
       <!-- Option 1: 5-Digit Cloud Code -->
       <div style="margin-bottom: 18px;">
+        <h4 style="font-size: 13px; font-weight: 700; color: #10b981; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.42-1.89-1.78-3.5-3.5-3.5a5.5 5.5 0 0 0-5.5 5.5c0 .34.02.68.06 1A4.5 4.5 0 0 0 7.5 19Z"/>
+          </svg>
+          ${t('cloudSyncSectionTitle')}
+        </h4>
         <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('cloudSyncSectionDesc')}</p>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <button id="data-export-cloud-btn" class="btn-primary" style="
