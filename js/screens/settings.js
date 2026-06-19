@@ -172,31 +172,7 @@ export function renderSettings(container) {
         </div>
       </div>
 
-      <div style="height: 1px; background: var(--border); margin: 18px 0;"></div>
 
-      <!-- Option 3: Backup File -->
-      <div>
-        <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
-          ${t('fileTransferTitle')}
-        </h4>
-        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('fileTransferDesc')}</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <button id="data-export-btn" style="
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            background: rgba(255,255,255,0.04); border: 1.5px solid var(--border);
-            color: var(--text-secondary); padding: 12px 10px; border-radius: 12px;
-            font-weight: 600; font-size: 11px; cursor: pointer; transition: all var(--transition);">
-            ${t('exportBtn')}
-          </button>
-          <button id="data-import-btn" style="
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            background: rgba(255,255,255,0.04); border: 1.5px solid var(--border);
-            color: var(--text-secondary); padding: 12px 10px; border-radius: 12px;
-            font-weight: 600; font-size: 11px; cursor: pointer; transition: all var(--transition);">
-            ${t('importBtn')}
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- ── Notifications ───────────────────────────────── -->
@@ -251,8 +227,6 @@ function setupEventListeners(container) {
   container.querySelector('#data-export-cloud-btn').addEventListener('click', () => exportToCloud());
   container.querySelector('#data-import-cloud-btn').addEventListener('click', () => importFromCloud());
 
-  container.querySelector('#data-export-btn').addEventListener('click', () => exportData());
-  container.querySelector('#data-import-btn').addEventListener('click', () => importData());
   container.querySelector('#data-export-code-btn').addEventListener('click', () => exportToText());
   container.querySelector('#data-import-code-btn').addEventListener('click', () => importFromText());
 
