@@ -136,7 +136,7 @@ export function renderSettings(container) {
         t('dataTransferDesc'),
         '',
         `
-        <div style="margin-top: 14px;">
+        <div style="margin-top: 6px;">
           <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('cloudSyncSectionDesc')}</p>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <button id="data-export-cloud-btn" class="btn-primary" style="
