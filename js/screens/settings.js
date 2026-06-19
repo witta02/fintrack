@@ -2,7 +2,7 @@ import { store } from '../store.js';
 import { currencies } from '../currency.js';
 import { t } from '../i18n.js';
 import { alerts } from '../utils/alertHelper.js';
-import { exportData, importData, exportToText, importFromText, exportToCloud, importFromCloud } from '../utils/dataTransfer.js';
+import { exportToCloud, importFromCloud } from '../utils/dataTransfer.js';
 
 // Reusable setting row helper
 function settingRow(iconSvg, iconBg, title, subtitle, rightSlot, extras = '') {
@@ -145,34 +145,6 @@ export function renderSettings(container) {
           </button>
         </div>
       </div>
-
-      <div style="height: 1px; background: var(--border); margin: 18px 0;"></div>
-
-      <!-- Option 2: Quick Code -->
-      <div style="margin-bottom: 18px;">
-        <h4 style="font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-          ${t('easyTransferTitle')}
-        </h4>
-        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('easyTransferDesc')}</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <button id="data-export-code-btn" style="
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            background: rgba(245,200,66,0.08); border: 1.5px solid rgba(245,200,66,0.22);
-            color: var(--text-primary); padding: 12px 10px; border-radius: 12px;
-            font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
-            ${t('copyCodeBtn')}
-          </button>
-          <button id="data-import-code-btn" style="
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            background: rgba(245,200,66,0.08); border: 1.5px solid rgba(245,200,66,0.22);
-            color: var(--text-primary); padding: 12px 10px; border-radius: 12px;
-            font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
-            ${t('pasteCodeBtn')}
-          </button>
-        </div>
-      </div>
-
-
     </div>
 
     <!-- ── Notifications ───────────────────────────────── -->
@@ -226,9 +198,6 @@ export function renderSettings(container) {
 function setupEventListeners(container) {
   container.querySelector('#data-export-cloud-btn').addEventListener('click', () => exportToCloud());
   container.querySelector('#data-import-cloud-btn').addEventListener('click', () => importFromCloud());
-
-  container.querySelector('#data-export-code-btn').addEventListener('click', () => exportToText());
-  container.querySelector('#data-import-code-btn').addEventListener('click', () => importFromText());
 
   container.querySelector('#setting-darkmode-chk').addEventListener('change', () => {
     store.toggleTheme();
