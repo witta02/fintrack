@@ -17,7 +17,6 @@ export function renderDashboard(container) {
       <div style="display: flex; align-items: center; gap: 10px;">
         <h1 class="brand-title shimmer-text" style="font-size: 26px; font-weight: 900; letter-spacing: -1px;">FinTrack</h1>
         <span class="premium-badge">PRO</span>
-        <h1 class="desktop-page-title" style="font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-primary); display: none;">Overview</h1>
       </div>
       <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
