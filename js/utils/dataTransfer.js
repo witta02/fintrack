@@ -193,6 +193,77 @@ function applyImport(data, mode) {
   );
 }
 
+// ─── COMPRESSION SCHEMAS ──────────────────────────────────────────────────
+
+function deflateToCompact(payload) {
+  return {
+    ft: 1, // FinTrack compact format v1
+    t: new Date(payload.exportedAt).getTime(),
+    tx: (payload.data.transactions || []).map(t => [
+      t.id,
+      t.title,
+      t.amount,
+      t.category,
+      t.date instanceof Date ? t.date.getTime() : new Date(t.date).getTime(),
+      t.isIncome ? 1 : 0
+    ]),
+    rr: (payload.data.recurringRules || []).map(r => [
+      r.id,
+      r.title,
+      r.amount,
+      r.isIncome ? 1 : 0,
+      r.category,
+      r.type,
+      r.customDays || 30,
+      r.nextDueDate instanceof Date ? r.nextDueDate.getTime() : new Date(r.nextDueDate).getTime(),
+      r.isActive ? 1 : 0,
+      r.createdAt instanceof Date ? r.createdAt.getTime() : new Date(r.createdAt).getTime()
+    ]),
+    st: {
+      c: payload.data.settings?.selectedCurrency || 'THB',
+      d: payload.data.settings?.isDarkMode ? 1 : 0,
+      l: payload.data.settings?.language || 'th',
+      t: payload.data.settings?.taxDeduction || 60000
+    }
+  };
+}
+
+function inflateFromCompact(compact) {
+  return {
+    _fintrack: true,
+    version: '1.0',
+    exportedAt: new Date(compact.t).toISOString(),
+    data: {
+      transactions: (compact.tx || []).map(row => ({
+        id: row[0],
+        title: row[1],
+        amount: parseFloat(row[2]),
+        category: row[3],
+        date: new Date(row[4]).toISOString(),
+        isIncome: row[5] === 1
+      })),
+      recurringRules: (compact.rr || []).map(row => ({
+        id: row[0],
+        title: row[1],
+        amount: parseFloat(row[2]),
+        isIncome: row[3] === 1,
+        category: row[4],
+        type: row[5],
+        customDays: parseInt(row[6] || 30),
+        nextDueDate: new Date(row[7]).toISOString(),
+        isActive: row[8] === 1,
+        createdAt: new Date(row[9] || Date.now()).toISOString()
+      })),
+      settings: {
+        selectedCurrency: compact.st?.c || 'THB',
+        isDarkMode: compact.st?.d === 1,
+        language: compact.st?.l || 'th',
+        taxDeduction: parseFloat(compact.st?.t || 60000)
+      }
+    }
+  };
+}
+
 // ─── TEXT CODE TRANSFER ──────────────────────────────────────────────────
 
 /**
@@ -218,7 +289,8 @@ export async function exportToText() {
       },
     };
 
-    const json = JSON.stringify(payload);
+    const compactPayload = deflateToCompact(payload);
+    const json = JSON.stringify(compactPayload);
     const base64Text = btoa(unescape(encodeURIComponent(json)));
 
     const isDark = store.settings.isDarkMode;
@@ -291,7 +363,12 @@ export async function importFromText() {
 
   try {
     const decodedJson = decodeURIComponent(escape(atob(cleanedText)));
-    const payload = JSON.parse(decodedJson);
+    let payload = JSON.parse(decodedJson);
+
+    // If it's the compact schema format, inflate it back to full schema first
+    if (payload && payload.ft === 1) {
+      payload = inflateFromCompact(payload);
+    }
 
     // Validate structure
     if (!payload._fintrack || !payload.data) {
