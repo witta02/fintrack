@@ -134,7 +134,7 @@ const dictionary = {
     importErrorTitle: 'นำเข้าไม่สำเร็จ',
     importErrorInvalidFile: 'ไฟล์ที่เลือกไม่ใช่ไฟล์ FinTrack ที่ถูกต้อง',
     importErrorParseError: 'อ่านไฟล์ไม่ได้ กรุณาตรวจสอบว่าไฟล์ไม่เสียหาย',
-    cloudSyncSectionTitle: 'ย้ายข้อมูลผ่านรหัส 5 หลัก (คลาวด์ชั่วคราว)',
+    cloudSyncSectionTitle: 'ย้ายข้อมูลผ่านรหัส 5 หลัก',
     cloudSyncSectionDesc: 'อัปโหลดข้อมูลของคุณขึ้นคลาวด์ชั่วคราว แล้วรับรหัส 5 หลักไปป้อนในอีกเครื่องเพื่อดึงข้อมูลมาผสานกันได้อย่างง่ายดาย',
     exportCloudBtn: '📤 แชร์ข้อมูลผ่านรหัส 5 หลัก',
     importCloudBtn: '📥 ดึงข้อมูลผ่านรหัส 5 หลัก',
