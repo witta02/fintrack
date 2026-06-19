@@ -16,6 +16,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const splash = document.getElementById('splash-screen');
   const app = document.getElementById('app');
 
+  // Sidebar toggle visibility (Desktop only)
+  const closeBtn = document.getElementById('sidebar-close-btn');
+  const toggleBtn = document.getElementById('sidebar-toggle-btn');
+  if (closeBtn && toggleBtn && app) {
+    const isSidebarHidden = localStorage.getItem('fintrack_sidebar_hidden') === 'true';
+    if (isSidebarHidden) {
+      app.classList.add('sidebar-hidden');
+    }
+    closeBtn.addEventListener('click', () => {
+      app.classList.add('sidebar-hidden');
+      localStorage.setItem('fintrack_sidebar_hidden', 'true');
+    });
+    toggleBtn.addEventListener('click', () => {
+      app.classList.remove('sidebar-hidden');
+      localStorage.setItem('fintrack_sidebar_hidden', 'false');
+    });
+  }
+
   // Fast boot for better stability
   setTimeout(() => {
     if (splash) {

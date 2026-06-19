@@ -1447,6 +1447,9 @@ input:focus, select:focus, textarea:focus {
 .sidebar {
   display: none;
 }
+.sidebar-toggle-btn {
+  display: none;
+}
 .desktop-only {
   display: none !important;
 }
@@ -1477,17 +1480,36 @@ input:focus, select:focus, textarea:focus {
     gap: 32px;
     z-index: 100;
     flex-shrink: 0;
+    transition: transform var(--transition);
   }
   .sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    width: 100%;
     font-family: var(--font-heading);
     font-size: 22px;
     font-weight: 900;
     letter-spacing: -1px;
     color: var(--text-primary);
     padding: 0 4px;
+  }
+  .sidebar-close-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .sidebar-close-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
   }
   .sidebar-brand .brand-badge {
     background: var(--gold);
@@ -1567,14 +1589,55 @@ input:focus, select:focus, textarea:focus {
     height: 100vh;
     overflow-y: auto;
     width: calc(100% - 260px);
+    transition: margin-left var(--transition), width var(--transition);
   }
   .screen {
     max-width: 1080px !important;
     padding: 40px !important;
     margin: 0 auto;
+    transition: padding-left var(--transition);
   }
   .bottom-nav {
     display: none !important;
+  }
+
+  /* Sidebar Toggle Button (floating hamburger) */
+  .sidebar-toggle-btn {
+    display: none;
+    position: fixed;
+    left: 24px;
+    top: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    cursor: pointer;
+    z-index: 99;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: all var(--transition);
+  }
+  .sidebar-toggle-btn:hover {
+    background: var(--surface-hover);
+    transform: scale(1.05);
+  }
+
+  /* Sidebar Hidden State Overrides */
+  .sidebar-hidden .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar-hidden .screen-container {
+    margin-left: 0;
+    width: 100%;
+  }
+  .sidebar-hidden .sidebar-toggle-btn {
+    display: flex !important;
+  }
+  .sidebar-hidden .screen {
+    padding-left: 80px !important;
   }
 
   /* Dashboard Desktop Layout */
