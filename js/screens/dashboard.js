@@ -12,36 +12,42 @@ let analysisMonth = new Date().getMonth();
 let analysisYear = new Date().getFullYear();
 
 export function renderDashboard(container) {
-  container.innerHTML = `
-    <div class="screen-header" style="padding-bottom: 18px;">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <h1 class="brand-title shimmer-text" style="font-size: 26px; font-weight: 900; letter-spacing: -1px;">FinTrack</h1>
-        <span class="premium-badge">PRO</span>
+    container.innerHTML = `
+    <!-- Dashboard Top Bar -->
+    <div class="dashboard-top-bar">
+      <div class="screen-header" style="padding-bottom: 18px; margin-bottom: 0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h1 class="brand-title shimmer-text desktop-hide" style="font-size: 26px; font-weight: 900; letter-spacing: -1px; margin-bottom: 0;">FinTrack</h1>
+          <span class="premium-badge desktop-hide">PRO</span>
+          <h1 class="screen-title-desktop desktop-only" style="font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin-bottom: 0;">ภาพรวม</h1>
+        </div>
+        <button id="theme-toggle-btn" class="icon-btn mobile-only" title="Toggle Theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/>
+            <path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/>
+            <path d="M2 12h2"/><path d="M20 12h2"/>
+            <path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/>
+          </svg>
+        </button>
       </div>
-      <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/>
-          <path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/>
-          <path d="M2 12h2"/><path d="M20 12h2"/>
-          <path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/>
-        </svg>
-      </button>
+
+      <!-- Period Selector -->
+      <div class="period-selector">
+        <button class="period-tab ${activePeriod === 'daily' ? 'active' : ''}" data-period="daily">${t('dashboardToday')}</button>
+        <button class="period-tab ${activePeriod === 'monthly' ? 'active' : ''}" data-period="monthly">${t('dashboardMonth')}</button>
+        <button class="period-tab ${activePeriod === 'yearly' ? 'active' : ''}" data-period="yearly">${t('dashboardYear')}</button>
+        <button class="period-tab ${activePeriod === 'all' ? 'active' : ''}" data-period="all">${t('dashboardAll')}</button>
+      </div>
     </div>
 
-    <!-- Period Selector -->
-    <div class="period-selector">
-      <button class="period-tab ${activePeriod === 'daily' ? 'active' : ''}" data-period="daily">${t('dashboardToday')}</button>
-      <button class="period-tab ${activePeriod === 'monthly' ? 'active' : ''}" data-period="monthly">${t('dashboardMonth')}</button>
-      <button class="period-tab ${activePeriod === 'yearly' ? 'active' : ''}" data-period="yearly">${t('dashboardYear')}</button>
-      <button class="period-tab ${activePeriod === 'all' ? 'active' : ''}" data-period="all">${t('dashboardAll')}</button>
-    </div>
-
-    <!-- Balance Card -->
-    <div class="balance-card" id="balance-card-clickable">
-      <div class="period-label" id="period-label-text">
-        ${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}
+    <!-- Balance Cards Container -->
+    <div class="balance-cards-container">
+      <div class="balance-card-main" id="balance-card-clickable">
+        <div class="period-label" id="period-label-text">
+          ${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}
+        </div>
+        <div class="balance-amount" id="card-balance">฿0.00</div>
       </div>
-      <div class="balance-amount" id="card-balance">฿0.00</div>
       <div class="balance-row">
         <div class="balance-item income">
           <div class="balance-item-icon">
@@ -104,68 +110,75 @@ export function renderDashboard(container) {
       </div>
     </div>
 
-    <!-- Chart Card -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <div>
-          <div class="section-eyebrow">${t('analysis')}</div>
-          <h3 class="card-title" style="font-size: 15px; margin-top: 2px;">${t('dashboardMonth')}</h3>
+    <!-- Dashboard Bottom Grid -->
+    <div class="dashboard-grid">
+      <div class="dashboard-grid-main">
+        <!-- Chart Card -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="section-eyebrow">${t('analysis')}</div>
+              <h3 class="card-title" style="font-size: 15px; margin-top: 2px;">${t('dashboardMonth')}</h3>
+            </div>
+            <div class="chart-legends">
+              <span class="legend"><span class="dot dot-expense"></span>${t('chartExpense')}</span>
+              <span class="legend"><span class="dot dot-income"></span>${t('chartIncome')}</span>
+            </div>
+          </div>
+
+          <div class="analysis-controls">
+            <select id="analysis-period-select" class="analysis-select">
+              <option value="monthly" ${analysisPeriod === 'monthly' ? 'selected' : ''}>รายเดือน</option>
+              <option value="yearly" ${analysisPeriod === 'yearly' ? 'selected' : ''}>รายปี</option>
+            </select>
+            <select id="analysis-month-select" class="analysis-select ${analysisPeriod !== 'monthly' ? 'hidden' : ''}">
+              ${Array.from({ length: 12 }, (_, i) => `
+                <option value="${i}" ${analysisMonth === i ? 'selected' : ''}>${new Date(2000, i).toLocaleString('th-TH', { month: 'long' })}</option>
+              `).join('')}
+            </select>
+          </div>
+
+          <div class="chart-container" style="height: 180px;">
+            <canvas id="spending-chart-canvas"></canvas>
+          </div>
         </div>
-        <div class="chart-legends">
-          <span class="legend"><span class="dot dot-expense"></span>${t('chartExpense')}</span>
-          <span class="legend"><span class="dot dot-income"></span>${t('chartIncome')}</span>
+
+        <!-- Category Pie Card -->
+        <div class="card pie-chart-card">
+          <div class="section-eyebrow" style="margin-bottom: 4px;">สัดส่วนรายจ่าย</div>
+          <h3 class="card-title" style="font-size: 15px; margin-bottom: 14px;">แยกตามหมวดหมู่</h3>
+          <div style="height: 200px; width: 100%;">
+            <canvas id="category-pie-chart-canvas"></canvas>
+          </div>
+          <div id="pie-chart-legend" class="pie-chart-legend"></div>
         </div>
       </div>
 
-      <div class="analysis-controls">
-        <select id="analysis-period-select" class="analysis-select">
-          <option value="monthly" ${analysisPeriod === 'monthly' ? 'selected' : ''}>รายเดือน</option>
-          <option value="yearly" ${analysisPeriod === 'yearly' ? 'selected' : ''}>รายปี</option>
-        </select>
-        <select id="analysis-month-select" class="analysis-select ${analysisPeriod !== 'monthly' ? 'hidden' : ''}">
-          ${Array.from({ length: 12 }, (_, i) => `
-            <option value="${i}" ${analysisMonth === i ? 'selected' : ''}>${new Date(2000, i).toLocaleString('th-TH', { month: 'long' })}</option>
-          `).join('')}
-        </select>
-      </div>
-
-      <div class="chart-container" style="height: 180px;">
-        <canvas id="spending-chart-canvas"></canvas>
-      </div>
-    </div>
-
-    <!-- Category Pie Card -->
-    <div class="card pie-chart-card">
-      <div class="section-eyebrow" style="margin-bottom: 4px;">สัดส่วนรายจ่าย</div>
-      <h3 class="card-title" style="font-size: 15px; margin-bottom: 14px;">แยกตามหมวดหมู่</h3>
-      <div style="height: 200px; width: 100%;">
-        <canvas id="category-pie-chart-canvas"></canvas>
-      </div>
-      <div id="pie-chart-legend" class="pie-chart-legend"></div>
-    </div>
-
-    <!-- Recent Transactions -->
-    <div style="margin-bottom: 8px;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-        <div>
-          <div class="section-eyebrow">${t('recentTransactions')}</div>
-          <h3 class="section-title" style="font-size: 16px; margin-top: 2px;">${t('recentTransactions')}</h3>
+      <div class="dashboard-grid-sidebar">
+        <!-- Recent Transactions -->
+        <div style="margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+            <div>
+              <div class="section-eyebrow">${t('recentTransactions')}</div>
+              <h3 class="section-title" style="font-size: 16px; margin-top: 2px;">${t('recentTransactions')}</h3>
+            </div>
+            <button id="view-all-transactions-btn" style="
+              color: var(--gold);
+              font-size: 12px;
+              font-weight: 700;
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              background: rgba(245,200,66,0.08);
+              border: 1px solid rgba(245,200,66,0.15);
+              padding: 6px 12px;
+              border-radius: 999px;
+              transition: all var(--transition);
+            ">${t('viewAll')} →</button>
+          </div>
+          <div id="recent-transactions-list"></div>
         </div>
-        <button id="view-all-transactions-btn" style="
-          color: var(--gold);
-          font-size: 12px;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          background: rgba(245,200,66,0.08);
-          border: 1px solid rgba(245,200,66,0.15);
-          padding: 6px 12px;
-          border-radius: 999px;
-          transition: all var(--transition);
-        ">${t('viewAll')} →</button>
       </div>
-      <div id="recent-transactions-list"></div>
     </div>
   `;
 

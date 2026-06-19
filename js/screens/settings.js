@@ -40,7 +40,7 @@ export function renderSettings(container) {
 
     <!-- ── General ───────────────────────────────── -->
     <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('generalSettings')}</div>
-    <div class="card" style="padding: 8px 14px; margin-bottom: 20px;">
+    <div class="card general-settings-card" style="padding: 8px 14px; margin-bottom: 20px;">
 
       <!-- Dark Mode -->
       ${settingRow(
@@ -85,41 +85,47 @@ export function renderSettings(container) {
       )}
     </div>
 
-    <!-- ── Currency ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('currency')}</div>
-    <div class="card" style="padding: 14px; margin-bottom: 20px;">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-        <div class="setting-icon-badge" style="background: rgba(52,211,153,0.15);">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--income);"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </div>
-        <div>
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('currency')}</div>
-          <div style="font-size: 11px; color: var(--text-secondary);">${t('chgcurtxt')}</div>
+    <!-- ── Currency & Tax Section (Responsive Grid) ── -->
+    <div class="section-eyebrow desktop-only" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">สกุลเงินและภาษี</div>
+    <div class="currency-tax-grid">
+      <div class="currency-col">
+        <div class="section-eyebrow mobile-only" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('currency')}</div>
+        <div class="card" style="padding: 14px; margin-bottom: 20px; height: calc(100% - 28px); display: flex; flex-direction: column; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <div class="setting-icon-badge" style="background: rgba(52,211,153,0.15);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--income);"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div>
+              <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('currency')}</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">${t('chgcurtxt')}</div>
+            </div>
+          </div>
+          <select id="setting-currency-select" class="form-control" style="font-size: 14px; margin-top: auto;">
+            ${currencyOptions}
+          </select>
         </div>
       </div>
-      <select id="setting-currency-select" class="form-control" style="font-size: 14px;">
-        ${currencyOptions}
-      </select>
-    </div>
 
-    <!-- ── Tax ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('taxSettings')}</div>
-    <div class="card" style="padding: 8px 14px; margin-bottom: 20px;">
-      <div id="tax-row-wrapper" style="cursor: pointer;">
-        ${settingRow(
-          `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--expense);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/><path d="M12 10h3"/></svg>`,
-          'rgba(248,113,113,0.15)',
-          t('taxSettings'),
-          t('taxSettingsDesc'),
-          `<button id="setting-tax-btn" style="
-            display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
-            background: rgba(245,200,66,0.08); color: var(--gold);
-            border: 1px solid rgba(245,200,66,0.22);
-            border-radius: 8px; cursor: pointer;
-            transition: all var(--transition);">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </button>`
-        )}
+      <div class="tax-col">
+        <div class="section-eyebrow mobile-only" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('taxSettings')}</div>
+        <div class="card" style="padding: 8px 14px; margin-bottom: 20px; height: calc(100% - 28px); display: flex; align-items: center;">
+          <div id="tax-row-wrapper" style="cursor: pointer; width: 100%;">
+            ${settingRow(
+              `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--expense);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/><path d="M12 10h3"/></svg>`,
+              'rgba(248,113,113,0.15)',
+              t('taxSettings'),
+              t('taxSettingsDesc'),
+              `<button id="setting-tax-btn" style="
+                display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+                background: rgba(245,200,66,0.08); color: var(--gold);
+                border: 1px solid rgba(245,200,66,0.22);
+                border-radius: 8px; cursor: pointer;
+                transition: all var(--transition);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              </button>`
+            )}
+          </div>
+        </div>
       </div>
     </div>
 
