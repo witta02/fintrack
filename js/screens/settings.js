@@ -107,74 +107,67 @@ export function renderSettings(container) {
 
     <!-- ── Tax ───────────────────────────────── -->
     <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('taxSettings')}</div>
-    <div class="card" style="padding: 14px; margin-bottom: 20px;">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-        <div class="setting-icon-badge" style="background: rgba(248,113,113,0.15);">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--expense);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/><path d="M12 10h3"/></svg>
-        </div>
-        <div>
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('taxSettings')}</div>
-          <div style="font-size: 11px; color: var(--text-secondary);">${t('taxSettingsDesc')}</div>
-        </div>
+    <div class="card" style="padding: 8px 14px; margin-bottom: 20px;">
+      <div id="tax-row-wrapper" style="cursor: pointer;">
+        ${settingRow(
+          `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--expense);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/><path d="M12 10h3"/></svg>`,
+          'rgba(248,113,113,0.15)',
+          t('taxSettings'),
+          t('taxSettingsDesc'),
+          `<button id="setting-tax-btn" style="
+            display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+            background: rgba(245,200,66,0.08); color: var(--gold);
+            border: 1px solid rgba(245,200,66,0.22);
+            border-radius: 8px; cursor: pointer;
+            transition: all var(--transition);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>`
+        )}
       </div>
-      <button id="setting-tax-btn" style="
-        width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-        background: rgba(245,200,66,0.08); color: var(--gold);
-        border: 1px solid rgba(245,200,66,0.22); padding: 11px;
-        border-radius: 12px; font-size: 13px; font-weight: 700;
-        transition: all var(--transition);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        ${t('manageTaxDeductions')}
-      </button>
     </div>
 
     <!-- ── Data Transfer ───────────────────────────────── -->
     <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px;">${t('dataTransferTitle')}</div>
-    <div class="card" style="
-      padding: 18px 16px;
-      margin-bottom: 20px;
-      border-color: rgba(124,92,252,0.25);
-      background: linear-gradient(135deg, rgba(124,92,252,0.06), var(--card));
-    ">
-      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.65;">${t('dataTransferDesc')}</p>
-      
-      <!-- Option 1: 5-Digit Cloud Code -->
-      <div style="margin-bottom: 18px;">
-        <h4 style="font-size: 13px; font-weight: 700; color: #10b981; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.42-1.89-1.78-3.5-3.5-3.5a5.5 5.5 0 0 0-5.5 5.5c0 .34.02.68.06 1A4.5 4.5 0 0 0 7.5 19Z"/>
-          </svg>
-          ${t('cloudSyncSectionTitle')}
-        </h4>
-        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('cloudSyncSectionDesc')}</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <button id="data-export-cloud-btn" class="btn-primary" style="
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            background: linear-gradient(135deg, #10b981, #059669); color: #fff;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); border: none;
-            padding: 12px 10px; border-radius: 12px;
-            font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-            ${t('exportCloudBtn')}
-          </button>
-          <button id="data-import-cloud-btn" style="
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            background: rgba(16,185,129,0.08); border: 1.5px solid rgba(16,185,129,0.22);
-            color: #34d399; padding: 12px 10px; border-radius: 12px;
-            font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            ${t('importCloudBtn')}
-          </button>
+    <div class="card" style="padding: 14px; margin-bottom: 20px;">
+      ${settingRow(
+        `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #34d399;"><path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.42-1.89-1.78-3.5-3.5-3.5a5.5 5.5 0 0 0-5.5 5.5c0 .34.02.68.06 1A4.5 4.5 0 0 0 7.5 19Z"/></svg>`,
+        'rgba(16,185,129,0.15)',
+        t('dataTransferTitle'),
+        t('dataTransferDesc'),
+        '',
+        `
+        <div style="margin-top: 14px;">
+          <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('cloudSyncSectionDesc')}</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button id="data-export-cloud-btn" class="btn-primary" style="
+              display: flex; align-items: center; justify-content: center; gap: 6px;
+              background: linear-gradient(135deg, #10b981, #059669); color: #fff;
+              box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); border: none;
+              padding: 11px 10px; border-radius: 12px;
+              font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              ${t('exportCloudBtn')}
+            </button>
+            <button id="data-import-cloud-btn" style="
+              display: flex; align-items: center; justify-content: center; gap: 6px;
+              background: rgba(16,185,129,0.08); border: 1.5px solid rgba(16,185,129,0.22);
+              color: #34d399; padding: 11px 10px; border-radius: 12px;
+              font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              ${t('importCloudBtn')}
+            </button>
+          </div>
         </div>
-      </div>
+        `
+      )}
     </div>
 
     <!-- ── Notifications ───────────────────────────────── -->
@@ -297,7 +290,7 @@ function setupEventListeners(container) {
     }
   });
 
-  container.querySelector('#setting-tax-btn').addEventListener('click', () => {
+  container.querySelector('#tax-row-wrapper').addEventListener('click', () => {
     showTaxSettings(container);
   });
 
