@@ -8,6 +8,19 @@ let isHost = false;
 let syncCode = null;
 let onStatusChange = null;
 let isApplyingRemoteUpdate = false;
+let reconnectTimer = null;
+
+// Helper to schedule client-side reconnection attempts
+function scheduleReconnect(code) {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    const config = JSON.parse(localStorage.getItem('fintrack_sync_config') || '{}');
+    if (config.role === 'client' && config.code === code && (!activeConnection || !activeConnection.open)) {
+      syncHelper.connectToSession(code, false); // false = background sync, no error popups
+    }
+  }, 10000);
+}
 
 // Merge helper: deduplicates transactions and rules by ID, merges settings
 function mergeStates(stateA, stateB) {
@@ -54,27 +67,45 @@ export const syncHelper = {
     return syncCode;
   },
 
+  // Auto-connect on startup if configured
+  autoConnect() {
+    try {
+      const configStr = localStorage.getItem('fintrack_sync_config');
+      if (!configStr) return;
+      const config = JSON.parse(configStr);
+      if (config.role === 'host' && config.code) {
+        this.hostSession(config.code, false);
+      } else if (config.role === 'client' && config.code) {
+        this.connectToSession(config.code, false);
+      }
+    } catch (e) {
+      console.error('Auto-connect parse failed:', e);
+    }
+  },
+
   // Host a session
-  hostSession() {
-    this.disconnect();
+  hostSession(forcedCode = null, isManual = false) {
+    this.disconnect(false); // keep sync config during restart
     isHost = true;
 
-    // Generate random 5-digit code
-    const code = Math.floor(10000 + Math.random() * 90000).toString();
+    // Generate random 5-digit code if not forced
+    const code = forcedCode || Math.floor(10000 + Math.random() * 90000).toString();
     syncCode = code;
 
-    const peerId = `fintrack-sync-${code}`;
+    localStorage.setItem('fintrack_sync_config', JSON.stringify({ role: 'host', code }));
     
     if (typeof Peer === 'undefined') {
-      alerts.error(
-        store.settings.language === 'en' ? 'P2P Library Error' : 'เกิดข้อผิดพลาดในการโหลดตัวซิงค์',
-        store.settings.language === 'en' ? 'PeerJS library not loaded yet.' : 'ไม่พบไลบรารีสำหรับซิงค์ข้อมูล กรุณาเชื่อมต่ออินเทอร์เน็ต'
-      );
+      if (isManual) {
+        alerts.error(
+          store.settings.language === 'en' ? 'P2P Library Error' : 'เกิดข้อผิดพลาดในการโหลดตัวซิงค์',
+          store.settings.language === 'en' ? 'PeerJS library not loaded yet.' : 'ไม่พบไลบรารีสำหรับซิงค์ข้อมูล กรุณาเชื่อมต่ออินเทอร์เน็ต'
+        );
+      }
       return;
     }
 
     try {
-      peer = new Peer(peerId);
+      peer = new Peer(`fintrack-sync-${code}`);
 
       peer.on('open', (id) => {
         if (onStatusChange) onStatusChange('hosting', code);
@@ -86,31 +117,46 @@ export const syncHelper = {
 
       peer.on('error', (err) => {
         console.error('PeerJS error:', err);
+        this.disconnect(false);
         if (err.type === 'unavailable-id') {
-          // Retry generating a new code if unavailable
-          this.hostSession();
+          // Retry generating if manual/automatic conflict occurs
+          if (!forcedCode) {
+            this.hostSession(null, isManual);
+          }
         } else {
-          alerts.error('Sync Error', err.message);
-          this.disconnect();
+          if (isManual) {
+            alerts.error('Sync Error', err.message);
+          }
+          // Retry hosting in 10s silently
+          setTimeout(() => {
+            const config = JSON.parse(localStorage.getItem('fintrack_sync_config') || '{}');
+            if (config.role === 'host' && config.code === code) {
+              this.hostSession(code, false);
+            }
+          }, 10000);
         }
       });
     } catch (e) {
       console.error('Peer creation failed:', e);
-      this.disconnect();
+      this.disconnect(false);
     }
   },
 
   // Connect to an existing session
-  connectToSession(code) {
-    this.disconnect();
+  connectToSession(code, isManual = false) {
+    this.disconnect(false);
     isHost = false;
     syncCode = code;
 
+    localStorage.setItem('fintrack_sync_config', JSON.stringify({ role: 'client', code }));
+
     if (typeof Peer === 'undefined') {
-      alerts.error(
-        store.settings.language === 'en' ? 'P2P Library Error' : 'เกิดข้อผิดพลาดในการโหลดตัวซิงค์',
-        store.settings.language === 'en' ? 'PeerJS library not loaded yet.' : 'ไม่พบไลบรารีสำหรับซิงค์ข้อมูล กรุณาเชื่อมต่ออินเทอร์เน็ต'
-      );
+      if (isManual) {
+        alerts.error(
+          store.settings.language === 'en' ? 'P2P Library Error' : 'เกิดข้อผิดพลาดในการโหลดตัวซิงค์',
+          store.settings.language === 'en' ? 'PeerJS library not loaded yet.' : 'ไม่พบไลบรารีสำหรับซิงค์ข้อมูล กรุณาเชื่อมต่ออินเทอร์เน็ต'
+        );
+      }
       return;
     }
 
@@ -126,12 +172,16 @@ export const syncHelper = {
 
       peer.on('error', (err) => {
         console.error('PeerJS connector error:', err);
-        alerts.error('Sync Connection Error', err.message);
-        this.disconnect();
+        if (isManual) {
+          alerts.error('Sync Connection Error', err.message);
+        }
+        this.disconnect(false);
+        scheduleReconnect(code);
       });
     } catch (e) {
       console.error('Peer creation failed:', e);
-      this.disconnect();
+      this.disconnect(false);
+      scheduleReconnect(code);
     }
   },
 
@@ -217,17 +267,28 @@ export const syncHelper = {
     });
 
     conn.on('close', () => {
-      this.disconnect();
+      this.disconnect(false);
+      const config = JSON.parse(localStorage.getItem('fintrack_sync_config') || '{}');
+      if (config.role === 'client' && config.code) {
+        scheduleReconnect(config.code);
+      }
     });
 
     conn.on('error', (err) => {
       console.error('Connection data error:', err);
-      this.disconnect();
+      this.disconnect(false);
     });
   },
 
   // Disconnect active peers
-  disconnect() {
+  disconnect(clearConfig = true) {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+    if (clearConfig) {
+      localStorage.removeItem('fintrack_sync_config');
+    }
     if (activeConnection) {
       try { activeConnection.close(); } catch(e) {}
       activeConnection = null;
@@ -238,7 +299,16 @@ export const syncHelper = {
     }
     isHost = false;
     syncCode = null;
-    if (onStatusChange) onStatusChange('idle');
+    if (onStatusChange) {
+      const config = JSON.parse(localStorage.getItem('fintrack_sync_config') || '{}');
+      if (!clearConfig && config.role === 'client') {
+        onStatusChange('connecting');
+      } else if (!clearConfig && config.role === 'host') {
+        onStatusChange('hosting', config.code);
+      } else {
+        onStatusChange('idle');
+      }
+    }
   },
 
   // Broadcast state changes

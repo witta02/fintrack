@@ -344,9 +344,9 @@ function setupEventListeners(container) {
 
   hostBtn.addEventListener('click', () => {
     if (hostBtn.textContent.includes('Cancel') || hostBtn.textContent.includes('ยกเลิก')) {
-      syncHelper.disconnect();
+      syncHelper.disconnect(true);
     } else {
-      syncHelper.hostSession();
+      syncHelper.hostSession(null, true);
     }
   });
 
@@ -359,11 +359,11 @@ function setupEventListeners(container) {
       );
       return;
     }
-    syncHelper.connectToSession(code);
+    syncHelper.connectToSession(code, true);
   });
 
   disconnectBtn.addEventListener('click', () => {
-    syncHelper.disconnect();
+    syncHelper.disconnect(true);
   });
 
   container.querySelector('#data-export-btn').addEventListener('click', () => exportData());

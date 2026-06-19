@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize the store
   store.init();
 
+  // Auto-connect P2P sync if previously configured
+  syncHelper.autoConnect();
+
   // Initialize the router
   router.init();
   updateStaticLabels();
