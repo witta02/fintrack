@@ -233,7 +233,7 @@ export function renderSettings(container) {
     <!-- Footer -->
     <div style="text-align: center; padding: 8px 0 4px; display: flex; flex-direction: column; gap: 4px;">
       <div style="font-family: var(--font-heading); font-weight: 800; font-size: 14px; background: linear-gradient(135deg, var(--gold-light), var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FinTrack</div>
-      <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;">Version 2.5.5 · Premium Edition</div>
+      <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;">Version 2.5.5</div>
     </div>
   `;
 

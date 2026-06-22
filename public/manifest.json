@@ -1,0 +1,56 @@
+{
+  "name": "FinTrack — วางแผนและจัดการเงิน",
+  "short_name": "FinTrack",
+  "description": "วางแผนและจัดการเงินแบบออฟไลน์ พรีเมียม",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060a14",
+  "theme_color": "#ffb800",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "เพิ่มรายการด่วน",
+      "short_name": "เพิ่มรายการ",
+      "description": "บันทึกรายรับหรือรายจ่ายใหม่อย่างรวดเร็ว",
+      "url": "/?screen=addTransaction",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "แชร์ค่าใช้จ่าย (Split Bill)",
+      "short_name": "แบ่งจ่าย",
+      "description": "คำนวณและหารค่าใช้จ่ายกับเพื่อนฝูง",
+      "url": "/?screen=splitBill",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "วางแผนการเงิน (Planner)",
+      "short_name": "วางแผน",
+      "description": "ดูการคำนวณดอกเบี้ยและแผนการเกษียณ",
+      "url": "/?screen=planner",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

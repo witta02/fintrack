@@ -1786,3 +1786,146 @@ input:focus, select:focus, textarea:focus {
     height: 100% !important;
   }
 }
+
+/* --- FinTrack Home Screen Widget Styles --- */
+.fintrack-home-widget {
+  background: linear-gradient(135deg, #FFB800 0%, #FF8F00 100%);
+  color: #060a14;
+  border-radius: 20px;
+  padding: 16px 20px;
+  margin: 10px 0 24px 0;
+  box-shadow: 0 8px 30px rgba(255, 184, 0, 0.18);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.fintrack-home-widget::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 150px;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.fintrack-home-widget .widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fintrack-home-widget .widget-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fintrack-home-widget .widget-logo {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.fintrack-home-widget .widget-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  opacity: 0.85;
+}
+
+.fintrack-home-widget .widget-tag {
+  font-size: 9px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 2px 6px;
+  border-radius: 99px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.fintrack-home-widget .widget-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fintrack-home-widget .widget-stat-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.fintrack-home-widget .widget-stat-label {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.fintrack-home-widget .widget-stat-value {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.fintrack-home-widget .widget-row {
+  display: flex;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+.fintrack-home-widget .widget-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.fintrack-home-widget .widget-mini-label {
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.fintrack-home-widget .widget-mini-val {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.fintrack-home-widget .widget-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.fintrack-home-widget .widget-action-btn {
+  flex: 1;
+  background: #060a14;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.fintrack-home-widget .widget-action-btn:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+
+.fintrack-home-widget .widget-action-btn:active {
+  transform: translateY(0);
+}

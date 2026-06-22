@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
   router.init();
   updateStaticLabels();
 
+  // Check URL query parameters for PWA shortcut/deep link navigation
+  const urlParams = new URLSearchParams(window.location.search);
+  const screenParam = urlParams.get('screen');
+
   const splash = document.getElementById('splash-screen');
   const app = document.getElementById('app');
 
@@ -43,6 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (app) {
       app.classList.remove('hidden');
       console.log('FinTrack: App Ready');
+      // Navigate to shortcut screen if specified
+      if (screenParam) {
+        router.navigate(screenParam);
+      }
     }
   }, 500);
 });

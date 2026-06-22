@@ -18,7 +18,6 @@ export function renderDashboard(container) {
       <div class="screen-header" style="padding-bottom: 18px; margin-bottom: 0;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <h1 class="brand-title shimmer-text desktop-hide" style="font-size: 26px; font-weight: 900; letter-spacing: -1px; margin-bottom: 0;">FinTrack</h1>
-          <span class="premium-badge desktop-hide">PRO</span>
           <h1 class="screen-title-desktop desktop-only" style="font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin-bottom: 0;">ภาพรวม</h1>
         </div>
         <button id="theme-toggle-btn" class="icon-btn mobile-only" title="Toggle Theme">
@@ -37,6 +36,48 @@ export function renderDashboard(container) {
         <button class="period-tab ${activePeriod === 'monthly' ? 'active' : ''}" data-period="monthly">${t('dashboardMonth')}</button>
         <button class="period-tab ${activePeriod === 'yearly' ? 'active' : ''}" data-period="yearly">${t('dashboardYear')}</button>
         <button class="period-tab ${activePeriod === 'all' ? 'active' : ''}" data-period="all">${t('dashboardAll')}</button>
+      </div>
+    </div>
+
+    <!-- FinTrack Mobile Home Widget -->
+    <div class="fintrack-home-widget">
+      <div class="widget-header">
+        <div class="widget-brand">
+          <svg viewBox="0 0 100 100" class="widget-logo" style="width: 20px; height: 20px; color: #060a14; fill: currentColor;">
+            <!-- Custom vector representation of our yellow/black wallet icon -->
+            <path d="M20,20 h40 a10,10 0 0,1 10,10 v10 a10,10 0 0,0 -10,10 v20 a10,10 0 0,0 10,10 v10 a10,10 0 0,1 -10,10 h-40 a10,10 0 0,1 -10,-10 v-60 a10,10 0 0,1 10,-10 Z" />
+            <rect x="55" y="35" width="30" height="30" rx="8" />
+            <rect x="66" y="46" width="8" height="8" rx="2" fill="#ffb800" />
+          </svg>
+          <span class="widget-title">FinTrack Widget</span>
+        </div>
+        <span class="widget-tag">Home Widget</span>
+      </div>
+      <div class="widget-body">
+        <div class="widget-stat-group">
+          <span class="widget-stat-label">ยอดคงเหลือรวมสุทธิ</span>
+          <span class="widget-stat-value" id="widget-balance">฿0.00</span>
+        </div>
+        <div class="widget-row">
+          <div class="widget-col">
+            <span class="widget-mini-label">รายรับเดือนนี้</span>
+            <span class="widget-mini-val" id="widget-income">฿0.00</span>
+          </div>
+          <div class="widget-col">
+            <span class="widget-mini-label">รายจ่ายเดือนนี้</span>
+            <span class="widget-mini-val" id="widget-expense">฿0.00</span>
+          </div>
+        </div>
+      </div>
+      <div class="widget-actions">
+        <button class="widget-action-btn" data-screen-target="addTransaction">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          บันทึกด่วน
+        </button>
+        <button class="widget-action-btn" data-screen-target="splitBill">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          แบ่งจ่าย
+        </button>
       </div>
     </div>
 
@@ -308,6 +349,14 @@ function updateUI(container) {
   container.querySelector('#card-balance').textContent = formatVal(balance);
   container.querySelector('#card-income').textContent = formatVal(income);
   container.querySelector('#card-expense').textContent = formatVal(expense);
+
+  // Update PWA Home Screen Widget data
+  const widgetBalance = container.querySelector('#widget-balance');
+  const widgetIncome = container.querySelector('#widget-income');
+  const widgetExpense = container.querySelector('#widget-expense');
+  if (widgetBalance) widgetBalance.textContent = formatVal(metrics.totalBalance);
+  if (widgetIncome) widgetIncome.textContent = formatVal(metrics.monthlyIncome);
+  if (widgetExpense) widgetExpense.textContent = formatVal(metrics.monthlyExpense);
 
   // Tax estimate
   const yearlyIncomeInTHB = store.settings.selectedCurrency === 'THB'
