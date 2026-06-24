@@ -662,8 +662,13 @@ export async function importFromCloud() {
     // Check if it's already unencrypted JSON (backward compatibility)
     if (decodedRaw.startsWith('{') || decodedRaw.startsWith('[')) {
       try {
-        payload = JSON.parse(decodedRaw);
-      } catch (_) {}
+        const decodedJson = decodeURIComponent(escape(decodedRaw));
+        payload = JSON.parse(decodedJson);
+      } catch (_) {
+        try {
+          payload = JSON.parse(decodedRaw);
+        } catch (__) {}
+      }
     }
 
     if (!payload) {
