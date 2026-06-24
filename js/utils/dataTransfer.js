@@ -516,8 +516,13 @@ export async function exportToCloud() {
             : 'รหัสสำรองข้อมูลชั่วคราว 5 หลักของคุณคือ:'
           }
         </p>
-        <div style="font-size:32px; font-family:monospace; font-weight:800; color:var(--gold); letter-spacing:4px; margin-bottom:16px; background:${isDark ? '#1C2128' : '#F9FAFB'}; padding:12px; border-radius:10px; border:1px solid ${isDark ? '#374151' : '#E5E7EB'};">
-          ${code}
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px;">
+          <div style="font-size:32px; font-family:monospace; font-weight:800; color:var(--gold); letter-spacing:4px; background:${isDark ? '#1C2128' : '#F9FAFB'}; padding:12px; border-radius:10px; border:1px solid ${isDark ? '#374151' : '#E5E7EB'}; flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; height: 60px; box-sizing: border-box;">
+            ${code}
+          </div>
+          <button id="copy-sync-code-btn" style="background: rgba(255, 184, 0, 0.1); border: 1.5px solid rgba(255, 184, 0, 0.22); color: var(--gold); height: 60px; width: 60px; padding: 0; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="${lang === 'en' ? 'Copy Code' : 'คัดลอกรหัส'}">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          </button>
         </div>
         <p style="font-size:11px; color:#ef4444; line-height:1.5;">
           ${lang === 'en'
@@ -530,6 +535,28 @@ export async function exportToCloud() {
       confirmButtonText: lang === 'en' ? 'Done' : 'เสร็จสิ้น',
       background: isDark ? '#161B22' : '#FFFFFF',
       color: isDark ? '#F9FAFB' : '#1F2937',
+      didOpen: () => {
+        const btn = document.getElementById('copy-sync-code-btn');
+        if (btn) {
+          btn.addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(code);
+              btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+              btn.style.background = 'rgba(52, 211, 153, 0.15)';
+              btn.style.borderColor = 'rgba(52, 211, 153, 0.3)';
+              btn.style.color = '#34d399';
+              setTimeout(() => {
+                btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`;
+                btn.style.background = 'rgba(255, 184, 0, 0.1)';
+                btn.style.borderColor = 'rgba(255, 184, 0, 0.22)';
+                btn.style.color = 'var(--gold)';
+              }, 2000);
+            } catch (err) {
+              console.error('Failed to copy sync code:', err);
+            }
+          });
+        }
+      }
     });
 
   } catch (err) {
