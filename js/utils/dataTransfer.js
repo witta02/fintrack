@@ -6,6 +6,14 @@ import Swal from 'sweetalert2';
 const FINTRACK_VERSION = '1.0';
 const FILE_EXTENSION = '.fintrack';
 
+function xorCipher(text, key) {
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  }
+  return result;
+}
+
 // ─── EXPORT ────────────────────────────────────────────────────────────────
 
 /**
@@ -486,7 +494,9 @@ export async function exportToCloud() {
 
     const compactPayload = deflateToCompact(payload);
     const json = JSON.stringify(compactPayload);
-    const base64Text = btoa(unescape(encodeURIComponent(json)));
+    const binaryString = unescape(encodeURIComponent(json));
+    const encrypted = xorCipher(binaryString, code);
+    const base64Text = btoa(encrypted);
 
     // Generate random 5-digit code
     const code = Math.floor(10000 + Math.random() * 90000).toString();
@@ -646,7 +656,9 @@ export async function importFromCloud() {
     }
 
     const cleanedBase64 = base64Text.trim().replace(/\s/g, '');
-    const decodedJson = decodeURIComponent(escape(atob(cleanedBase64)));
+    const encrypted = atob(cleanedBase64);
+    const decrypted = xorCipher(encrypted, code);
+    const decodedJson = decodeURIComponent(escape(decrypted));
     let payload = JSON.parse(decodedJson);
 
     // If compact format, inflate

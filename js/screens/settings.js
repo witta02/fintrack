@@ -140,6 +140,13 @@ export function renderSettings(container) {
         '',
         `
         <div style="margin-top: 6px;">
+          <div style="background: rgba(248,113,113,0.07); border: 1px dashed rgba(248,113,113,0.3); color: var(--expense); padding: 12px; border-radius: 12px; font-size: 11px; margin-bottom: 12px; line-height: 1.6; display: flex; align-items: flex-start; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-top: 1px; flex-shrink: 0;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div>
+              <strong style="font-weight: 700; color: var(--expense); display: block; margin-bottom: 2px;">${t('dataLossWarningTitle')}</strong>
+              ${t('dataLossWarningDesc')}
+            </div>
+          </div>
           <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('cloudSyncSectionDesc')}</p>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <button id="data-export-cloud-btn" class="btn-primary" style="

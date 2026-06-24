@@ -121,6 +121,8 @@ const dictionary = {
     cloudSyncSectionDesc: 'นำรหัส 5 หลักไปป้อนในอีกเครื่องเพื่อดึงข้อมูลโลด!',
     exportCloudBtn: 'เริ่มโคลนผ่านรหัส 5 หลัก',
     importCloudBtn: 'ดึงข้อมูลผ่านรหัส 5 หลัก',
+    dataLossWarningTitle: 'คำเตือนความปลอดภัยของข้อมูล (Data Loss Risk)',
+    dataLossWarningDesc: 'ข้อมูลทั้งหมดจะถูกบันทึกอยู่ในเบราว์เซอร์นี้เท่านั้น (Offline) หากท่านทำการล้างประวัติการใช้งานหรือแคชของเบราว์เซอร์ ข้อมูลของคุณจะถูกลบถาวรทันที โปรดคลิกดาวน์โหลดไฟล์สำรอง (.json) เก็บรักษาไว้สม่ำเสมอ',
   },
   en: {
     emptyrecur: "Still empty",
@@ -244,6 +246,8 @@ const dictionary = {
     cloudSyncSectionDesc: 'Enter this code on another device to pull and merge the data.',
     exportCloudBtn: 'Start Clone by 5-Digit Code',
     importCloudBtn: 'Pull by 5-Digit Code',
+    dataLossWarningTitle: 'Data Security Warning',
+    dataLossWarningDesc: 'All data is saved locally in this browser (Offline). Clearing browser history, cookies, or cache will permanently erase your financial history. Please download backup files (.json) regularly to secure your data.',
   }
 };
 
