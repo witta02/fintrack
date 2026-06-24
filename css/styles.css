@@ -649,13 +649,14 @@ input:focus, select:focus, textarea:focus {
 }
 .period-tab {
   flex: 1;
-  padding: 9px 4px;
+  padding: 9px 16px;
   text-align: center;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
   border-radius: 12px;
   transition: all var(--transition);
+  white-space: nowrap;
 }
 .period-tab:hover { color: var(--text-secondary); background: var(--surface-hover); }
 .period-tab.active {
