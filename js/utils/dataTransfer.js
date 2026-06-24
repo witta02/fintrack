@@ -492,14 +492,14 @@ export async function exportToCloud() {
       },
     };
 
+    // Generate random 5-digit code
+    const code = Math.floor(10000 + Math.random() * 90000).toString();
+
     const compactPayload = deflateToCompact(payload);
     const json = JSON.stringify(compactPayload);
     const binaryString = unescape(encodeURIComponent(json));
     const encrypted = xorCipher(binaryString, code);
     const base64Text = btoa(encrypted);
-
-    // Generate random 5-digit code
-    const code = Math.floor(10000 + Math.random() * 90000).toString();
 
     // Upload to ntfy topic as an attachment: fintrack-cloud-sync-<code>
     const response = await fetch(`https://ntfy.sh/fintrack-cloud-sync-${code}`, {
