@@ -656,10 +656,22 @@ export async function importFromCloud() {
     }
 
     const cleanedBase64 = base64Text.trim().replace(/\s/g, '');
-    const encrypted = atob(cleanedBase64);
-    const decrypted = xorCipher(encrypted, code);
-    const decodedJson = decodeURIComponent(escape(decrypted));
-    let payload = JSON.parse(decodedJson);
+    const decodedRaw = atob(cleanedBase64);
+    let payload;
+
+    // Check if it's already unencrypted JSON (backward compatibility)
+    if (decodedRaw.startsWith('{') || decodedRaw.startsWith('[')) {
+      try {
+        payload = JSON.parse(decodedRaw);
+      } catch (_) {}
+    }
+
+    if (!payload) {
+      // Otherwise, decrypt it
+      const decrypted = xorCipher(decodedRaw, code);
+      const decodedJson = decodeURIComponent(escape(decrypted));
+      payload = JSON.parse(decodedJson);
+    }
 
     // If compact format, inflate
     if (payload && payload.ft === 1) {
