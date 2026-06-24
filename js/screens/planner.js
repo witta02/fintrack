@@ -46,7 +46,7 @@ export function renderPlanner(container) {
         <div id="suggestion-chips-container" class="chat-suggestions">
           <button class="chat-suggestion" data-val="มีเงิน 5000 ใช้ 20 วัน">มีเงิน 5000 ใช้ 20 วัน</button>
           <button class="chat-suggestion" data-val="อยากเก็บ 30000 ใน 6 เดือน">เก็บ 30000 ใน 6 เดือน</button>
-          <button class="chat-suggestion" data-val="วิเคราะห์การเงิน">วิเคราะห์การเงิน</button>
+          <button class="chat-suggestion" data-val="ลงทุน 50000 ดอกเบี้ย 7% นาน 15 ปี">ลงทุน 50000 ดอกเบี้ย 7% นาน 15 ปี</button>
         </div>
         
         <form id="chat-form" class="chat-input-form">
@@ -249,6 +249,14 @@ function getOfflinePlannerResponse(input) {
   const symbol = store.getCurrencySymbol();
   const isEnglish = store.settings.language === 'en';
 
+  const interestPlan = parseCompoundInterest(input);
+  if (interestPlan) {
+    return {
+      response: formatInterestResponse(interestPlan, symbol, isEnglish),
+      transaction_to_add: null
+    };
+  }
+
   const plan = parseMoneyPlan(input);
   if (plan) {
     return {
@@ -450,6 +458,68 @@ ${needsTightBudget ? '\nThis is a tight budget, so avoid non-essential spending 
 • อาหาร/เดินทาง: ${symbol}${(daily * 0.25).toFixed(2)} ต่อวัน
 • กันพลาด: ${symbol}${(daily * 0.10).toFixed(2)} ต่อวัน
 ${needsTightBudget ? '\nงบนี้ค่อนข้างตึง ควรงดรายจ่ายที่ไม่จำเป็นจนกว่าจะครบระยะเวลานี้ค่ะ' : ''}`;
+}
+
+function parseCompoundInterest(input) {
+  const normalized = input.toLowerCase().replace(/,/g, '');
+  const isInterestQuery = /(ดอกเบี้ย|ทบต้น|compound|interest|ลงทุน|invest)/i.test(normalized);
+  if (!isInterestQuery) return null;
+
+  const numbers = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map(match => parseFloat(match[1]));
+  if (numbers.length < 2) return null;
+
+  // Assume numbers are: Principal, Rate (%), Years.
+  // If years is missing, default to 10.
+  const principal = numbers[0];
+  const rate = numbers[1];
+  const years = numbers[2] || 10;
+
+  return {
+    principal,
+    rate,
+    years
+  };
+}
+
+function formatInterestResponse(plan, symbol, isEnglish) {
+  const principal = plan.principal;
+  const rate = plan.rate;
+  const years = plan.years;
+  const inflationRate = 2.0; // average inflation
+
+  const total = principal * Math.pow(1 + rate / 100, years);
+  const interest = total - principal;
+  const realTotal = total / Math.pow(1 + inflationRate / 100, years);
+
+  if (isEnglish) {
+    return `📈 Compound Interest & Inflation Plan:
+• Principal: ${symbol}${principal.toLocaleString()}
+• Return Rate: ${rate}% p.a.
+• Duration: ${years} years
+
+Results:
+• Future Value: ${symbol}${total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
+• Interest Earned: ${symbol}${interest.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
+• Real Value (2% Inflation adjusted): ${symbol}${realTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
+
+Advisory Note:
+- Compound interest is the 8th wonder of the world.
+- Adjusted for a historical 2% inflation rate, the purchasing power of your future sum is equivalent to ${symbol}${realTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} today.`;
+  } else {
+    return `📈 แผนคำนวณดอกเบี้ยทบต้นและอัตราเงินเฟ้อ:
+• เงินต้น: ${symbol}${principal.toLocaleString()}
+• อัตราผลตอบแทน: ${rate}% ต่อปี
+• ระยะเวลา: ${years} ปี
+
+ผลลัพธ์:
+• มูลค่าในอนาคต: ${symbol}${total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
+• ดอกเบี้ยสะสม: ${symbol}${interest.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
+• มูลค่าที่แท้จริง (ปรับเงินเฟ้อ 2%): ${symbol}${realTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
+
+คำแนะนำทางการเงิน:
+- พลังของดอกเบี้ยทบต้นจะเติบโตแบบก้าวกระโดดเมื่อระยะเวลาเพิ่มขึ้น
+- เมื่อปรับลดมูลค่าด้วยเงินเฟ้อเฉลี่ย 2% ต่อปี เงินในอนาคตจำนวนนี้จะมีอำนาจซื้อเท่ากับเงิน ${symbol}${realTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} ในปัจจุบันค่ะ`;
+  }
 }
 
 function escapeHTML(str) {

@@ -13,7 +13,12 @@ export const store = {
     language: 'th',
     hasCompletedOnboarding: false,
     taxDeduction: 60000,
-    dataVersion: 2
+    taxPersonalDeduction: 60000,
+    taxSocialSecurity: 9000,
+    taxProvidentFund: 0,
+    taxMutualFunds: 0,
+    taxOtherDeductions: 0,
+    dataVersion: 4
   },
 
   subscribe(listener) {
@@ -36,9 +41,19 @@ export const store = {
     const savedTransactions = localStorage.getItem('fintrack_transactions');
     const savedRules = localStorage.getItem('fintrack_recurring_rules');
     const savedSettings = localStorage.getItem('fintrack_settings');
+    const savedNetWorth = localStorage.getItem('fintrack_net_worth');
 
     if (savedSettings) {
       this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
+    }
+
+    if (savedNetWorth) {
+      this.netWorth = JSON.parse(savedNetWorth);
+    } else {
+      this.netWorth = {
+        assets: { cash: 0, investments: 0, property: 0, other: 0 },
+        liabilities: { creditCard: 0, loans: 0, other: 0 }
+      };
     }
 
     if (savedTransactions) {
@@ -73,7 +88,7 @@ export const store = {
   },
 
   removeLegacyDemoData() {
-    if (this.settings.dataVersion >= 3) return;
+    if (this.settings.dataVersion >= 4) return;
 
     const demoTransactionIds = new Set([
       '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13',
@@ -86,7 +101,16 @@ export const store = {
 
     this.transactions = this.transactions.filter(t => !demoTransactionIds.has(String(t.id)));
     this.recurringRules = this.recurringRules.filter(r => !demoRuleIds.has(String(r.id)));
-    this.settings.dataVersion = 3;
+
+    if (this.settings.taxPersonalDeduction === undefined) {
+      this.settings.taxPersonalDeduction = this.settings.taxDeduction || 60000;
+      this.settings.taxSocialSecurity = 9000;
+      this.settings.taxProvidentFund = 0;
+      this.settings.taxMutualFunds = 0;
+      this.settings.taxOtherDeductions = 0;
+    }
+
+    this.settings.dataVersion = 4;
 
     if (beforeTransactions !== this.transactions.length || beforeRules !== this.recurringRules.length) {
       this.save();
@@ -100,6 +124,26 @@ export const store = {
     localStorage.setItem('fintrack_recurring_rules', JSON.stringify(this.recurringRules));
     localStorage.setItem('fintrack_settings', JSON.stringify(this.settings));
     this.notify();
+  },
+
+  saveNetWorth(assets, liabilities) {
+    this.netWorth = { assets, liabilities };
+    localStorage.setItem('fintrack_net_worth', JSON.stringify(this.netWorth));
+    this.notify();
+  },
+
+  getTotalAssets() {
+    if (!this.netWorth || !this.netWorth.assets) return 0;
+    return Object.values(this.netWorth.assets).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+  },
+
+  getTotalLiabilities() {
+    if (!this.netWorth || !this.netWorth.liabilities) return 0;
+    return Object.values(this.netWorth.liabilities).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+  },
+
+  getNetWorth() {
+    return this.getTotalAssets() - this.getTotalLiabilities();
   },
 
   // Seed standard Thai/Eng descriptions & categories
@@ -506,7 +550,16 @@ export const store = {
 
   // Thai tax calculation based on 2026 personal income tax rates
   calculateThaiTax(annualIncome) {
-    const netIncome = Math.max(0, annualIncome - (this.settings.taxDeduction || 60000));
+    const standardExpenseDeduction = Math.min(annualIncome * 0.5, 100000);
+    const personal = this.settings.taxPersonalDeduction !== undefined ? this.settings.taxPersonalDeduction : (this.settings.taxDeduction || 60000);
+    const ssf = this.settings.taxSocialSecurity || 0;
+    const pvd = this.settings.taxProvidentFund || 0;
+    const mf = this.settings.taxMutualFunds || 0;
+    const other = this.settings.taxOtherDeductions || 0;
+    
+    const totalDeductions = standardExpenseDeduction + personal + ssf + pvd + mf + other;
+    const netIncome = Math.max(0, annualIncome - totalDeductions);
+
     const taxBrackets = [
       { min: 0, max: 150000, rate: 0 },
       { min: 150001, max: 300000, rate: 0.05 },
@@ -530,8 +583,13 @@ export const store = {
     return calculatedTax;
   },
 
-  updateTaxDeduction(amount) {
-    this.settings.taxDeduction = parseFloat(amount) || 0;
+  updateTaxDeduction(personal, ssf, pvd, mf, other) {
+    this.settings.taxPersonalDeduction = parseFloat(personal) || 0;
+    this.settings.taxSocialSecurity = parseFloat(ssf) || 0;
+    this.settings.taxProvidentFund = parseFloat(pvd) || 0;
+    this.settings.taxMutualFunds = parseFloat(mf) || 0;
+    this.settings.taxOtherDeductions = parseFloat(other) || 0;
+    this.settings.taxDeduction = this.settings.taxPersonalDeduction;
     this.save();
   },
 

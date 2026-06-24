@@ -317,48 +317,108 @@ function setupEventListeners(container) {
 }
 
 function showTaxSettings(container) {
+  const lang = store.settings.language;
+  const s = store.settings;
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
+  
+  const getVal = (v, def) => v !== undefined ? v : def;
+  const personal = getVal(s.taxPersonalDeduction, s.taxDeduction || 60000);
+  const ssf = getVal(s.taxSocialSecurity, 9000);
+  const pvd = getVal(s.taxProvidentFund, 0);
+  const mf = getVal(s.taxMutualFunds, 0);
+  const other = getVal(s.taxOtherDeductions, 0);
+
   modal.innerHTML = `
-    <div class="modal-dialog">
+    <div class="modal-dialog" style="max-width: 460px; padding: 22px; text-align: left;">
       <div class="modal-header">
         <h3 class="modal-title">${t('taxSettingsTitle')}</h3>
         <button class="modal-close-btn">×</button>
       </div>
-      <div style="padding-top: 6px;">
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6;">
+      <div style="padding-top: 6px; max-height: 420px; overflow-y: auto; padding-right: 4px;">
+        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5; text-align: left;">
           ${t('taxSettingsContext')}
         </p>
-        <div class="form-group">
-          <label class="form-label">${t('annualDeduction')}</label>
-          <input type="number" id="tax-deduction-input" class="form-control" value="${store.settings.taxDeduction || 60000}" placeholder="e.g. 60000" />
-          <small style="display: block; margin-top: 6px; color: var(--text-secondary); font-size: 11px;">${t('personalDeductionHint')}</small>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === 'en' ? 'Personal Deduction (Standard)' : 'ค่าลดหย่อนส่วนบุคคล (ทั่วไป)'}</label>
+            <input type="number" id="tax-personal" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${personal}" placeholder="60000" />
+            <small style="color: var(--text-secondary); font-size: 9.5px; display: block; margin-top: 3px;">* ค่าลดหย่อนพื้นฐานสำหรับผู้เสียภาษีทุกคน (ปกติ 60,000 บาท)</small>
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === 'en' ? 'Social Security (Max 9,000)' : 'ประกันสังคม (สูงสุด 9,000)'}</label>
+            <input type="number" id="tax-ssf" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${ssf}" placeholder="9000" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === 'en' ? 'Provident Fund / Pension' : 'กองทุนสำรองเลี้ยงชีพ / กบข. / บำนาญ'}</label>
+            <input type="number" id="tax-pvd" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${pvd}" placeholder="0" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === 'en' ? 'Mutual Funds (SSF / RMF / ThaiESG)' : 'กองทุนลดหย่อนภาษี (SSF / RMF / ThaiESG)'}</label>
+            <input type="number" id="tax-mf" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${mf}" placeholder="0" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === 'en' ? 'Other Deductions (e.g. Life Insurance, Parents)' : 'ค่าลดหย่อนอื่น ๆ (เช่น เบี้ยประกันชีวิต, บิดามารดา)'}</label>
+            <input type="number" id="tax-other" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${other}" placeholder="0" />
+          </div>
         </div>
-        <div style="background: var(--surface); padding: 14px; border-radius: 14px; border: 1px solid var(--border); margin-top: 6px;">
-          <h4 style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--gold);">${t('taxKnowledge')}</h4>
-          <ul style="font-size: 11px; color: var(--text-secondary); padding-left: 16px; line-height: 1.7;">
-            <li>${t('taxStep1')}</li>
-            <li>${t('taxStep2')}</li>
-            <li>${t('taxStep3')}</li>
-          </ul>
+
+        <div style="background: rgba(255, 184, 0, 0.05); padding: 12px 14px; border-radius: 12px; border: 1.5px dashed rgba(255, 184, 0, 0.25); margin-top: 16px; display: flex; align-items: center; justify-content: space-between;">
+          <strong style="font-size: 12px; color: var(--gold);">${lang === 'en' ? 'Total Deductions:' : 'รวมลดหย่อนภาษีทั้งหมด:'}</strong>
+          <strong style="font-size: 15px; color: var(--gold);" id="tax-total-deduction-display">฿0.00</strong>
         </div>
       </div>
-      <div style="display: flex; gap: 10px; margin-top: 24px;">
-        <button class="modal-cancel-btn" style="flex:1; border:1px solid var(--border); padding:12px; border-radius:12px; color: var(--text-secondary); font-weight: 600;">${t('cancel')}</button>
-        <button class="btn-primary modal-save-btn" style="flex:1; padding:12px; border-radius:12px;">${t('save')}</button>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="modal-cancel-btn" style="flex:1; border:1px solid var(--border); padding:12px; border-radius:12px; color: var(--text-secondary); background: transparent; font-weight: 600; cursor: pointer;">${t('cancel')}</button>
+        <button class="btn-primary modal-save-btn" style="flex:1; padding:12px; border-radius:12px; font-weight: 700; cursor: pointer;">${t('save')}</button>
       </div>
     </div>
   `;
 
   document.body.appendChild(modal);
+
+  const calculateTotal = () => {
+    const personalVal = parseFloat(modal.querySelector('#tax-personal').value) || 0;
+    const ssfVal = parseFloat(modal.querySelector('#tax-ssf').value) || 0;
+    const pvdVal = parseFloat(modal.querySelector('#tax-pvd').value) || 0;
+    const mfVal = parseFloat(modal.querySelector('#tax-mf').value) || 0;
+    const otherVal = parseFloat(modal.querySelector('#tax-other').value) || 0;
+    const total = personalVal + ssfVal + pvdVal + mfVal + otherVal;
+    
+    const totalDisplay = store.toDisplay(total);
+    modal.querySelector('#tax-total-deduction-display').textContent = 
+      `${store.getCurrencySymbol()}${totalDisplay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  // Bind real-time inputs calculation
+  modal.querySelectorAll('.tax-calc-input').forEach(inp => {
+    inp.addEventListener('input', calculateTotal);
+  });
+  calculateTotal();
+
   const close = () => document.body.removeChild(modal);
   modal.querySelector('.modal-close-btn').onclick = close;
   modal.querySelector('.modal-cancel-btn').onclick = close;
   modal.querySelector('.modal-save-btn').onclick = () => {
-    const val = modal.querySelector('#tax-deduction-input').value;
-    store.updateTaxDeduction(val);
+    const personalVal = parseFloat(modal.querySelector('#tax-personal').value) || 0;
+    const ssfVal = parseFloat(modal.querySelector('#tax-ssf').value) || 0;
+    const pvdVal = parseFloat(modal.querySelector('#tax-pvd').value) || 0;
+    const mfVal = parseFloat(modal.querySelector('#tax-mf').value) || 0;
+    const otherVal = parseFloat(modal.querySelector('#tax-other').value) || 0;
+
+    store.updateTaxDeduction(personalVal, ssfVal, pvdVal, mfVal, otherVal);
     close();
     alerts.success(t('taxSaveSuccess'));
+    // Reload dashboard to update tax calculation if screen is open
+    const currentScreen = document.querySelector('.nav-item.active');
+    if (currentScreen && currentScreen.getAttribute('data-screen') === 'dashboard') {
+      window.location.reload();
+    }
   };
 }
 

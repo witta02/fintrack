@@ -72,6 +72,23 @@ export function renderDashboard(container) {
       </div>
     </div>
 
+    <!-- Net Worth Card -->
+    <div class="card net-worth-card" id="net-worth-card-clickable" style="padding: 16px; margin-bottom: 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(255, 184, 0, 0.05), var(--card)); border: 1px solid var(--border); border-radius: 16px; transition: all var(--transition);">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div class="setting-icon-badge" style="background: rgba(255, 184, 0, 0.12); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--gold);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div style="text-align: left;">
+          <div style="font-size: 11.5px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">ความมั่งคั่งสุทธิ (Net Worth)</div>
+          <div style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin-top: 2px;" id="dashboard-net-worth">฿0.00</div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+        <div style="font-size: 10px; color: var(--income); font-weight: 600;" id="dashboard-net-assets">สินทรัพย์: ฿0.00</div>
+        <div style="font-size: 10px; color: var(--expense); font-weight: 600;" id="dashboard-net-liabilities">หนี้สิน: ฿0.00</div>
+      </div>
+    </div>
+
     <!-- Starter Guide -->
     <div id="starter-guide" class="starter-guide hidden">
       <div class="starter-guide-header">
@@ -279,6 +296,11 @@ function setupEventListeners(container) {
   if (balanceCard) {
     balanceCard.addEventListener('click', () => showBalancePopup(container));
   }
+
+  const netWorthCard = container.querySelector('#net-worth-card-clickable');
+  if (netWorthCard) {
+    netWorthCard.addEventListener('click', () => showNetWorthModal(container));
+  }
 }
 
 function updateUI(container) {
@@ -316,6 +338,19 @@ function updateUI(container) {
   const taxAmountTHB = store.calculateThaiTax(yearlyIncomeInTHB);
   const taxAmountDisplay = store.toDisplay(taxAmountTHB);
   container.querySelector('#card-income-tax').textContent = `ประมาณการภาษี: ${formatVal(taxAmountDisplay)}`;
+
+  // Update Net Worth elements
+  const netWorth = store.getNetWorth();
+  const totalAssets = store.getTotalAssets();
+  const totalLiabilities = store.getTotalLiabilities();
+
+  const netWorthEl = container.querySelector('#dashboard-net-worth');
+  const assetsEl = container.querySelector('#dashboard-net-assets');
+  const liabilitiesEl = container.querySelector('#dashboard-net-liabilities');
+
+  if (netWorthEl) netWorthEl.textContent = formatVal(netWorth);
+  if (assetsEl) assetsEl.textContent = `${store.settings.language === 'en' ? 'Assets' : 'สินทรัพย์'}: ${formatVal(totalAssets)}`;
+  if (liabilitiesEl) liabilitiesEl.textContent = `${store.settings.language === 'en' ? 'Liabilities' : 'หนี้สิน'}: ${formatVal(totalLiabilities)}`;
 
   // Bar chart
   const canvas = container.querySelector('#spending-chart-canvas');
@@ -388,4 +423,107 @@ function updateUI(container) {
       listContainer.appendChild(tile);
     });
   }
+}
+
+function showNetWorthModal(container) {
+  const isDark = store.settings.isDarkMode;
+  const lang = store.settings.language;
+  const nw = store.netWorth || {
+    assets: { cash: 0, investments: 0, property: 0, other: 0 },
+    liabilities: { creditCard: 0, loans: 0, other: 0 }
+  };
+  const symbol = store.getCurrencySymbol();
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-dialog" style="max-width: 480px; padding: 22px;">
+      <div class="modal-header">
+        <h3 class="modal-title">${lang === 'en' ? 'Balance Sheet (Net Worth)' : 'งบดุลยภาพ (สินทรัพย์ & หนี้สิน)'}</h3>
+        <button class="modal-close-btn">×</button>
+      </div>
+      <div style="padding-top: 6px; display: flex; flex-direction: column; gap: 16px;">
+        <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.5; margin: 0; text-align: left;">
+          ${lang === 'en' 
+            ? 'Track your total net worth by logging your assets and liabilities. This data is saved locally.'
+            : 'บันทึกมูลค่าทรัพย์สินและหนี้สินทั้งหมดของคุณเพื่อคำนวณความมั่งคั่งสุทธิ ข้อมูลนี้จะถูกจัดเก็บในเครื่องอย่างปลอดภัย'}
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; text-align: left;">
+          <!-- Assets column -->
+          <div>
+            <h4 style="font-size: 13px; font-weight: 700; color: var(--income); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; margin-top: 0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              ${lang === 'en' ? 'Assets' : 'สินทรัพย์ (+)'}
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 10px; margin-bottom: 4px;">${lang === 'en' ? 'Cash & Bank' : 'เงินสดและเงินฝาก'}</label>
+                <input type="number" id="nw-asset-cash" class="form-control" style="font-size:12px; padding:8px 12px;" value="${nw.assets.cash || ''}" placeholder="0.00" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 10px; margin-bottom: 4px;">${lang === 'en' ? 'Investments' : 'หุ้น/กองทุน/ทองคำ'}</label>
+                <input type="number" id="nw-asset-investments" class="form-control" style="font-size:12px; padding:8px 12px;" value="${nw.assets.investments || ''}" placeholder="0.00" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 10px; margin-bottom: 4px;">${lang === 'en' ? 'Property & Vehicles' : 'บ้าน/ที่ดิน/รถยนต์'}</label>
+                <input type="number" id="nw-asset-property" class="form-control" style="font-size:12px; padding:8px 12px;" value="${nw.assets.property || ''}" placeholder="0.00" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 10px; margin-bottom: 4px;">${lang === 'en' ? 'Other Assets' : 'สินทรัพย์อื่น ๆ'}</label>
+                <input type="number" id="nw-asset-other" class="form-control" style="font-size:12px; padding:8px 12px;" value="${nw.assets.other || ''}" placeholder="0.00" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Liabilities column -->
+          <div>
+            <h4 style="font-size: 13px; font-weight: 700; color: var(--expense); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; margin-top: 0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              ${lang === 'en' ? 'Liabilities' : 'หนี้สิน (-)'}
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 10px; margin-bottom: 4px;">${lang === 'en' ? 'Credit Cards' : 'หนี้บัตรเครดิต'}</label>
+                <input type="number" id="nw-lia-credit" class="form-control" style="font-size:12px; padding:8px 12px;" value="${nw.liabilities.creditCard || ''}" placeholder="0.00" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 10px; margin-bottom: 4px;">${lang === 'en' ? 'Loans & Mortgages' : 'เงินกู้/หนี้บ้าน/หนี้รถ'}</label>
+                <input type="number" id="nw-lia-loans" class="form-control" style="font-size:12px; padding:8px 12px;" value="${nw.liabilities.loans || ''}" placeholder="0.00" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 10px; margin-bottom: 4px;">${lang === 'en' ? 'Other Debt' : 'หนี้สินอื่น ๆ'}</label>
+                <input type="number" id="nw-lia-other" class="form-control" style="font-size:12px; padding:8px 12px;" value="${nw.liabilities.other || ''}" placeholder="0.00" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 24px;">
+        <button class="modal-cancel-btn" style="flex:1; border:1px solid var(--border); padding:12px; border-radius:12px; color: var(--text-secondary); background: transparent; font-weight: 600; cursor: pointer;">${lang === 'en' ? 'Cancel' : 'ยกเลิก'}</button>
+        <button class="btn-primary modal-save-btn" style="flex:1; padding:12px; border-radius:12px; font-weight: 700; cursor: pointer;">${lang === 'en' ? 'Save' : 'บันทึก'}</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  const close = () => document.body.removeChild(modal);
+  modal.querySelector('.modal-close-btn').onclick = close;
+  modal.querySelector('.modal-cancel-btn').onclick = close;
+  modal.querySelector('.modal-save-btn').onclick = () => {
+    const assets = {
+      cash: parseFloat(modal.querySelector('#nw-asset-cash').value) || 0,
+      investments: parseFloat(modal.querySelector('#nw-asset-investments').value) || 0,
+      property: parseFloat(modal.querySelector('#nw-asset-property').value) || 0,
+      other: parseFloat(modal.querySelector('#nw-asset-other').value) || 0
+    };
+    const liabilities = {
+      creditCard: parseFloat(modal.querySelector('#nw-lia-credit').value) || 0,
+      loans: parseFloat(modal.querySelector('#nw-lia-loans').value) || 0,
+      other: parseFloat(modal.querySelector('#nw-lia-other').value) || 0
+    };
+    store.saveNetWorth(assets, liabilities);
+    close();
+    alerts.success(lang === 'en' ? 'Balance Sheet updated!' : 'อัปเดตงบดุลเรียบร้อยแล้ว!');
+  };
 }
