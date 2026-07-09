@@ -375,7 +375,15 @@ export const store = {
       await supabase.from('transactions').delete().eq('user_id', userId);
       await supabase.from('recurring_rules').delete().eq('user_id', userId);
       await supabase.from('settings').delete().eq('user_id', userId);
-      console.log('Cloud data deleted successfully for user:', userId);
+      
+      // Clear local data as well
+      this.transactions = [];
+      this.recurringRules = [];
+      localStorage.removeItem("fintrack_transactions");
+      localStorage.removeItem("fintrack_recurring_rules");
+      
+      console.log('Cloud and local data deleted successfully for user:', userId);
+      this.notify();
     } catch (err) {
       console.error('Error deleting cloud data:', err);
       throw err;
