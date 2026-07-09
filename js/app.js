@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Fast boot for better stability
+  // Hide splash screen after 800ms
   setTimeout(() => {
     if (splash) {
       splash.classList.add("fade-out");
@@ -71,12 +71,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (app) {
       app.classList.remove("hidden");
       console.log("FinTrack: App Ready");
-      // Navigate to shortcut screen if specified
       if (screenParam) {
         router.navigate(screenParam);
       }
     }
-  }, 500);
+  }, 800);
+
+  // Hard failsafe: force splash hidden after 3 seconds no matter what
+  setTimeout(() => {
+    if (splash) splash.style.display = "none";
+    if (app) app.classList.remove("hidden");
+  }, 3000);
 });
 
 export function updateStaticLabels() {
