@@ -1,5 +1,5 @@
 /* ============================================
-   FinTrack Web App — Design System v4.0
+   FinTrack Web App — Design System v2.70
    Premium Fintech Overhaul
    ============================================ */
 
@@ -1943,4 +1943,317 @@ input:focus, select:focus, textarea:focus {
 }
 @keyframes spin-loader {
   to { transform: rotate(360deg); }
+}
+
+/* ─── v2.70 UI Enhancements ────────────────────────────────────────────── */
+
+/* Improved card hover — gold shimmer border */
+.card:hover, .chart-card:hover {
+  border-color: rgba(245, 200, 66, 0.22);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.20),
+    0 0 0 1px rgba(245, 200, 66, 0.10),
+    0 1px 0 rgba(255,255,255,0.07) inset;
+}
+
+/* Richer transaction tile */
+.transaction-tile {
+  cursor: pointer;
+}
+.transaction-tile:hover {
+  border-color: rgba(245, 200, 66, 0.15) !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.18), 0 0 0 1px rgba(245,200,66,0.06);
+}
+
+/* Tile accent bar pulse on hover */
+.transaction-tile:hover::before {
+  opacity: 1;
+  width: 4px;
+}
+
+/* Nav item active pill indicator */
+.nav-item.active {
+  background: rgba(245, 200, 66, 0.12);
+  border-radius: 16px;
+}
+
+/* Smoother screen entry animation */
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(18px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Auth screen full premium redesign */
+.auth-page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  position: relative;
+}
+.auth-page-wrapper::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70vw 60vh at 20% 10%, rgba(245,200,66,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 60vw 70vh at 80% 90%, rgba(124,92,252,0.07) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.auth-card-wrapper {
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  z-index: 1;
+}
+.auth-logo-section {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.auth-logo-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--gold-light), var(--amber));
+  border-radius: 22px;
+  box-shadow: 0 8px 32px rgba(245, 200, 66, 0.35), 0 0 0 1px rgba(245,200,66,0.15);
+  animation: logoPulse 3s ease-in-out infinite;
+}
+.auth-brand-name {
+  font-family: var(--font-heading);
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.auth-brand-tagline {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.auth-form-card {
+  background: var(--card);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl);
+  padding: 32px 28px;
+  box-shadow:
+    0 24px 64px rgba(0,0,0,0.28),
+    0 0 0 1px rgba(245,200,66,0.06),
+    0 1px 0 rgba(255,255,255,0.08) inset;
+}
+.auth-mode-title {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+.auth-mode-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+.auth-input-group {
+  margin-bottom: 16px;
+}
+.auth-input-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 8px;
+}
+.auth-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--input-bg);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: var(--font);
+  transition: all var(--transition);
+  outline: none;
+}
+.auth-input:focus {
+  border-color: var(--gold);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+.auth-submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--amber));
+  color: #000;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 15px;
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(245,200,66,0.40);
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.auth-submit-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.14), transparent);
+  pointer-events: none;
+}
+.auth-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(245,200,66,0.55);
+}
+.auth-submit-btn:active { transform: scale(0.98); }
+.auth-submit-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+.auth-divider {
+  text-align: center;
+  margin: 20px 0 16px;
+  position: relative;
+}
+.auth-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+}
+.auth-divider span {
+  position: relative;
+  background: var(--card);
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.auth-toggle-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.auth-toggle-btn:hover {
+  background: var(--surface-hover);
+  border-color: rgba(245,200,66,0.25);
+}
+
+/* Dashboard greeting pill */
+.dashboard-greeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.greeting-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.user-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245,200,66,0.08);
+  border: 1px solid rgba(245,200,66,0.18);
+  border-radius: 999px;
+  padding: 4px 10px 4px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.user-pill-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold-light), var(--amber));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 900;
+  color: #000;
+}
+
+/* Improved balance amount — shimmer text */
+.balance-amount {
+  background: linear-gradient(135deg, #fff 30%, var(--gold-light) 70%, #fff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmerAmt 4s linear infinite;
+}
+@keyframes shimmerAmt {
+  to { background-position: 200% center; }
+}
+[data-theme="light"] .balance-amount {
+  background: none;
+  -webkit-text-fill-color: var(--balance-text);
+  animation: none;
+}
+
+/* Sidebar improvements */
+.sidebar {
+  box-shadow: 4px 0 32px rgba(0,0,0,0.18);
+}
+.sidebar-item {
+  position: relative;
+  overflow: hidden;
+}
+.sidebar-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(245,200,66,0.05), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+.sidebar-item:hover::after, .sidebar-item.active::after {
+  opacity: 1;
+}
+
+/* FAB pulse glow */
+.nav-add-btn {
+  animation: fabPulse 3s ease-in-out infinite;
+}
+@keyframes fabPulse {
+  0%, 100% { box-shadow: 0 6px 20px rgba(245,200,66,0.40), 0 2px 8px rgba(245,200,66,0.20); }
+  50% { box-shadow: 0 8px 28px rgba(245,200,66,0.60), 0 2px 8px rgba(245,200,66,0.30), 0 0 40px rgba(245,200,66,0.10); }
+}
+
+/* Settings profile card improvement */
+.profile-card-logged-in {
+  background: linear-gradient(135deg, rgba(245,200,66,0.06), var(--card));
+  border-color: rgba(245,200,66,0.18);
 }

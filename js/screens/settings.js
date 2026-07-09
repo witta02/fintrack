@@ -41,7 +41,7 @@ export function renderSettings(container) {
   container.innerHTML = `
     <div style="text-align: center; margin-bottom: 22px;">
       <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px;">${t("settingsTitle")}</h1>
-      <span class="premium-badge">v2.5.5</span>
+      <span class="premium-badge">v2.70</span>
     </div>
 
     <!-- ── General ───────────────────────────────── -->
@@ -244,7 +244,7 @@ export function renderSettings(container) {
     </div>
 
     <!-- Cloud Account & Sync -->
-    <div class="card" style="padding: 18px; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--card);">
+    <div class="card ${store.user ? 'profile-card-logged-in' : ''}" style="padding: 18px; margin-bottom: 20px; border-radius: 16px;">
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div class="setting-icon-badge" style="background: rgba(255, 184, 0, 0.12); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--gold);">
@@ -271,7 +271,7 @@ export function renderSettings(container) {
     <!-- Footer -->
     <div style="text-align: center; padding: 8px 0 4px; display: flex; flex-direction: column; gap: 4px;">
       <div style="font-family: var(--font-heading); font-weight: 800; font-size: 14px; background: linear-gradient(135deg, var(--gold-light), var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FinTrack</div>
-      <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;">Version 2.5.5</div>
+      <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;">Version 2.70</div>
     </div>
   `;
 

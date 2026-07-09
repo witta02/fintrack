@@ -15,22 +15,37 @@ let analysisMonth = new Date().getMonth();
 let analysisYear = new Date().getFullYear();
 
 export function renderDashboard(container) {
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'สวัสดีตอนเช้า 🌅';
+    if (h < 17) return 'สวัสดีตอนบ่าย ☀️';
+    if (h < 21) return 'สวัสดีตอนเย็น 🌆';
+    return 'สวัสดีตอนดึก 🌙';
+  })();
+  const userInitial = store.user ? store.user.email.charAt(0).toUpperCase() : null;
+
   container.innerHTML = `
     <!-- Dashboard Top Bar -->
     <div class="dashboard-top-bar">
       <div class="screen-header" style="padding-bottom: 18px; margin-bottom: 0;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <h1 class="brand-title shimmer-text desktop-hide" style="font-size: 26px; font-weight: 900; letter-spacing: -1px; margin-bottom: 0;">FinTrack</h1>
-          <h1 class="screen-title-desktop desktop-only" style="font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin-bottom: 0;">ภาพรวม</h1>
+          <div>
+            <h1 class="brand-title shimmer-text desktop-hide" style="font-size: 26px; font-weight: 900; letter-spacing: -1px; margin-bottom: 0;">FinTrack</h1>
+            <h1 class="screen-title-desktop desktop-only" style="font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin-bottom: 0;">ภาพรวม</h1>
+            <div class="greeting-text desktop-hide" style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${greeting}</div>
+          </div>
         </div>
-        <button id="theme-toggle-btn" class="icon-btn mobile-only" title="Toggle Theme">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/>
-            <path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/>
-            <path d="M2 12h2"/><path d="M20 12h2"/>
-            <path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/>
-          </svg>
-        </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          ${userInitial ? `<div class="user-pill"><div class="user-pill-avatar">${userInitial}</div>${store.user.email.split('@')[0]}</div>` : ''}
+          <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/>
+              <path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/>
+              <path d="M2 12h2"/><path d="M20 12h2"/>
+              <path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <!-- Period Selector -->
