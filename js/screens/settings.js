@@ -243,6 +243,47 @@ export function renderSettings(container) {
       </button>
     </div>
 
+    <!-- Security & Privacy Card -->
+    <div class="card" style="padding: 18px; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--card);">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+        <div class="setting-icon-badge" style="background: rgba(52, 211, 153, 0.12); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--income);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div style="text-align: left;">
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">${store.settings.language === 'en' ? 'Security & Privacy' : 'ความปลอดภัยและความเป็นส่วนตัว'}</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">
+            ${store.settings.language === 'en' ? 'Your financial data is protected' : 'ข้อมูลทางการเงินของคุณได้รับการคุ้มครองอย่างปลอดภัย'}
+          </div>
+        </div>
+      </div>
+      
+      <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6; text-align: left; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 14px;">
+        <div style="display: flex; align-items: flex-start; gap: 8px;">
+          <span style="color: var(--income); font-weight: bold;">✓</span>
+          <span>${store.settings.language === 'en' ? 'HTTPS/SSL encrypted connection to the database.' : 'การเชื่อมต่อไปยังฐานข้อมูลคลาวด์ถูกเข้ารหัสความปลอดภัย (HTTPS/SSL)'}</span>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 8px;">
+          <span style="color: var(--income); font-weight: bold;">✓</span>
+          <span>${store.settings.language === 'en' ? 'Row Level Security (RLS) active: Only you can access your records.' : 'เปิดใช้งานระบบปกป้องสิทธิ์ผู้ใช้ (RLS): ไม่มีผู้ใดสามารถเห็นข้อมูลของคุณได้นอกจากตัวคุณเอง'}</span>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 8px;">
+          <span style="color: var(--income); font-weight: bold;">✓</span>
+          <span>${store.settings.language === 'en' ? 'Full data ownership: Purge your cloud records at any time.' : 'สิทธิ์ควบคุมข้อมูล 100%: คุณสามารถเลือกที่จะลบข้อมูลที่จัดเก็บในคลาวด์ได้ตลอดเวลา'}</span>
+        </div>
+      </div>
+
+      ${store.user ? `
+        <button id="delete-cloud-data-btn" class="btn-primary" style="background: rgba(239, 68, 68, 0.08); border: 1.5px solid rgba(239, 68, 68, 0.25); color: var(--expense); padding: 12px; font-size: 13px; font-weight: 700; border-radius: 12px; cursor: pointer; transition: all var(--transition); display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: none;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          ${store.settings.language === 'en' ? 'Delete Cloud Database Backup' : 'ลบข้อมูลฐานข้อมูลบน Cloud'}
+        </button>
+      ` : `
+        <div style="font-size: 11px; color: var(--text-muted); font-style: italic; text-align: center;">
+          ${store.settings.language === 'en' ? 'Log in to manage your cloud database options.' : 'เข้าสู่ระบบเพื่อจัดการตัวเลือกความปลอดภัยและฐานข้อมูลคลาวด์'}
+        </div>
+      `}
+    </div>
+
     <!-- Cloud Account & Sync -->
     <div class="card ${store.user ? 'profile-card-logged-in' : ''}" style="padding: 18px; margin-bottom: 20px; border-radius: 16px;">
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
@@ -389,6 +430,34 @@ function setupEventListeners(container) {
           alerts.success(
             store.settings.language === 'en' ? 'Success' : 'สำเร็จ',
             store.settings.language === 'en' ? 'Password updated successfully!' : 'เปลี่ยนรหัสผ่านเสร็จเรียบร้อยแล้ว!'
+          );
+        }
+      }
+    });
+  }
+
+  const deleteCloudBtn = container.querySelector("#delete-cloud-data-btn");
+  if (deleteCloudBtn) {
+    deleteCloudBtn.addEventListener("click", async () => {
+      const isConfirmed = await alerts.confirmReset(
+        store.settings.language === "en" ? "Delete Cloud Backup?" : "ลบข้อมูลสำรองบนคลาวด์?",
+        store.settings.language === "en" 
+          ? "This will permanently delete all your financial records from Supabase database. Your local offline data will remain." 
+          : "การดำเนินการนี้จะลบข้อมูลธุรกรรมทั้งหมดของคุณออกจากเซิร์ฟเวอร์คลาวด์ถาวร โดยข้อมูลธุรกรรมในเครื่องนี้จะไม่ถูกลบ"
+      );
+      if (isConfirmed) {
+        try {
+          await store.deleteCloudData();
+          alerts.success(
+            store.settings.language === "en" ? "Deleted Successfully" : "ลบข้อมูลสำเร็จ",
+            store.settings.language === "en" 
+              ? "All cloud data has been deleted." 
+              : "ข้อมูลของคุณบนคลาวด์ได้รับการลบออกเสร็จสิ้น"
+          );
+        } catch (err) {
+          alerts.error(
+            store.settings.language === "en" ? "Deletion Failed" : "ลบข้อมูลล้มเหลว",
+            err.message
           );
         }
       }

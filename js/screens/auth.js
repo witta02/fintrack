@@ -45,6 +45,11 @@ export function renderAuth(container) {
               <div id="auth-spinner" class="spinner hidden"></div>
             </button>
           </form>
+
+          <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; padding: 10px; background: rgba(52, 211, 153, 0.06); border: 1px solid rgba(52, 211, 153, 0.18); border-radius: 12px; color: var(--income); font-size: 11.5px; font-weight: 600; text-align: center; line-height: 1.3;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>${store.settings.language === 'en' ? 'Secured Cloud: Only you can access your data' : 'ระบบคลาวด์ปลอดภัย: มีเพียงคุณเท่านั้นที่เข้าถึงข้อมูลได้'}</span>
+          </div>
         </div>
 
         <!-- Back link -->

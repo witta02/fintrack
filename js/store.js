@@ -368,6 +368,20 @@ export const store = {
     localStorage.removeItem("fintrack_net_worth");
   },
 
+  async deleteCloudData() {
+    if (!this.user) return;
+    try {
+      const userId = this.user.id;
+      await supabase.from('transactions').delete().eq('user_id', userId);
+      await supabase.from('recurring_rules').delete().eq('user_id', userId);
+      await supabase.from('settings').delete().eq('user_id', userId);
+      console.log('Cloud data deleted successfully for user:', userId);
+    } catch (err) {
+      console.error('Error deleting cloud data:', err);
+      throw err;
+    }
+  },
+
   saveNetWorth(assets, liabilities) {
     this.netWorth = { assets, liabilities };
     localStorage.setItem("fintrack_net_worth", JSON.stringify(this.netWorth));
