@@ -4,15 +4,11 @@ import { router } from "./router.js";
 import { t } from "./i18n.js";
 import { supabase } from "./supabase.js";
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   console.log("FinTrack: Initializing...");
 
-  // Initialize the store asynchronously
-  try {
-    await store.init();
-  } catch (e) {
-    console.error("FinTrack: Store initialization failed:", e);
-  }
+  // Initialize the store (synchronous — loads from LocalStorage only)
+  store.init();
 
   // Initialize the router
   router.init();

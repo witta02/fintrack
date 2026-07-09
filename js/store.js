@@ -43,8 +43,8 @@ export const store = {
     }
   },
 
-  async init() {
-    // Load from LocalStorage
+  init() {
+    // Load from LocalStorage (synchronous — no network calls here)
     const savedTransactions = localStorage.getItem("fintrack_transactions");
     const savedRules = localStorage.getItem("fintrack_recurring_rules");
     const savedSettings = localStorage.getItem("fintrack_settings");
@@ -86,15 +86,6 @@ export const store = {
 
     this.removeLegacyDemoData();
 
-    // Check active session
-    const { data: { session } } = await supabase.auth.getSession();
-    this.user = session ? session.user : null;
-
-    if (this.user) {
-      // Sync cloud data
-      await this.handleLoginSync(this.user);
-    }
-
     // Process recurring rules immediately
     this.processRecurringPayments();
 
@@ -105,6 +96,7 @@ export const store = {
     );
     document.documentElement.lang =
       this.settings.language === "en" ? "en" : "th";
+    // Note: Supabase session check happens via onAuthStateChange (INITIAL_SESSION) in app.js
   },
 
   removeLegacyDemoData() {
