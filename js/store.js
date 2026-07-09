@@ -202,7 +202,6 @@ export const store = {
         this.settings = {
           ...this.settings,
           selectedCurrency: dbSettings.selected_currency,
-          isDarkMode: dbSettings.is_dark_mode,
           language: dbSettings.language,
           taxPersonalDeduction: parseFloat(dbSettings.tax_personal_deduction),
           taxSocialSecurity: parseFloat(dbSettings.tax_social_security),
@@ -215,7 +214,6 @@ export const store = {
         const settingsPayload = {
           user_id: user.id,
           selected_currency: this.settings.selectedCurrency || 'THB',
-          is_dark_mode: this.settings.isDarkMode !== undefined ? this.settings.isDarkMode : true,
           language: this.settings.language || 'th',
           tax_personal_deduction: this.settings.taxPersonalDeduction !== undefined ? this.settings.taxPersonalDeduction : 60000,
           tax_social_security: this.settings.taxSocialSecurity !== undefined ? this.settings.taxSocialSecurity : 9000,
@@ -332,7 +330,6 @@ export const store = {
       const payload = {
         user_id: this.user.id,
         selected_currency: this.settings.selectedCurrency,
-        is_dark_mode: this.settings.isDarkMode,
         language: this.settings.language,
         tax_personal_deduction: this.settings.taxPersonalDeduction,
         tax_social_security: this.settings.taxSocialSecurity,
