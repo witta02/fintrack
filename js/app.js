@@ -8,7 +8,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   console.log("FinTrack: Initializing...");
 
   // Initialize the store asynchronously
-  await store.init();
+  try {
+    await store.init();
+  } catch (e) {
+    console.error("FinTrack: Store initialization failed:", e);
+  }
 
   // Initialize the router
   router.init();

@@ -178,125 +178,135 @@ export const store = {
     if (!user) return;
     this.user = user;
 
-    // Fetch settings from Supabase
-    const { data: dbSettings, error: settingsError } = await supabase
-      .from('settings')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    try {
+      // Fetch settings from Supabase
+      const { data: dbSettings, error: settingsError } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    // Fetch transactions
-    const { data: dbTransactions, error: txError } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', user.id);
+      if (settingsError) throw settingsError;
 
-    // Fetch recurring rules
-    const { data: dbRules, error: rulesError } = await supabase
-      .from('recurring_rules')
-      .select('*')
-      .eq('user_id', user.id);
+      // Fetch transactions
+      const { data: dbTransactions, error: txError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id);
 
-    const hasCloudData = (dbTransactions && dbTransactions.length > 0) || dbSettings || (dbRules && dbRules.length > 0);
+      if (txError) throw txError;
 
-    if (!hasCloudData) {
-      // LocalStorage -> Supabase Migration (First login sync)
-      console.log('Migrating local storage data to Supabase cloud...');
+      // Fetch recurring rules
+      const { data: dbRules, error: rulesError } = await supabase
+        .from('recurring_rules')
+        .select('*')
+        .eq('user_id', user.id);
 
-      // Migrate Settings
-      const settingsPayload = {
-        user_id: user.id,
-        selected_currency: this.settings.selectedCurrency || 'THB',
-        is_dark_mode: this.settings.isDarkMode !== undefined ? this.settings.isDarkMode : true,
-        language: this.settings.language || 'th',
-        tax_personal_deduction: this.settings.taxPersonalDeduction !== undefined ? this.settings.taxPersonalDeduction : 60000,
-        tax_social_security: this.settings.taxSocialSecurity !== undefined ? this.settings.taxSocialSecurity : 9000,
-        tax_provident_fund: this.settings.taxProvidentFund || 0,
-        tax_mutual_funds: this.settings.taxMutualFunds || 0,
-        tax_other_deductions: this.settings.taxOtherDeductions || 0
-      };
-      await supabase.from('settings').upsert(settingsPayload);
+      if (rulesError) throw rulesError;
 
-      // Migrate Transactions
-      if (this.transactions.length > 0) {
-        const txsToInsert = this.transactions.map(t => ({
-          id: t.id,
+      const hasCloudData = (dbTransactions && dbTransactions.length > 0) || dbSettings || (dbRules && dbRules.length > 0);
+
+      if (!hasCloudData) {
+        // LocalStorage -> Supabase Migration (First login sync)
+        console.log('Migrating local storage data to Supabase cloud...');
+
+        // Migrate Settings
+        const settingsPayload = {
           user_id: user.id,
-          title: t.title,
-          amount: t.amount,
-          is_income: t.isIncome,
-          category: t.category,
-          date: t.date instanceof Date ? t.date.toISOString() : new Date(t.date).toISOString(),
-          recurring_id: t.recurringId || null
-        }));
-        await supabase.from('transactions').insert(txsToInsert);
-      }
-
-      // Migrate Recurring Rules
-      if (this.recurringRules.length > 0) {
-        const rulesToInsert = this.recurringRules.map(r => ({
-          id: r.id,
-          user_id: user.id,
-          title: r.title,
-          amount: r.amount,
-          is_income: r.isIncome,
-          category: r.category,
-          type: r.type,
-          custom_days: r.customDays,
-          next_due_date: r.nextDueDate instanceof Date ? r.nextDueDate.toISOString() : new Date(r.nextDueDate).toISOString(),
-          is_active: r.isActive,
-          created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : new Date(r.createdAt).toISOString()
-        }));
-        await supabase.from('recurring_rules').insert(rulesToInsert);
-      }
-    } else {
-      // Supabase -> LocalStorage (Standard pull sync)
-      if (dbSettings) {
-        this.settings = {
-          ...this.settings,
-          selectedCurrency: dbSettings.selected_currency,
-          isDarkMode: dbSettings.is_dark_mode,
-          language: dbSettings.language,
-          taxPersonalDeduction: parseFloat(dbSettings.tax_personal_deduction),
-          taxSocialSecurity: parseFloat(dbSettings.tax_social_security),
-          taxProvidentFund: parseFloat(dbSettings.tax_provident_fund),
-          taxMutualFunds: parseFloat(dbSettings.tax_mutual_funds),
-          taxOtherDeductions: parseFloat(dbSettings.tax_other_deductions)
+          selected_currency: this.settings.selectedCurrency || 'THB',
+          is_dark_mode: this.settings.isDarkMode !== undefined ? this.settings.isDarkMode : true,
+          language: this.settings.language || 'th',
+          tax_personal_deduction: this.settings.taxPersonalDeduction !== undefined ? this.settings.taxPersonalDeduction : 60000,
+          tax_social_security: this.settings.taxSocialSecurity !== undefined ? this.settings.taxSocialSecurity : 9000,
+          tax_provident_fund: this.settings.taxProvidentFund || 0,
+          tax_mutual_funds: this.settings.taxMutualFunds || 0,
+          tax_other_deductions: this.settings.taxOtherDeductions || 0
         };
+        await supabase.from('settings').upsert(settingsPayload);
+
+        // Migrate Transactions
+        if (this.transactions.length > 0) {
+          const txsToInsert = this.transactions.map(t => ({
+            id: t.id,
+            user_id: user.id,
+            title: t.title,
+            amount: t.amount,
+            is_income: t.isIncome,
+            category: t.category,
+            date: t.date instanceof Date ? t.date.toISOString() : new Date(t.date).toISOString(),
+            recurring_id: t.recurringId || null
+          }));
+          await supabase.from('transactions').insert(txsToInsert);
+        }
+
+        // Migrate Recurring Rules
+        if (this.recurringRules.length > 0) {
+          const rulesToInsert = this.recurringRules.map(r => ({
+            id: r.id,
+            user_id: user.id,
+            title: r.title,
+            amount: r.amount,
+            is_income: r.isIncome,
+            category: r.category,
+            type: r.type,
+            custom_days: r.customDays,
+            next_due_date: r.nextDueDate instanceof Date ? r.nextDueDate.toISOString() : new Date(r.nextDueDate).toISOString(),
+            is_active: r.isActive,
+            created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : new Date(r.createdAt).toISOString()
+          }));
+          await supabase.from('recurring_rules').insert(rulesToInsert);
+        }
+      } else {
+        // Supabase -> LocalStorage (Standard pull sync)
+        if (dbSettings) {
+          this.settings = {
+            ...this.settings,
+            selectedCurrency: dbSettings.selected_currency,
+            isDarkMode: dbSettings.is_dark_mode,
+            language: dbSettings.language,
+            taxPersonalDeduction: parseFloat(dbSettings.tax_personal_deduction),
+            taxSocialSecurity: parseFloat(dbSettings.tax_social_security),
+            taxProvidentFund: parseFloat(dbSettings.tax_provident_fund),
+            taxMutualFunds: parseFloat(dbSettings.tax_mutual_funds),
+            taxOtherDeductions: parseFloat(dbSettings.tax_other_deductions)
+          };
+        }
+
+        if (dbTransactions) {
+          this.transactions = dbTransactions.map(t => ({
+            id: t.id,
+            title: t.title,
+            amount: parseFloat(t.amount),
+            isIncome: t.is_income,
+            category: t.category,
+            date: new Date(t.date),
+            recurringId: t.recurring_id
+          }));
+        }
+
+        if (dbRules) {
+          this.recurringRules = dbRules.map(r => ({
+            id: r.id,
+            title: r.title,
+            amount: parseFloat(r.amount),
+            isIncome: r.is_income,
+            category: r.category,
+            type: r.type,
+            customDays: r.custom_days,
+            nextDueDate: new Date(r.next_due_date),
+            isActive: r.is_active,
+            createdAt: new Date(r.created_at)
+          }));
+        }
       }
 
-      if (dbTransactions) {
-        this.transactions = dbTransactions.map(t => ({
-          id: t.id,
-          title: t.title,
-          amount: parseFloat(t.amount),
-          isIncome: t.is_income,
-          category: t.category,
-          date: new Date(t.date),
-          recurringId: t.recurring_id
-        }));
-      }
-
-      if (dbRules) {
-        this.recurringRules = dbRules.map(r => ({
-          id: r.id,
-          title: r.title,
-          amount: parseFloat(r.amount),
-          isIncome: r.is_income,
-          category: r.category,
-          type: r.type,
-          customDays: r.custom_days,
-          nextDueDate: new Date(r.next_due_date),
-          isActive: r.is_active,
-          createdAt: new Date(r.created_at)
-        }));
-      }
+      // Update LocalStorage cache
+      localStorage.setItem("fintrack_transactions", JSON.stringify(this.transactions));
+      localStorage.setItem("fintrack_recurring_rules", JSON.stringify(this.recurringRules));
+      localStorage.setItem("fintrack_settings", JSON.stringify(this.settings));
+    } catch (err) {
+      console.warn("Supabase sync failed (tables might not exist yet), falling back to LocalStorage:", err);
     }
-
-    // Update LocalStorage cache
-    localStorage.setItem("fintrack_transactions", JSON.stringify(this.transactions));
-    localStorage.setItem("fintrack_recurring_rules", JSON.stringify(this.recurringRules));
-    localStorage.setItem("fintrack_settings", JSON.stringify(this.settings));
   },
 
   async saveSettingsToCloud() {
