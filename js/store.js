@@ -422,6 +422,20 @@ export const store = {
     let yearlyExpense = 0;
     let yearlyBalance = 0;
 
+    let weeklyIncome = 0;
+    let weeklyExpense = 0;
+    let weeklyBalance = 0;
+
+    // Current Week (Monday to Sunday)
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
     this.transactions.forEach(t => {
       const amt = t.amount; // amount is stored in base currency (THB)
       const tDate = t.date;
@@ -434,6 +448,17 @@ export const store = {
       } else {
         totalExpense += amt;
         totalBalance -= amt;
+      }
+
+      // Weekly
+      if (tDate >= startOfWeek && tDate < endOfWeek) {
+        if (isInc) {
+          weeklyIncome += amt;
+          weeklyBalance += amt;
+        } else {
+          weeklyExpense += amt;
+          weeklyBalance -= amt;
+        }
       }
 
       // Year-to-date
@@ -482,7 +507,10 @@ export const store = {
       dailyBalance: this.toDisplay(dailyBalance),
       yearlyIncome: this.toDisplay(yearlyIncome),
       yearlyExpense: this.toDisplay(yearlyExpense),
-      yearlyBalance: this.toDisplay(yearlyBalance)
+      yearlyBalance: this.toDisplay(yearlyBalance),
+      weeklyIncome: this.toDisplay(weeklyIncome),
+      weeklyExpense: this.toDisplay(weeklyExpense),
+      weeklyBalance: this.toDisplay(weeklyBalance)
     };
   },
 

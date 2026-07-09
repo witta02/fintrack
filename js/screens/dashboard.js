@@ -31,18 +31,21 @@ export function renderDashboard(container) {
       </div>
 
       <!-- Period Selector -->
-      <div class="period-selector">
-        <button class="period-tab ${activePeriod === 'daily' ? 'active' : ''}" data-period="daily">${t('dashboardToday')}</button>
-        <button class="period-tab ${activePeriod === 'monthly' ? 'active' : ''}" data-period="monthly">${t('dashboardMonth')}</button>
-        <button class="period-tab ${activePeriod === 'yearly' ? 'active' : ''}" data-period="yearly">${t('dashboardYear')}</button>
-        <button class="period-tab ${activePeriod === 'all' ? 'active' : ''}" data-period="all">${t('dashboardAll')}</button>
+      <div class="period-dropdown-container">
+        <select id="period-select" class="period-select">
+          <option value="daily" ${activePeriod === 'daily' ? 'selected' : ''}>${t('balanceToday')}</option>
+          <option value="weekly" ${activePeriod === 'weekly' ? 'selected' : ''}>${t('balanceWeek')}</option>
+          <option value="monthly" ${activePeriod === 'monthly' ? 'selected' : ''}>${t('balanceMonth')}</option>
+          <option value="yearly" ${activePeriod === 'yearly' ? 'selected' : ''}>${t('balanceYear')}</option>
+          <option value="all" ${activePeriod === 'all' ? 'selected' : ''}>${t('balanceAll')}</option>
+        </select>
       </div>
     </div>
     <!-- Balance Cards Container -->
     <div class="balance-cards-container">
       <div class="balance-card-main" id="balance-card-clickable">
         <div class="period-label" id="period-label-text">
-          ${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}
+          ${activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'weekly' ? t('balanceWeek') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll')}
         </div>
         <div class="balance-amount" id="card-balance">฿0.00</div>
       </div>
@@ -217,6 +220,7 @@ function showBalancePopup(container) {
 
   switch (activePeriod) {
     case 'daily':   amount = metrics.dailyBalance;   label = t('balanceToday'); break;
+    case 'weekly':  amount = metrics.weeklyBalance;  label = t('balanceWeek');  break;
     case 'monthly': amount = metrics.monthlyBalance; label = t('balanceMonth'); break;
     case 'yearly':  amount = metrics.yearlyBalance;  label = t('balanceYear');  break;
     case 'all':     amount = metrics.totalBalance;   label = t('balanceAll');   break;
@@ -256,14 +260,13 @@ function setupEventListeners(container) {
     store.toggleTheme();
   });
 
-  container.querySelectorAll('.period-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      container.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      activePeriod = tab.getAttribute('data-period');
+  const periodSelect = container.querySelector('#period-select');
+  if (periodSelect) {
+    periodSelect.addEventListener('change', (e) => {
+      activePeriod = e.target.value;
       updateUI(container);
     });
-  });
+  }
 
   container.querySelector('#analysis-period-select').addEventListener('change', (e) => {
     analysisPeriod = e.target.value;
@@ -311,6 +314,8 @@ function updateUI(container) {
   switch (activePeriod) {
     case 'daily':
       balance = metrics.dailyBalance; income = metrics.dailyIncome; expense = metrics.dailyExpense; break;
+    case 'weekly':
+      balance = metrics.weeklyBalance; income = metrics.weeklyIncome; expense = metrics.weeklyExpense; break;
     case 'monthly':
       balance = metrics.monthlyBalance; income = metrics.monthlyIncome; expense = metrics.monthlyExpense; break;
     case 'yearly':
@@ -319,7 +324,15 @@ function updateUI(container) {
       balance = metrics.totalBalance; income = metrics.totalIncome; expense = metrics.totalExpense; break;
   }
 
-  const labelText = activePeriod === 'daily' ? t('balanceToday') : activePeriod === 'monthly' ? t('balanceMonth') : activePeriod === 'yearly' ? t('balanceYear') : t('balanceAll');
+  const labelText = activePeriod === 'daily' 
+    ? t('balanceToday') 
+    : activePeriod === 'weekly' 
+      ? t('balanceWeek') 
+      : activePeriod === 'monthly' 
+        ? t('balanceMonth') 
+        : activePeriod === 'yearly' 
+          ? t('balanceYear') 
+          : t('balanceAll');
   const periodLabel = container.querySelector('#period-label-text');
   if (periodLabel) periodLabel.textContent = labelText;
 
