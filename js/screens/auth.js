@@ -194,6 +194,16 @@ function setupEventListeners(container) {
           throw new Error(translateAuthError(signUpError.message, lang));
         }
 
+        // If email verification is enabled and user already exists, Supabase returns a user object
+        // with an empty identities array. Check this to prevent false 'Verification email sent' alerts.
+        const userExists = signUpData.user && 
+                           signUpData.user.identities && 
+                           signUpData.user.identities.length === 0;
+
+        if (userExists) {
+          throw new Error(translateAuthError('User already registered', lang));
+        }
+
         // SignUp successful
         if (signUpData.session) {
           btnText.textContent = t('syncingData');
