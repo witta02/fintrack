@@ -1,11 +1,12 @@
-import { store } from '../store.js';
-import { currencies } from '../currency.js';
-import { t } from '../i18n.js';
-import { alerts } from '../utils/alertHelper.js';
-import { exportToCloud, importFromCloud } from '../utils/dataTransfer.js';
+import { store } from "../store.js";
+import { currencies } from "../currency.js";
+import { t } from "../i18n.js";
+import { alerts } from "../utils/alertHelper.js";
+import { exportToCloud, importFromCloud } from "../utils/dataTransfer.js";
+import { supabase } from "../supabase.js";
 
 // Reusable setting row helper
-function settingRow(iconSvg, iconBg, title, subtitle, rightSlot, extras = '') {
+function settingRow(iconSvg, iconBg, title, subtitle, rightSlot, extras = "") {
   return `
     <div class="setting-item" style="display: flex; align-items: center; gap: 14px;">
       <div class="setting-icon-badge" style="background: ${iconBg};">
@@ -24,34 +25,38 @@ function settingRow(iconSvg, iconBg, title, subtitle, rightSlot, extras = '') {
 export function renderSettings(container) {
   const selectedCurrency = store.getSelectedCurrency();
   const isDarkMode = store.settings.isDarkMode;
-  const language = store.settings.language === 'en' ? 'en' : 'th';
+  const language = store.settings.language === "en" ? "en" : "th";
 
-  const currencyOptions = Object.values(currencies).map(curr => `
-    <option value="${curr.code}" ${selectedCurrency === curr.code ? 'selected' : ''}>
+  const currencyOptions = Object.values(currencies)
+    .map(
+      (curr) => `
+    <option value="${curr.code}" ${selectedCurrency === curr.code ? "selected" : ""}>
       ${curr.symbol} — ${curr.name}
     </option>
-  `).join('');
+  `,
+    )
+    .join("");
 
   container.innerHTML = `
     <div style="text-align: center; margin-bottom: 22px;">
-      <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px;">${t('settingsTitle')}</h1>
+      <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px;">${t("settingsTitle")}</h1>
       <span class="premium-badge">v2.5.5</span>
     </div>
 
     <!-- ── General ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('generalSettings')}</div>
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t("generalSettings")}</div>
     <div class="card general-settings-card" style="padding: 8px 14px; margin-bottom: 20px;">
 
       <!-- Dark Mode -->
       ${settingRow(
         `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>`,
-        'rgba(245,200,66,0.15)',
-        t('darkMode'),
-        t('swhtodarktxt'),
+        "rgba(245,200,66,0.15)",
+        t("darkMode"),
+        t("swhtodarktxt"),
         `<label class="switch-toggle">
-           <input type="checkbox" id="setting-darkmode-chk" ${isDarkMode ? 'checked' : ''} />
+           <input type="checkbox" id="setting-darkmode-chk" ${isDarkMode ? "checked" : ""} />
            <span class="switch-slider"></span>
-         </label>`
+         </label>`,
       )}
 
       <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
@@ -59,11 +64,11 @@ export function renderSettings(container) {
       <!-- Language -->
       ${settingRow(
         `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>`,
-        'rgba(124,92,252,0.15)',
-        t('language'),
-        t('languageHint'),
+        "rgba(124,92,252,0.15)",
+        t("language"),
+        t("languageHint"),
         `<div style="display: flex; gap: 6px;">
-           <button type="button" id="language-th-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid ${language === 'th' ? 'var(--gold)' : 'var(--border)'}; background: ${language === 'th' ? 'rgba(245,200,66,0.12)' : 'var(--surface)'}; color: ${language === 'th' ? 'var(--gold)' : 'var(--text-secondary)'}; transition: all var(--transition);">
+           <button type="button" id="language-th-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid ${language === "th" ? "var(--gold)" : "var(--border)"}; background: ${language === "th" ? "rgba(245,200,66,0.12)" : "var(--surface)"}; color: ${language === "th" ? "var(--gold)" : "var(--text-secondary)"}; transition: all var(--transition);">
              <svg width="16" height="12" viewBox="0 0 9 6" style="border-radius: 2px;">
                <rect width="9" height="6" fill="#A51931"/>
                <rect y="1" width="9" height="4" fill="#F4F5F8"/>
@@ -71,7 +76,7 @@ export function renderSettings(container) {
              </svg>
              TH
            </button>
-           <button type="button" id="language-en-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid ${language === 'en' ? 'var(--gold)' : 'var(--border)'}; background: ${language === 'en' ? 'rgba(245,200,66,0.12)' : 'var(--surface)'}; color: ${language === 'en' ? 'var(--gold)' : 'var(--text-secondary)'}; transition: all var(--transition);">
+           <button type="button" id="language-en-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1.5px solid ${language === "en" ? "var(--gold)" : "var(--border)"}; background: ${language === "en" ? "rgba(245,200,66,0.12)" : "var(--surface)"}; color: ${language === "en" ? "var(--gold)" : "var(--text-secondary)"}; transition: all var(--transition);">
              <svg width="16" height="12" viewBox="0 0 50 30" style="border-radius: 2px;">
                <rect width="50" height="30" fill="#012169"/>
                <path d="M0 0 L50 30 M50 0 L0 30" stroke="#FFF" stroke-width="6"/>
@@ -81,7 +86,7 @@ export function renderSettings(container) {
              </svg>
              EN
            </button>
-         </div>`
+         </div>`,
       )}
     </div>
 
@@ -89,15 +94,15 @@ export function renderSettings(container) {
     <div class="section-eyebrow desktop-only" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">สกุลเงินและภาษี</div>
     <div class="currency-tax-grid">
       <div class="currency-col">
-        <div class="section-eyebrow mobile-only" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('currency')}</div>
+        <div class="section-eyebrow mobile-only" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t("currency")}</div>
         <div class="card" style="padding: 14px; margin-bottom: 20px; height: calc(100% - 28px); display: flex; flex-direction: column; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
             <div class="setting-icon-badge" style="background: rgba(52,211,153,0.15);">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--income);"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
             <div>
-              <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t('currency')}</div>
-              <div style="font-size: 11px; color: var(--text-secondary);">${t('chgcurtxt')}</div>
+              <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${t("currency")}</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">${t("chgcurtxt")}</div>
             </div>
           </div>
           <select id="setting-currency-select" class="form-control" style="font-size: 14px; margin-top: auto;">
@@ -107,14 +112,14 @@ export function renderSettings(container) {
       </div>
 
       <div class="tax-col">
-        <div class="section-eyebrow mobile-only" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('taxSettings')}</div>
+        <div class="section-eyebrow mobile-only" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t("taxSettings")}</div>
         <div class="card" style="padding: 8px 14px; margin-bottom: 20px; height: calc(100% - 28px); display: flex; align-items: center;">
           <div id="tax-row-wrapper" style="cursor: pointer; width: 100%;">
             ${settingRow(
               `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--expense);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/><path d="M12 10h3"/></svg>`,
-              'rgba(248,113,113,0.15)',
-              t('taxSettings'),
-              t('taxSettingsDesc'),
+              "rgba(248,113,113,0.15)",
+              t("taxSettings"),
+              t("taxSettingsDesc"),
               `<button id="setting-tax-btn" style="
                 display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
                 background: rgba(245,200,66,0.08); color: var(--gold);
@@ -122,7 +127,7 @@ export function renderSettings(container) {
                 border-radius: 8px; cursor: pointer;
                 transition: all var(--transition);">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-              </button>`
+              </button>`,
             )}
           </div>
         </div>
@@ -130,24 +135,24 @@ export function renderSettings(container) {
     </div>
 
     <!-- ── Data Transfer ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('dataTransferTitle')}</div>
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t("dataTransferTitle")}</div>
     <div class="card" style="padding: 14px; margin-bottom: 20px;">
       ${settingRow(
         `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #34d399;"><path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.42-1.89-1.78-3.5-3.5-3.5a5.5 5.5 0 0 0-5.5 5.5c0 .34.02.68.06 1A4.5 4.5 0 0 0 7.5 19Z"/></svg>`,
-        'rgba(16,185,129,0.15)',
-        t('dataTransferTitle'),
-        t('dataTransferDesc'),
-        '',
+        "rgba(16,185,129,0.15)",
+        t("dataTransferTitle"),
+        t("dataTransferDesc"),
+        "",
         `
         <div style="margin-top: 6px;">
           <div style="background: rgba(248,113,113,0.07); border: 1px dashed rgba(248,113,113,0.3); color: var(--expense); padding: 12px; border-radius: 12px; font-size: 11px; margin-bottom: 12px; line-height: 1.6; display: flex; align-items: flex-start; gap: 8px;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-top: 1px; flex-shrink: 0;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div>
-              <strong style="font-weight: 700; color: var(--expense); display: block; margin-bottom: 2px;">${t('dataLossWarningTitle')}</strong>
-              ${t('dataLossWarningDesc')}
+              <strong style="font-weight: 700; color: var(--expense); display: block; margin-bottom: 2px;">${t("dataLossWarningTitle")}</strong>
+              ${t("dataLossWarningDesc")}
             </div>
           </div>
-          <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t('cloudSyncSectionDesc')}</p>
+          <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t("cloudSyncSectionDesc")}</p>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <button id="data-export-cloud-btn" class="btn-primary" style="
               display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -160,7 +165,7 @@ export function renderSettings(container) {
                 <polyline points="17 8 12 3 7 8"/>
                 <line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
-              ${t('exportCloudBtn')}
+              ${t("exportCloudBtn")}
             </button>
             <button id="data-import-cloud-btn" style="
               display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -172,16 +177,16 @@ export function renderSettings(container) {
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              ${t('importCloudBtn')}
+              ${t("importCloudBtn")}
             </button>
           </div>
         </div>
-        `
+        `,
       )}
     </div>
 
     <!-- ── Notifications ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t('notificationSystem')}</div>
+    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t("notificationSystem")}</div>
     <div class="card" style="padding: 14px; margin-bottom: 20px;">
       <div style="display: flex; gap: 10px;">
         <button id="test-notify-btn" style="
@@ -193,7 +198,7 @@ export function renderSettings(container) {
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
-          ${t('notitestbtn')}
+          ${t("notitestbtn")}
         </button>
         <button id="clear-notify-btn" style="
           flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -206,7 +211,7 @@ export function renderSettings(container) {
             <line x1="10" y1="11" x2="10" y2="17"/>
             <line x1="14" y1="11" x2="14" y2="17"/>
           </svg>
-          ${t('clearbtn')}
+          ${t("clearbtn")}
         </button>
       </div>
     </div>
@@ -227,14 +232,34 @@ export function renderSettings(container) {
           </svg>
         </div>
         <div>
-          <div style="font-size: 14px; font-weight: 700; color: var(--gold);">${t('installbtn')}</div>
-          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px; line-height: 1.5;">${t('installtxt')}</div>
+          <div style="font-size: 14px; font-weight: 700; color: var(--gold);">${t("installbtn")}</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px; line-height: 1.5;">${t("installtxt")}</div>
         </div>
       </div>
       <button id="install-app-btn" class="btn-primary" style="padding: 12px; font-size: 13px; border-radius: 12px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        ${t('installbtn')}
+        ${t("installbtn")}
       </button>
+    </div>
+
+    <!-- Cloud Account & Sync -->
+    <div class="card" style="padding: 18px; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--card);">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="setting-icon-badge" style="background: rgba(255, 184, 0, 0.12); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--gold);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div style="text-align: left;">
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">${t("profile")}</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">${store.user ? store.user.email : 'ไม่ได้เข้าสู่ระบบ'}</div>
+          </div>
+        </div>
+        ${store.user ? `
+          <button id="auth-signout-btn" class="btn-primary" style="background: #ef4444; border-color: #ef4444; color: #fff; padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all var(--transition);">
+            ${t("signOut")}
+          </button>
+        ` : ''}
+      </div>
     </div>
 
     <!-- Footer -->
@@ -248,81 +273,104 @@ export function renderSettings(container) {
 }
 
 function setupEventListeners(container) {
-  container.querySelector('#data-export-cloud-btn').addEventListener('click', () => exportToCloud());
-  container.querySelector('#data-import-cloud-btn').addEventListener('click', () => importFromCloud());
+  container
+    .querySelector("#data-export-cloud-btn")
+    .addEventListener("click", () => exportToCloud());
+  container
+    .querySelector("#data-import-cloud-btn")
+    .addEventListener("click", () => importFromCloud());
 
-  container.querySelector('#setting-darkmode-chk').addEventListener('change', () => {
-    store.toggleTheme();
-  });
+  container
+    .querySelector("#setting-darkmode-chk")
+    .addEventListener("change", () => {
+      store.toggleTheme();
+    });
 
-  container.querySelector('#setting-currency-select').addEventListener('change', (e) => {
-    store.setCurrency(e.target.value);
-  });
+  container
+    .querySelector("#setting-currency-select")
+    .addEventListener("change", (e) => {
+      store.setCurrency(e.target.value);
+    });
 
-  container.querySelector('#language-th-btn').addEventListener('click', () => {
-    store.setLanguage('th');
+  container.querySelector("#language-th-btn").addEventListener("click", () => {
+    store.setLanguage("th");
     updateNavLabels();
     renderSettings(container);
   });
 
-  container.querySelector('#language-en-btn').addEventListener('click', () => {
-    store.setLanguage('en');
+  container.querySelector("#language-en-btn").addEventListener("click", () => {
+    store.setLanguage("en");
     updateNavLabels();
     renderSettings(container);
   });
 
-  container.querySelector('#install-app-btn').addEventListener('click', () => {
+  container.querySelector("#install-app-btn").addEventListener("click", () => {
     if (window.deferredPrompt) {
       window.deferredPrompt.prompt();
       window.deferredPrompt.userChoice.then(() => {
         window.deferredPrompt = null;
       });
     } else {
-      alerts.info(t('installPwaHint'));
+      alerts.info(t("installPwaHint"));
     }
   });
 
-  container.querySelector('#test-notify-btn').addEventListener('click', () => {
-    if ('Notification' in window) {
-      if (Notification.permission === 'granted') {
-        store.triggerNotification(t('notiTestTitle'), t('notiTestBody'));
+  container.querySelector("#test-notify-btn").addEventListener("click", () => {
+    if ("Notification" in window) {
+      if (Notification.permission === "granted") {
+        store.triggerNotification(t("notiTestTitle"), t("notiTestBody"));
       } else {
-        Notification.requestPermission().then(perm => {
-          if (perm === 'granted') {
-            store.triggerNotification(t('notiWelcomeTitle'), t('notiWelcomeBody'));
+        Notification.requestPermission().then((perm) => {
+          if (perm === "granted") {
+            store.triggerNotification(
+              t("notiWelcomeTitle"),
+              t("notiWelcomeBody"),
+            );
           } else {
-            alerts.warning(t('notiDenied'));
+            alerts.warning(t("notiDenied"));
           }
         });
       }
     } else {
-      alerts.error(t('notiUnsupported'));
+      alerts.error(t("notiUnsupported"));
     }
   });
 
-  container.querySelector('#tax-row-wrapper').addEventListener('click', () => {
+  container.querySelector("#tax-row-wrapper").addEventListener("click", () => {
     showTaxSettings(container);
   });
 
-  container.querySelector('#clear-notify-btn').addEventListener('click', async () => {
-    const isConfirmed = await alerts.confirmReset(
-      store.settings.language === 'en' ? 'Reset App Data?' : 'ยืนยันการรีเซ็ตข้อมูล?',
-      t('resetAppConfirm')
-    );
-    if (isConfirmed) {
-      localStorage.clear();
-      window.location.reload();
-    }
-  });
+  container
+    .querySelector("#clear-notify-btn")
+    .addEventListener("click", async () => {
+      const isConfirmed = await alerts.confirmReset(
+        store.settings.language === "en"
+          ? "Reset App Data?"
+          : "ยืนยันการรีเซ็ตข้อมูล?",
+        t("resetAppConfirm"),
+      );
+      if (isConfirmed) {
+        localStorage.clear();
+        window.location.reload();
+      }
+    });
+
+  const signOutBtn = container.querySelector("#auth-signout-btn");
+  if (signOutBtn) {
+    signOutBtn.addEventListener("click", async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) console.error('Sign out error:', error);
+    });
+  }
 }
 
 function showTaxSettings(container) {
   const lang = store.settings.language;
   const s = store.settings;
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  
-  const getVal = (v, def) => v !== undefined ? v : def;
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+
+  const getVal = (v, def) => (v !== undefined ? v : def);
   const personal = getVal(s.taxPersonalDeduction, s.taxDeduction || 60000);
   const ssf = getVal(s.taxSocialSecurity, 9000);
   const pvd = getVal(s.taxProvidentFund, 0);
@@ -332,50 +380,50 @@ function showTaxSettings(container) {
   modal.innerHTML = `
     <div class="modal-dialog" style="max-width: 460px; padding: 22px; text-align: left;">
       <div class="modal-header">
-        <h3 class="modal-title">${t('taxSettingsTitle')}</h3>
+        <h3 class="modal-title">${t("taxSettingsTitle")}</h3>
         <button class="modal-close-btn">×</button>
       </div>
       <div style="padding-top: 6px; max-height: 420px; overflow-y: auto; padding-right: 4px;">
         <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5; text-align: left;">
-          ${t('taxSettingsContext')}
+          ${t("taxSettingsContext")}
         </p>
         
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === 'en' ? 'Personal Deduction (Standard)' : 'ค่าลดหย่อนส่วนบุคคล (ทั่วไป)'}</label>
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Personal Deduction (Standard)" : "ค่าลดหย่อนส่วนบุคคล (ทั่วไป)"}</label>
             <input type="number" id="tax-personal" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${personal}" placeholder="60000" />
             <small style="color: var(--text-secondary); font-size: 9.5px; display: block; margin-top: 3px;">* ค่าลดหย่อนพื้นฐานสำหรับผู้เสียภาษีทุกคน (ปกติ 60,000 บาท)</small>
           </div>
           
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === 'en' ? 'Social Security (Max 9,000)' : 'ประกันสังคม (สูงสุด 9,000)'}</label>
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Social Security (Max 9,000)" : "ประกันสังคม (สูงสุด 9,000)"}</label>
             <input type="number" id="tax-ssf" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${ssf}" placeholder="9000" />
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === 'en' ? 'Provident Fund / Pension' : 'กองทุนสำรองเลี้ยงชีพ / กบข. / บำนาญ'}</label>
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Provident Fund / Pension" : "กองทุนสำรองเลี้ยงชีพ / กบข. / บำนาญ"}</label>
             <input type="number" id="tax-pvd" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${pvd}" placeholder="0" />
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === 'en' ? 'Mutual Funds (SSF / RMF / ThaiESG)' : 'กองทุนลดหย่อนภาษี (SSF / RMF / ThaiESG)'}</label>
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Mutual Funds (SSF / RMF / ThaiESG)" : "กองทุนลดหย่อนภาษี (SSF / RMF / ThaiESG)"}</label>
             <input type="number" id="tax-mf" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${mf}" placeholder="0" />
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === 'en' ? 'Other Deductions (e.g. Life Insurance, Parents)' : 'ค่าลดหย่อนอื่น ๆ (เช่น เบี้ยประกันชีวิต, บิดามารดา)'}</label>
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Other Deductions (e.g. Life Insurance, Parents)" : "ค่าลดหย่อนอื่น ๆ (เช่น เบี้ยประกันชีวิต, บิดามารดา)"}</label>
             <input type="number" id="tax-other" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${other}" placeholder="0" />
           </div>
         </div>
 
         <div style="background: rgba(255, 184, 0, 0.05); padding: 12px 14px; border-radius: 12px; border: 1.5px dashed rgba(255, 184, 0, 0.25); margin-top: 16px; display: flex; align-items: center; justify-content: space-between;">
-          <strong style="font-size: 12px; color: var(--gold);">${lang === 'en' ? 'Total Deductions:' : 'รวมลดหย่อนภาษีทั้งหมด:'}</strong>
+          <strong style="font-size: 12px; color: var(--gold);">${lang === "en" ? "Total Deductions:" : "รวมลดหย่อนภาษีทั้งหมด:"}</strong>
           <strong style="font-size: 15px; color: var(--gold);" id="tax-total-deduction-display">฿0.00</strong>
         </div>
       </div>
       <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button class="modal-cancel-btn" style="flex:1; border:1px solid var(--border); padding:12px; border-radius:12px; color: var(--text-secondary); background: transparent; font-weight: 600; cursor: pointer;">${t('cancel')}</button>
-        <button class="btn-primary modal-save-btn" style="flex:1; padding:12px; border-radius:12px; font-weight: 700; cursor: pointer;">${t('save')}</button>
+        <button class="modal-cancel-btn" style="flex:1; border:1px solid var(--border); padding:12px; border-radius:12px; color: var(--text-secondary); background: transparent; font-weight: 600; cursor: pointer;">${t("cancel")}</button>
+        <button class="btn-primary modal-save-btn" style="flex:1; padding:12px; border-radius:12px; font-weight: 700; cursor: pointer;">${t("save")}</button>
       </div>
     </div>
   `;
@@ -383,40 +431,45 @@ function showTaxSettings(container) {
   document.body.appendChild(modal);
 
   const calculateTotal = () => {
-    const personalVal = parseFloat(modal.querySelector('#tax-personal').value) || 0;
-    const ssfVal = parseFloat(modal.querySelector('#tax-ssf').value) || 0;
-    const pvdVal = parseFloat(modal.querySelector('#tax-pvd').value) || 0;
-    const mfVal = parseFloat(modal.querySelector('#tax-mf').value) || 0;
-    const otherVal = parseFloat(modal.querySelector('#tax-other').value) || 0;
+    const personalVal =
+      parseFloat(modal.querySelector("#tax-personal").value) || 0;
+    const ssfVal = parseFloat(modal.querySelector("#tax-ssf").value) || 0;
+    const pvdVal = parseFloat(modal.querySelector("#tax-pvd").value) || 0;
+    const mfVal = parseFloat(modal.querySelector("#tax-mf").value) || 0;
+    const otherVal = parseFloat(modal.querySelector("#tax-other").value) || 0;
     const total = personalVal + ssfVal + pvdVal + mfVal + otherVal;
-    
+
     const totalDisplay = store.toDisplay(total);
-    modal.querySelector('#tax-total-deduction-display').textContent = 
+    modal.querySelector("#tax-total-deduction-display").textContent =
       `${store.getCurrencySymbol()}${totalDisplay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   // Bind real-time inputs calculation
-  modal.querySelectorAll('.tax-calc-input').forEach(inp => {
-    inp.addEventListener('input', calculateTotal);
+  modal.querySelectorAll(".tax-calc-input").forEach((inp) => {
+    inp.addEventListener("input", calculateTotal);
   });
   calculateTotal();
 
   const close = () => document.body.removeChild(modal);
-  modal.querySelector('.modal-close-btn').onclick = close;
-  modal.querySelector('.modal-cancel-btn').onclick = close;
-  modal.querySelector('.modal-save-btn').onclick = () => {
-    const personalVal = parseFloat(modal.querySelector('#tax-personal').value) || 0;
-    const ssfVal = parseFloat(modal.querySelector('#tax-ssf').value) || 0;
-    const pvdVal = parseFloat(modal.querySelector('#tax-pvd').value) || 0;
-    const mfVal = parseFloat(modal.querySelector('#tax-mf').value) || 0;
-    const otherVal = parseFloat(modal.querySelector('#tax-other').value) || 0;
+  modal.querySelector(".modal-close-btn").onclick = close;
+  modal.querySelector(".modal-cancel-btn").onclick = close;
+  modal.querySelector(".modal-save-btn").onclick = () => {
+    const personalVal =
+      parseFloat(modal.querySelector("#tax-personal").value) || 0;
+    const ssfVal = parseFloat(modal.querySelector("#tax-ssf").value) || 0;
+    const pvdVal = parseFloat(modal.querySelector("#tax-pvd").value) || 0;
+    const mfVal = parseFloat(modal.querySelector("#tax-mf").value) || 0;
+    const otherVal = parseFloat(modal.querySelector("#tax-other").value) || 0;
 
     store.updateTaxDeduction(personalVal, ssfVal, pvdVal, mfVal, otherVal);
     close();
-    alerts.success(t('taxSaveSuccess'));
+    alerts.success(t("taxSaveSuccess"));
     // Reload dashboard to update tax calculation if screen is open
-    const currentScreen = document.querySelector('.nav-item.active');
-    if (currentScreen && currentScreen.getAttribute('data-screen') === 'dashboard') {
+    const currentScreen = document.querySelector(".nav-item.active");
+    if (
+      currentScreen &&
+      currentScreen.getAttribute("data-screen") === "dashboard"
+    ) {
       window.location.reload();
     }
   };
@@ -424,16 +477,16 @@ function showTaxSettings(container) {
 
 function updateNavLabels() {
   const labels = {
-    dashboard: t('navDashboard'),
-    transactions: t('navTransactions'),
-    addTransaction: t('navAdd'),
-    planner: 'Planner',
-    recurring: t('navRecurring'),
-    settings: t('navSettings')
+    dashboard: t("navDashboard"),
+    transactions: t("navTransactions"),
+    addTransaction: t("navAdd"),
+    planner: "Planner",
+    recurring: t("navRecurring"),
+    settings: t("navSettings"),
   };
-  document.querySelectorAll('[data-screen]').forEach(btn => {
-    const screen = btn.getAttribute('data-screen');
-    const label = btn.querySelector('span');
+  document.querySelectorAll("[data-screen]").forEach((btn) => {
+    const screen = btn.getAttribute("data-screen");
+    const label = btn.querySelector("span");
     if (label && labels[screen]) label.textContent = labels[screen];
   });
 }

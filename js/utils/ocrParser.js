@@ -1,9 +1,9 @@
-import { store } from '../store.js';
+import { store } from "../store.js";
 
 // Preprocesses text to normalize spaces incorrectly inserted between Thai characters by OCR diacritics/segments
 export function normalizeThaiText(text) {
   if (!text) return "";
-  return text.replace(/(?<=[\u0E00-\u0E7F])\s+(?=[\u0E00-\u0E7F])/g, '');
+  return text.replace(/(?<=[\u0E00-\u0E7F])\s+(?=[\u0E00-\u0E7F])/g, "");
 }
 
 // Dynamic script loader for Tesseract.js
@@ -13,7 +13,7 @@ export function loadScript(src) {
       resolve();
       return;
     }
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = src;
     script.onload = resolve;
     script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
@@ -24,7 +24,7 @@ export function loadScript(src) {
 // Regex-based receipt parser
 export function parseReceiptText(text) {
   text = normalizeThaiText(text);
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   let detectedPayee = "";
   const detectedItems = [];
   let detectedTax = 0.0;
@@ -42,17 +42,30 @@ export function parseReceiptText(text) {
   // Helper to normalize payee names
   const normalizePayeeName = (name) => {
     if (!name) return "";
-    const clean = name.toLowerCase().replace(/[^\w\s\u0E00-\u0E7F]/g, '');
-    if (clean.includes("mcthai") || clean.includes("ncthat") || clean.includes("mcdonald")) {
+    const clean = name.toLowerCase().replace(/[^\w\s\u0E00-\u0E7F]/g, "");
+    if (
+      clean.includes("mcthai") ||
+      clean.includes("ncthat") ||
+      clean.includes("mcdonald")
+    ) {
       return "McDonald's";
     }
-    if (clean.includes("711") || clean.includes("seven") || clean.includes("cpall") || clean.includes("cp all")) {
+    if (
+      clean.includes("711") ||
+      clean.includes("seven") ||
+      clean.includes("cpall") ||
+      clean.includes("cp all")
+    ) {
       return "7-Eleven";
     }
     if (clean.includes("starbuck")) {
       return "Starbucks";
     }
-    if (clean.includes("cafe amazon") || clean.includes("amazon cafe") || clean.includes("อเมซอน")) {
+    if (
+      clean.includes("cafe amazon") ||
+      clean.includes("amazon cafe") ||
+      clean.includes("อเมซอน")
+    ) {
       return "Café Amazon";
     }
     if (clean.includes("grab")) {
@@ -79,7 +92,7 @@ export function parseReceiptText(text) {
       !line.toLowerCase().includes("tax") &&
       !line.toLowerCase().includes("welcome")
     ) {
-      detectedPayee = line.replace(/[^\w\s\u0E00-\u0E7F]/g, '').trim(); // clean special chars
+      detectedPayee = line.replace(/[^\w\s\u0E00-\u0E7F]/g, "").trim(); // clean special chars
       if (detectedPayee.length > 2) {
         payeeLineIndex = i;
         break;
@@ -97,15 +110,23 @@ export function parseReceiptText(text) {
 
   // Extract metadata fields
   const dateRegex = /\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})\b/;
-  
+
   for (let idx = 0; idx < lines.length; idx++) {
     const line = lines[idx].trim();
     if (line.length < 4) continue;
 
     // Address/Tel detection
-    if (!detectedAddress && /tel\b|phone\b|mobile\b|branch\b|สาขา\b|ถนน\b|ซอย\b|ชั้น\b|road\b|street\b|st\b|rd\b|ave\b|avenue\b|bldg\b|building\b|town\b|city\b|prov\b|district\b|ตำบล\b|อำเภอ\b|จังหวัด\b/i.test(line)) {
-      if (!line.toLowerCase().includes("payee") && !line.toLowerCase().includes("total")) {
-        detectedAddress = line.replace(/[#_*|]/g, '').trim();
+    if (
+      !detectedAddress &&
+      /tel\b|phone\b|mobile\b|branch\b|สาขา\b|ถนน\b|ซอย\b|ชั้น\b|road\b|street\b|st\b|rd\b|ave\b|avenue\b|bldg\b|building\b|town\b|city\b|prov\b|district\b|ตำบล\b|อำเภอ\b|จังหวัด\b/i.test(
+        line,
+      )
+    ) {
+      if (
+        !line.toLowerCase().includes("payee") &&
+        !line.toLowerCase().includes("total")
+      ) {
+        detectedAddress = line.replace(/[#_*|]/g, "").trim();
       }
     }
 
@@ -122,12 +143,26 @@ export function parseReceiptText(text) {
     }
 
     // Server detection
-    if (!detectedServer && (/\b(?:server|cashier|crew|staff|waiter|cashier\d*|พนักงาน|ผู้ขาย|แคชเชียร์)\b/i.test(line) || line.toLowerCase().includes("crew id"))) {
-      const serverMatch = line.match(/(?:server|cashier|crew|staff|waiter|พนักงาน|ผู้ขาย|แคชเชียร์)(?:\s*id)?\s*[:\-\d]*\s+(.+)/i);
+    if (
+      !detectedServer &&
+      (/\b(?:server|cashier|crew|staff|waiter|cashier\d*|พนักงาน|ผู้ขาย|แคชเชียร์)\b/i.test(
+        line,
+      ) ||
+        line.toLowerCase().includes("crew id"))
+    ) {
+      const serverMatch = line.match(
+        /(?:server|cashier|crew|staff|waiter|พนักงาน|ผู้ขาย|แคชเชียร์)(?:\s*id)?\s*[:\-\d]*\s+(.+)/i,
+      );
       if (serverMatch) {
-        detectedServer = serverMatch[1].replace(/[#_*|]/g, '').replace(/^[^\w\u0E00-\u0E7F]+/g, '').trim();
+        detectedServer = serverMatch[1]
+          .replace(/[#_*|]/g, "")
+          .replace(/^[^\w\u0E00-\u0E7F]+/g, "")
+          .trim();
       } else {
-        detectedServer = line.replace(/[#_*|]/g, '').replace(/^[^\w\u0E00-\u0E7F]+/g, '').trim();
+        detectedServer = line
+          .replace(/[#_*|]/g, "")
+          .replace(/^[^\w\u0E00-\u0E7F]+/g, "")
+          .trim();
       }
     }
 
@@ -140,8 +175,15 @@ export function parseReceiptText(text) {
     }
 
     // Check / Order / Inv detection
-    if (!detectedCheck && /\b(?:check|chk|order|ord|inv|bill|receipt)\b|เลขที่|ใบเสร็จ|อ้างอิง/i.test(line)) {
-      const match = line.match(/(?:\b(?:check|chk|order|ord|inv|bill|receipt)\b|เลขที่|ใบเสร็จ|อ้างอิง)\s*#?[:\-\s]*\s*([A-Z0-9\-\/]+)/i);
+    if (
+      !detectedCheck &&
+      /\b(?:check|chk|order|ord|inv|bill|receipt)\b|เลขที่|ใบเสร็จ|อ้างอิง/i.test(
+        line,
+      )
+    ) {
+      const match = line.match(
+        /(?:\b(?:check|chk|order|ord|inv|bill|receipt)\b|เลขที่|ใบเสร็จ|อ้างอิง)\s*#?[:\-\s]*\s*([A-Z0-9\-\/]+)/i,
+      );
       if (match) {
         if (match[1].length > 2 && !/^\d{2}[\/\-]\d{2}/.test(match[1])) {
           detectedCheck = match[1].trim();
@@ -161,24 +203,51 @@ export function parseReceiptText(text) {
     const lowerLine = line.toLowerCase();
 
     // Check if line represents Totals (Tax, Tip, Total, Discount, Rounding)
-    const isTotalLine = lowerLine.includes("total") || lowerLine.includes("subtotal") || lowerLine.includes("net") ||
-      lowerLine.includes("รวม") || lowerLine.includes("ยอดรวม") || lowerLine.includes("รวมเงิน") ||
-      lowerLine.includes("ภาษี") || lowerLine.includes("tax") || lowerLine.includes("vat") ||
-      lowerLine.includes("tip") || lowerLine.includes("service charge") || lowerLine.includes("ค่าบริการ") ||
-      lowerLine.includes("ทิป") || lowerLine.includes("discount") || lowerLine.includes("ส่วนลด") ||
-      lowerLine.includes("rounding") || lowerLine.includes("adjustment");
+    const isTotalLine =
+      lowerLine.includes("total") ||
+      lowerLine.includes("subtotal") ||
+      lowerLine.includes("net") ||
+      lowerLine.includes("รวม") ||
+      lowerLine.includes("ยอดรวม") ||
+      lowerLine.includes("รวมเงิน") ||
+      lowerLine.includes("ภาษี") ||
+      lowerLine.includes("tax") ||
+      lowerLine.includes("vat") ||
+      lowerLine.includes("tip") ||
+      lowerLine.includes("service charge") ||
+      lowerLine.includes("ค่าบริการ") ||
+      lowerLine.includes("ทิป") ||
+      lowerLine.includes("discount") ||
+      lowerLine.includes("ส่วนลด") ||
+      lowerLine.includes("rounding") ||
+      lowerLine.includes("adjustment");
 
     if (isTotalLine) {
       // Find all decimal numbers in the line
       const matches = line.match(/(\d+[\.,]\d{1,2})/g) || line.match(/(\d+)/g);
       if (matches && matches.length > 0) {
-        const value = parseFloat(matches[matches.length - 1].replace(',', '.')) || 0.0;
+        const value =
+          parseFloat(matches[matches.length - 1].replace(",", ".")) || 0.0;
 
-        if (lowerLine.includes("tax") || lowerLine.includes("vat") || lowerLine.includes("ภาษี")) {
+        if (
+          lowerLine.includes("tax") ||
+          lowerLine.includes("vat") ||
+          lowerLine.includes("ภาษี")
+        ) {
           detectedTax = value;
-        } else if (lowerLine.includes("tip") || lowerLine.includes("service charge") || lowerLine.includes("ค่าบริการ") || lowerLine.includes("ทิป")) {
+        } else if (
+          lowerLine.includes("tip") ||
+          lowerLine.includes("service charge") ||
+          lowerLine.includes("ค่าบริการ") ||
+          lowerLine.includes("ทิป")
+        ) {
           detectedTip = value;
-        } else if (lowerLine.includes("total") || lowerLine.includes("ยอดรวม") || lowerLine.includes("รวมเงิน") || lowerLine.includes("สุทธิ")) {
+        } else if (
+          lowerLine.includes("total") ||
+          lowerLine.includes("ยอดรวม") ||
+          lowerLine.includes("รวมเงิน") ||
+          lowerLine.includes("สุทธิ")
+        ) {
           // Keep the highest total found
           if (value > detectedTotal) {
             detectedTotal = value;
@@ -189,20 +258,42 @@ export function parseReceiptText(text) {
     }
 
     // Skip metadata lines (using word boundary for English keys to prevent false positives)
-    const isMetadataLine = /\b(?:tel|phone|mobile|date|time|ref|check|table|id|no|card|cash|change|visa|mastercard|credit|debit|payment|coupon|serial|type|crew|cashier|staff|waiter|member|loyalty|rounding|adjustment)\b|grabpay|shopeepay|truemoney|promptpay|\b(?:grab|lineman|foodpanda|shopeefood|delivery)\b|#|xxx|เลขที่|วันที่|เวลา|อ้างอิง|เบอร์|โทร|บัญชี|account|โอนเงิน|สำเร็จ|ไปยัง|จาก|พร้อมเพย์|ธนาคาร|สาขา|คูปอง/i.test(line);
+    const isMetadataLine =
+      /\b(?:tel|phone|mobile|date|time|ref|check|table|id|no|card|cash|change|visa|mastercard|credit|debit|payment|coupon|serial|type|crew|cashier|staff|waiter|member|loyalty|rounding|adjustment)\b|grabpay|shopeepay|truemoney|promptpay|\b(?:grab|lineman|foodpanda|shopeefood|delivery)\b|#|xxx|เลขที่|วันที่|เวลา|อ้างอิง|เบอร์|โทร|บัญชี|account|โอนเงิน|สำเร็จ|ไปยัง|จาก|พร้อมเพย์|ธนาคาร|สาขา|คูปอง/i.test(
+        line,
+      );
     if (isMetadataLine) continue;
 
     // Skip payee name line to prevent matching the payee line itself as an item (using helper)
     const isPayeeLine = (l, raw, norm) => {
       if (!l) return false;
-      const cleanLine = l.toLowerCase().replace(/[^\w\u0E00-\u0E7F]/g, '').replace(/0/g, 'o');
-      const cleanRaw = (raw || "").toLowerCase().replace(/[^\w\u0E00-\u0E7F]/g, '').replace(/0/g, 'o');
-      const cleanNorm = (norm || "").toLowerCase().replace(/[^\w\u0E00-\u0E7F]/g, '').replace(/0/g, 'o');
-      
-      if (cleanRaw && (cleanLine === cleanRaw || cleanLine.includes(cleanRaw) || cleanRaw.includes(cleanLine))) {
+      const cleanLine = l
+        .toLowerCase()
+        .replace(/[^\w\u0E00-\u0E7F]/g, "")
+        .replace(/0/g, "o");
+      const cleanRaw = (raw || "")
+        .toLowerCase()
+        .replace(/[^\w\u0E00-\u0E7F]/g, "")
+        .replace(/0/g, "o");
+      const cleanNorm = (norm || "")
+        .toLowerCase()
+        .replace(/[^\w\u0E00-\u0E7F]/g, "")
+        .replace(/0/g, "o");
+
+      if (
+        cleanRaw &&
+        (cleanLine === cleanRaw ||
+          cleanLine.includes(cleanRaw) ||
+          cleanRaw.includes(cleanLine))
+      ) {
         return true;
       }
-      if (cleanNorm && (cleanLine === cleanNorm || cleanLine.includes(cleanNorm) || cleanNorm.includes(cleanLine))) {
+      if (
+        cleanNorm &&
+        (cleanLine === cleanNorm ||
+          cleanLine.includes(cleanNorm) ||
+          cleanNorm.includes(cleanLine))
+      ) {
         return true;
       }
       return false;
@@ -220,9 +311,12 @@ export function parseReceiptText(text) {
 
     // Normalize common OCR typos in prices before matching
     let normalizedLine = cleanedLine;
-    normalizedLine = normalizedLine.replace(/[\.,\s]([oO0])([oO0])\s*$/g, '.00');
+    normalizedLine = normalizedLine.replace(
+      /[\.,\s]([oO0])([oO0])\s*$/g,
+      ".00",
+    );
     if (/(\d+)\s+(\d{2})\s*$/.test(normalizedLine)) {
-      normalizedLine = normalizedLine.replace(/(\d+)\s+(\d{2})\s*$/, '$1.$2');
+      normalizedLine = normalizedLine.replace(/(\d+)\s+(\d{2})\s*$/, "$1.$2");
     }
 
     // Try to extract an item price
@@ -233,7 +327,8 @@ export function parseReceiptText(text) {
       const intMatch = normalizedLine.match(/\b(\d+)\s*$/);
       if (intMatch && intMatch[1].length < 5) {
         const val = parseInt(intMatch[1]);
-        if (val >= 10) { // Filter out small integers like table index or single qty numbers
+        if (val >= 10) {
+          // Filter out small integers like table index or single qty numbers
           const beforeNum = normalizedLine.substring(0, intMatch.index).trim();
           // Check it's not part of a date/time (like 12:27 or 09/06)
           if (!/[:\-\/]$/.test(beforeNum)) {
@@ -244,14 +339,14 @@ export function parseReceiptText(text) {
     }
 
     if (priceMatch) {
-      const priceStr = priceMatch[1].replace(',', '.');
+      const priceStr = priceMatch[1].replace(",", ".");
       const price = parseFloat(priceStr);
 
       if (price > 0 && price < 100000) {
         let name = normalizedLine.substring(0, priceMatch.index).trim();
-        
+
         // Clean up symbols often misread by OCR at the end of the name
-        name = name.replace(/[\.\-\*_#:@|\\/]+$/g, '').trim();
+        name = name.replace(/[\.\-\*_#:@|\\/]+$/g, "").trim();
 
         // Parse quantity if present (e.g. "2x Latte", "Latte x3", "Latte 2 120.00")
         let qty = 1;
@@ -275,14 +370,16 @@ export function parseReceiptText(text) {
         }
 
         // Clean up leading/trailing symbols in name
-        name = name.replace(/^[^\w\u0E00-\u0E7F]+|[^\w\u0E00-\u0E7F]+$/g, '').trim();
+        name = name
+          .replace(/^[^\w\u0E00-\u0E7F]+|[^\w\u0E00-\u0E7F]+$/g, "")
+          .trim();
 
         if (name.length > 2) {
           detectedItems.push({
             id: Math.random().toString(36).substring(2, 11),
             name: name,
             price: price / qty, // unit price
-            qty: qty
+            qty: qty,
           });
         }
       }
@@ -290,11 +387,15 @@ export function parseReceiptText(text) {
   }
 
   // Calculate sum of items
-  const itemsSum = detectedItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const itemsSum = detectedItems.reduce(
+    (sum, item) => sum + item.price * item.qty,
+    0,
+  );
 
   // If detectedTotal is 0 or less than the items sum, set it to items sum + tax + tip
   if (detectedTotal <= 0 || detectedTotal < itemsSum) {
-    detectedTotal = itemsSum + (detectedTaxIncluded ? 0.0 : (detectedTax + detectedTip));
+    detectedTotal =
+      itemsSum + (detectedTaxIncluded ? 0.0 : detectedTax + detectedTip);
   }
 
   return {
@@ -308,44 +409,185 @@ export function parseReceiptText(text) {
     tax: detectedTax,
     tip: detectedTip,
     total: detectedTotal,
-    taxIncluded: detectedTaxIncluded
+    taxIncluded: detectedTaxIncluded,
   };
 }
 
 // Maps keywords to standard fintrack categories
 export function guessCategory(text, payee) {
   const combined = (text + " " + payee).toLowerCase();
-  
+
   const rules = [
-    { cat: 'Food', keywords: ['cafe', 'coffee', 'food', 'restaurant', 'steak', 'sushi', 'pizza', 'burger', 'kitchen', 'bakery', 'ร้านอาหาร', 'กาแฟ', 'อร่อย', 'ชา', 'ขนม', 'เมนู', 'หมูกระทะ', 'ชาบู'] },
-    { cat: 'Transport', keywords: ['taxi', 'gas', 'petrol', 'fuel', 'bts', 'mrt', 'grab', 'bolt', 'ride', 'น้ำมัน', 'รถไฟฟ้า', 'ทางด่วน', 'ปั๊มน้ำมัน', 'caltex', 'ptt', 'shell', 'esso'] },
-    { cat: 'Shopping', keywords: ['shop', 'store', 'mall', 'supermarket', 'outlet', 'clothes', 'shoes', 'index', 'hm', 'zara', '7-11', 'tops', 'lotus', 'bigc', 'ซูเปอร์', 'ห้าง', 'บิ๊กซี', 'โลตัส', 'เซเว่น'] },
-    { cat: 'Salary', keywords: ['salary', 'income', 'payroll', 'bonus', 'เงินเดือน', 'รายได้', 'ปันผล'] },
-    { cat: 'Bills', keywords: ['bill', 'electric', 'water', 'net', 'wifi', 'mobile', 'phone', 'rent', 'ค่าไฟ', 'ค่าน้ำ', 'ค่าเน็ต', 'ค่าเช่า', 'บิล', 'ais', 'true', 'dtac'] },
-    { cat: 'Entertainment', keywords: ['cinema', 'movie', 'game', 'play', 'show', 'concert', 'netflix', 'โรงหนัง', 'เกม', 'คอนเสิร์ต', 'คาราโอเกะ'] },
-    { cat: 'Health', keywords: ['pharmacy', 'drug', 'hospital', 'clinic', 'doctor', 'gym', 'fit', 'ยา', 'โรงพยาบาล', 'คลินิก', 'ยาสีฟัน', 'ฟิตเนส', 'สปา'] }
+    {
+      cat: "Food",
+      keywords: [
+        "cafe",
+        "coffee",
+        "food",
+        "restaurant",
+        "steak",
+        "sushi",
+        "pizza",
+        "burger",
+        "kitchen",
+        "bakery",
+        "ร้านอาหาร",
+        "กาแฟ",
+        "อร่อย",
+        "ชา",
+        "ขนม",
+        "เมนู",
+        "หมูกระทะ",
+        "ชาบู",
+      ],
+    },
+    {
+      cat: "Transport",
+      keywords: [
+        "taxi",
+        "gas",
+        "petrol",
+        "fuel",
+        "bts",
+        "mrt",
+        "grab",
+        "bolt",
+        "ride",
+        "น้ำมัน",
+        "รถไฟฟ้า",
+        "ทางด่วน",
+        "ปั๊มน้ำมัน",
+        "caltex",
+        "ptt",
+        "shell",
+        "esso",
+      ],
+    },
+    {
+      cat: "Shopping",
+      keywords: [
+        "shop",
+        "store",
+        "mall",
+        "supermarket",
+        "outlet",
+        "clothes",
+        "shoes",
+        "index",
+        "hm",
+        "zara",
+        "7-11",
+        "tops",
+        "lotus",
+        "bigc",
+        "ซูเปอร์",
+        "ห้าง",
+        "บิ๊กซี",
+        "โลตัส",
+        "เซเว่น",
+      ],
+    },
+    {
+      cat: "Salary",
+      keywords: [
+        "salary",
+        "income",
+        "payroll",
+        "bonus",
+        "เงินเดือน",
+        "รายได้",
+        "ปันผล",
+      ],
+    },
+    {
+      cat: "Bills",
+      keywords: [
+        "bill",
+        "electric",
+        "water",
+        "net",
+        "wifi",
+        "mobile",
+        "phone",
+        "rent",
+        "ค่าไฟ",
+        "ค่าน้ำ",
+        "ค่าเน็ต",
+        "ค่าเช่า",
+        "บิล",
+        "ais",
+        "true",
+        "dtac",
+      ],
+    },
+    {
+      cat: "Entertainment",
+      keywords: [
+        "cinema",
+        "movie",
+        "game",
+        "play",
+        "show",
+        "concert",
+        "netflix",
+        "โรงหนัง",
+        "เกม",
+        "คอนเสิร์ต",
+        "คาราโอเกะ",
+      ],
+    },
+    {
+      cat: "Health",
+      keywords: [
+        "pharmacy",
+        "drug",
+        "hospital",
+        "clinic",
+        "doctor",
+        "gym",
+        "fit",
+        "ยา",
+        "โรงพยาบาล",
+        "คลินิก",
+        "ยาสีฟัน",
+        "ฟิตเนส",
+        "สปา",
+      ],
+    },
   ];
 
   for (const rule of rules) {
-    if (rule.keywords.some(kw => combined.includes(kw))) {
+    if (rule.keywords.some((kw) => combined.includes(kw))) {
       return rule.cat;
     }
   }
 
-  return 'Other';
+  return "Other";
 }
 
 // Run client-side Tesseract OCR
 export async function runLocalOCR(file, progressCallback) {
-  if (typeof window.Tesseract === 'undefined') {
-    progressCallback?.(store.settings.language === 'en' ? 'Loading OCR engine...' : 'กำลังโหลดระบบสแกนข้อความ...');
-    await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+  if (typeof window.Tesseract === "undefined") {
+    progressCallback?.(
+      store.settings.language === "en"
+        ? "Loading OCR engine..."
+        : "กำลังโหลดระบบสแกนข้อความ...",
+    );
+    await loadScript(
+      "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js",
+    );
   }
 
-  progressCallback?.(store.settings.language === 'en' ? 'Scanning receipt details...' : 'กำลังวิเคราะห์รายการบิล...');
-  
-  const worker = await window.Tesseract.createWorker(store.settings.language === 'en' ? 'eng' : 'eng+tha');
-  
+  progressCallback?.(
+    store.settings.language === "en"
+      ? "Scanning receipt details..."
+      : "กำลังวิเคราะห์รายการบิล...",
+  );
+
+  const worker = await window.Tesseract.createWorker(
+    store.settings.language === "en" ? "eng" : "eng+tha",
+  );
+
   try {
     const result = await worker.recognize(file);
     await worker.terminate();
@@ -360,60 +602,70 @@ export async function runLocalOCR(file, progressCallback) {
 export function parseBankSlipAmount(text) {
   if (!text) return null;
   text = normalizeThaiText(text);
-  const lines = text.split('\n');
-  
+  const lines = text.split("\n");
+
   // Strategy 1: Look for final payment amount keywords (ชำระ, สุทธิ, net, paid) to avoid subtotal/discount lines
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].toLowerCase();
     if (/ชำระ|สุทธิ|net|paid/i.test(line) && !/ธรรม|fee/i.test(line)) {
-      let match = line.match(/(\d+[\.,]\d{2})/) || line.match(/\b(\d+)\s*(?:บาท|thb|฿|\s|$)/i);
+      let match =
+        line.match(/(\d+[\.,]\d{2})/) ||
+        line.match(/\b(\d+)\s*(?:บาท|thb|฿|\s|$)/i);
       if (match) {
-        const val = parseFloat(match[1].replace(',', '.'));
+        const val = parseFloat(match[1].replace(",", "."));
         if (val > 0) return val;
       }
-      
+
       // Check next line
       if (i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        match = nextLine.match(/(\d+[\.,]\d{2})/) || nextLine.match(/\b(\d+)\b/);
+        match =
+          nextLine.match(/(\d+[\.,]\d{2})/) || nextLine.match(/\b(\d+)\b/);
         if (match) {
-          const val = parseFloat(match[1].replace(',', '.'));
+          const val = parseFloat(match[1].replace(",", "."));
           if (val > 0) return val;
         }
       }
     }
   }
-  
+
   // Strategy 2: Keyword Proximity
   // Check for amount labels on a line and look for the number on that line or next line
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i].toLowerCase();
-    
+
     // Truncate line before fee keywords if it contains both amount and fee details (OCR merging)
-    if (line.includes('ธรรม') || line.includes('fee')) {
+    if (line.includes("ธรรม") || line.includes("fee")) {
       if (/[จจํ][ําา]นวน|ยอด|amount|total|sum/i.test(line)) {
-        const idx = line.includes('ธรรม') ? line.indexOf('ธรรม') : line.indexOf('fee');
+        const idx = line.includes("ธรรม")
+          ? line.indexOf("ธรรม")
+          : line.indexOf("fee");
         line = line.substring(0, idx);
       }
     }
-    
+
     // Check for amount keywords (matching both standard and decomposed SARAM AM) and exclude fees
-    const isAmountLabel = (/[จจํ][ําา]นวน|ยอด|amount|total|sum/i.test(line)) && !(/ธรรม|fee/i.test(line));
-    
+    const isAmountLabel =
+      /[จจํ][ําา]นวน|ยอด|amount|total|sum/i.test(line) &&
+      !/ธรรม|fee/i.test(line);
+
     if (isAmountLabel) {
       // Find a decimal number in this line
-      let match = line.match(/(\d+[\.,]\d{2})/) || line.match(/\b(\d+)\s*(?:บาท|thb|฿|\s|$)/i);
+      let match =
+        line.match(/(\d+[\.,]\d{2})/) ||
+        line.match(/\b(\d+)\s*(?:บาท|thb|฿|\s|$)/i);
       if (match) {
-        const val = parseFloat(match[1].replace(',', '.'));
+        const val = parseFloat(match[1].replace(",", "."));
         if (val > 0) return val;
       }
-      
+
       // Check next line
       if (i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        match = nextLine.match(/(\d+[\.,]\d{2})/) || nextLine.match(/\b(\d+)\b/);
+        match =
+          nextLine.match(/(\d+[\.,]\d{2})/) || nextLine.match(/\b(\d+)\b/);
         if (match) {
-          const val = parseFloat(match[1].replace(',', '.'));
+          const val = parseFloat(match[1].replace(",", "."));
           if (val > 0) return val;
         }
       }
@@ -425,7 +677,7 @@ export function parseBankSlipAmount(text) {
   const decimals = [];
   for (const line of lines) {
     if (/ธรรม|fee/i.test(line)) continue;
-    
+
     const matches = line.match(/(\d+[\.,]\d{2})/g);
     if (matches) {
       for (const m of matches) {
@@ -433,16 +685,16 @@ export function parseBankSlipAmount(text) {
         const index = line.indexOf(m);
         if (index !== -1) {
           const charAfter = line.charAt(index + m.length);
-          const charBefore = index > 0 ? line.charAt(index - 1) : '';
-          if (charAfter === ':' || charBefore === ':') {
+          const charBefore = index > 0 ? line.charAt(index - 1) : "";
+          if (charAfter === ":" || charBefore === ":") {
             continue;
           }
           if (/^\d/.test(line.substring(index + m.length))) {
             continue;
           }
         }
-        
-        const val = parseFloat(m.replace(',', '.'));
+
+        const val = parseFloat(m.replace(",", "."));
         if (val > 0 && val < 1000000) {
           decimals.push(val);
         }
@@ -459,7 +711,7 @@ export function parseBankSlipAmount(text) {
     if (/บาท|thb|฿/i.test(lowerLine) && !/ธรรม|fee/i.test(lowerLine)) {
       const match = line.match(/(\d+[\.,]\d{2})/) || line.match(/\b(\d+)\b/);
       if (match) {
-        const val = parseFloat(match[1].replace(',', '.')) || 0.0;
+        const val = parseFloat(match[1].replace(",", ".")) || 0.0;
         if (val > 0) return val;
       }
     }
@@ -473,21 +725,40 @@ export function detectIfBankSlip(text) {
   if (!text) return false;
   text = normalizeThaiText(text);
   const lowerText = text.toLowerCase();
-  
+
   const keywords = [
-    'โอนเงินสำเร็จ', 'รายการสำเร็จ', 'ทำรายการสำเร็จ', 'รหัสอ้างอิง', 'เลขที่อ้างอิง',
-    'ค่าธรรมเนียม', 'พร้อมเพย์', 'g-wallet', 'เป๋าตัง', 'krungthai', 'bangkok bank',
-    'kbank', 'scb', 'kasikorn', 'ไทยพาณิชย์', 'กสิกร', 'กรุงไทย', 'กรุงเทพ', 'ttb',
-    'โอนเงิน', 'ชำระเงิน', 'สิทธิ์คนละครึ่ง', 'สิทธิ์ไทยช่วยไทย'
+    "โอนเงินสำเร็จ",
+    "รายการสำเร็จ",
+    "ทำรายการสำเร็จ",
+    "รหัสอ้างอิง",
+    "เลขที่อ้างอิง",
+    "ค่าธรรมเนียม",
+    "พร้อมเพย์",
+    "g-wallet",
+    "เป๋าตัง",
+    "krungthai",
+    "bangkok bank",
+    "kbank",
+    "scb",
+    "kasikorn",
+    "ไทยพาณิชย์",
+    "กสิกร",
+    "กรุงไทย",
+    "กรุงเทพ",
+    "ttb",
+    "โอนเงิน",
+    "ชำระเงิน",
+    "สิทธิ์คนละครึ่ง",
+    "สิทธิ์ไทยช่วยไทย",
   ];
-  
+
   let count = 0;
   for (const kw of keywords) {
     if (lowerText.includes(kw)) {
       count++;
     }
   }
-  
+
   return count >= 2;
 }
 
@@ -495,25 +766,35 @@ export function detectIfBankSlip(text) {
 export function parseBankSlipReceiver(text) {
   if (!text) return "โอนเงินสำเร็จ";
   text = normalizeThaiText(text);
-  const lines = text.split('\n');
-  
+  const lines = text.split("\n");
+
   // Look for lines that indicate receiver
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (line.includes('ไปยัง') || line.includes('ไปที่') || line.toLowerCase().includes('to:')) {
+    if (
+      line.includes("ไปยัง") ||
+      line.includes("ไปที่") ||
+      line.toLowerCase().includes("to:")
+    ) {
       // Try to extract from the same line after the keyword first
       let rest = "";
-      if (line.includes('ไปยัง')) rest = line.substring(line.indexOf('ไปยัง') + 5).trim();
-      else if (line.includes('ไปที่')) rest = line.substring(line.indexOf('ไปที่') + 5).trim();
-      else if (line.toLowerCase().includes('to:')) rest = line.substring(line.toLowerCase().indexOf('to:') + 3).trim();
-      
-      rest = rest.replace(/^[@\s_]+/g, '').replace(/[\d\-*]+/g, '').trim();
+      if (line.includes("ไปยัง"))
+        rest = line.substring(line.indexOf("ไปยัง") + 5).trim();
+      else if (line.includes("ไปที่"))
+        rest = line.substring(line.indexOf("ไปที่") + 5).trim();
+      else if (line.toLowerCase().includes("to:"))
+        rest = line.substring(line.toLowerCase().indexOf("to:") + 3).trim();
+
+      rest = rest
+        .replace(/^[@\s_]+/g, "")
+        .replace(/[\d\-*]+/g, "")
+        .trim();
       if (rest.length > 2) return rest;
 
       // Fall back to next line if same line is empty
       if (i + 1 < lines.length) {
         let name = lines[i + 1].trim();
-        name = name.replace(/[\d\-*]+/g, '').trim();
+        name = name.replace(/[\d\-*]+/g, "").trim();
         if (name.length > 2) return name;
       }
     }
@@ -522,10 +803,16 @@ export function parseBankSlipReceiver(text) {
   // Fallback for Pao Tang or other layouts: search for a shop/name indicator
   for (let i = Math.floor(lines.length / 4); i < lines.length; i++) {
     const line = lines[i].trim();
-    if (line.includes('ร้าน') || line.includes('บริษัท') || line.includes('นาย') || line.includes('นาง') || line.includes('น.ส.')) {
-      return line.replace(/[^\w\s\u0E00-\u0E7F]/g, '').trim();
+    if (
+      line.includes("ร้าน") ||
+      line.includes("บริษัท") ||
+      line.includes("นาย") ||
+      line.includes("นาง") ||
+      line.includes("น.ส.")
+    ) {
+      return line.replace(/[^\w\s\u0E00-\u0E7F]/g, "").trim();
     }
   }
-  
+
   return "รายการโอนเงิน";
 }

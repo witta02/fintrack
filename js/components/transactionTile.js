@@ -1,26 +1,32 @@
-import { getCategoryInfo } from '../categories.js';
+import { getCategoryInfo } from "../categories.js";
 
-export function createTransactionTile(transaction, symbol, displayAmount, onEdit, onDelete) {
+export function createTransactionTile(
+  transaction,
+  symbol,
+  displayAmount,
+  onEdit,
+  onDelete,
+) {
   const cat = getCategoryInfo(transaction.category);
 
   // Format Date: "21 พ.ค. 2026, 22:30"
   const dateObj = new Date(transaction.date);
-  const dateStr = dateObj.toLocaleDateString('th-TH', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  const dateStr = dateObj.toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
-  const amountSign = transaction.isIncome ? '+' : '-';
+  const amountSign = transaction.isIncome ? "+" : "-";
 
-  const tile = document.createElement('div');
-  tile.className = 'transaction-tile';
+  const tile = document.createElement("div");
+  tile.className = "transaction-tile";
   tile.dataset.id = transaction.id;
 
   // Set CSS custom property for the left accent bar color
-  tile.style.setProperty('--accent-color', cat.color);
+  tile.style.setProperty("--accent-color", cat.color);
 
   tile.innerHTML = `
     <div class="cat-icon" style="background: ${cat.color}18; color: ${cat.color}; border-color: ${cat.color}28;">
@@ -34,7 +40,7 @@ export function createTransactionTile(transaction, symbol, displayAmount, onEdit
         <span>${dateStr}</span>
       </div>
     </div>
-    <div class="tile-amount ${transaction.isIncome ? 'income' : 'expense'}">
+    <div class="tile-amount ${transaction.isIncome ? "income" : "expense"}">
       ${amountSign}${symbol}${displayAmount}
     </div>
     <button class="tile-delete" title="ลบรายการ" aria-label="ลบ">
@@ -46,13 +52,13 @@ export function createTransactionTile(transaction, symbol, displayAmount, onEdit
   `;
 
   // Delete button
-  tile.querySelector('.tile-delete').addEventListener('click', (e) => {
+  tile.querySelector(".tile-delete").addEventListener("click", (e) => {
     e.stopPropagation();
     onDelete(transaction.id);
   });
 
   // Tile click → edit
-  tile.addEventListener('click', () => {
+  tile.addEventListener("click", () => {
     onEdit(transaction);
   });
 
@@ -60,13 +66,15 @@ export function createTransactionTile(transaction, symbol, displayAmount, onEdit
 }
 
 function escapeHTML(str) {
-  return str.replace(/[&<>'\"]/g,
-    tag => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      "'": '&#39;',
-      '"': '&quot;'
-    }[tag] || tag)
+  return str.replace(
+    /[&<>'\"]/g,
+    (tag) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      })[tag] || tag,
   );
 }

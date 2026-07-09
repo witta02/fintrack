@@ -1,6 +1,10 @@
-import { store } from '../store.js';
-import { getCategoryInfo, expenseCategories, incomeCategories } from '../categories.js';
-import { alerts } from '../utils/alertHelper.js';
+import { store } from "../store.js";
+import {
+  getCategoryInfo,
+  expenseCategories,
+  incomeCategories,
+} from "../categories.js";
+import { alerts } from "../utils/alertHelper.js";
 
 export function renderRecurring(container) {
   container.innerHTML = `
@@ -37,7 +41,7 @@ export function renderRecurring(container) {
 
   // Subscribe to changes
   const unsubscribe = store.subscribe(() => {
-    if (document.getElementById('recurring-rules-list')) {
+    if (document.getElementById("recurring-rules-list")) {
       updateUI(container);
     } else {
       unsubscribe();
@@ -46,15 +50,17 @@ export function renderRecurring(container) {
 }
 
 function setupEventListeners(container) {
-  container.querySelector('#add-recurring-btn').addEventListener('click', () => {
-    showAddRecurringModal();
-  });
+  container
+    .querySelector("#add-recurring-btn")
+    .addEventListener("click", () => {
+      showAddRecurringModal();
+    });
 }
 
 function updateUI(container) {
   const symbol = store.getCurrencySymbol();
-  const listContainer = container.querySelector('#recurring-rules-list');
-  listContainer.innerHTML = '';
+  const listContainer = container.querySelector("#recurring-rules-list");
+  listContainer.innerHTML = "";
 
   const rules = store.getAllRecurringRules();
 
@@ -68,26 +74,33 @@ function updateUI(container) {
         <button id="add-first-recurring-btn" class="btn btn-primary" style="margin-top: 12px; font-size: 13px; padding: 8px 16px;">ตั้งค่ารายการประจำแรก</button>
       </div>
     `;
-    listContainer.querySelector('#add-first-recurring-btn').addEventListener('click', () => {
-      showAddRecurringModal();
-    });
+    listContainer
+      .querySelector("#add-first-recurring-btn")
+      .addEventListener("click", () => {
+        showAddRecurringModal();
+      });
     return;
   }
 
-  rules.forEach(rule => {
+  rules.forEach((rule) => {
     const cat = getCategoryInfo(rule.category);
     const amountVal = store.toDisplay(rule.amount);
-    const dateStr = new Date(rule.nextDueDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-    
-    // Type display label
-    let frequencyText = '';
-    if (rule.type === 'monthly') frequencyText = 'รายเดือน';
-    else if (rule.type === 'yearly') frequencyText = 'รายปี';
-    else if (rule.type === 'custom') frequencyText = `ทุกๆ ${rule.customDays} วัน`;
+    const dateStr = new Date(rule.nextDueDate).toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
 
-    const card = document.createElement('div');
-    card.className = `recurring-card ${!rule.isActive ? 'inactive' : ''}`;
-    card.style.setProperty('--accent-color', cat.color);
+    // Type display label
+    let frequencyText = "";
+    if (rule.type === "monthly") frequencyText = "รายเดือน";
+    else if (rule.type === "yearly") frequencyText = "รายปี";
+    else if (rule.type === "custom")
+      frequencyText = `ทุกๆ ${rule.customDays} วัน`;
+
+    const card = document.createElement("div");
+    card.className = `recurring-card ${!rule.isActive ? "inactive" : ""}`;
+    card.style.setProperty("--accent-color", cat.color);
     card.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -101,7 +114,7 @@ function updateUI(container) {
         </div>
         <!-- Status Switch toggle button -->
         <label class="switch-toggle">
-          <input type="checkbox" class="toggle-status-chk" ${rule.isActive ? 'checked' : ''} />
+          <input type="checkbox" class="toggle-status-chk" ${rule.isActive ? "checked" : ""} />
           <span class="switch-slider"></span>
         </label>
       </div>
@@ -114,8 +127,8 @@ function updateUI(container) {
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="font-size: 15px; font-weight: 700; color: ${rule.isIncome ? 'var(--income)' : 'var(--expense)'};">
-            ${rule.isIncome ? '+' : '-'}${symbol}${amountVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div style="font-size: 15px; font-weight: 700; color: ${rule.isIncome ? "var(--income)" : "var(--expense)"};">
+            ${rule.isIncome ? "+" : "-"}${symbol}${amountVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button class="rule-delete-btn" title="ลบ">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
@@ -125,31 +138,37 @@ function updateUI(container) {
     `;
 
     // Listen status change toggle
-    card.querySelector('.toggle-status-chk').addEventListener('change', () => {
+    card.querySelector(".toggle-status-chk").addEventListener("change", () => {
       store.toggleRecurringRule(rule.id);
     });
 
     // Listen delete button click
-    card.querySelector('.rule-delete-btn').addEventListener('click', async () => {
-      const isConfirmed = await alerts.confirmDelete(
-        store.settings.language === 'en' ? 'Delete Recurring Rule?' : 'ต้องการยกเลิกรายการประจำใช่หรือไม่?',
-        store.settings.language === 'en' ? 'This recurring rule will be deleted.' : 'รายการประจำนี้จะถูกลบออกและยกเลิกบันทึกอัตโนมัติ'
-      );
-      if (isConfirmed) {
-        store.deleteRecurringRule(rule.id);
-      }
-    });
+    card
+      .querySelector(".rule-delete-btn")
+      .addEventListener("click", async () => {
+        const isConfirmed = await alerts.confirmDelete(
+          store.settings.language === "en"
+            ? "Delete Recurring Rule?"
+            : "ต้องการยกเลิกรายการประจำใช่หรือไม่?",
+          store.settings.language === "en"
+            ? "This recurring rule will be deleted."
+            : "รายการประจำนี้จะถูกลบออกและยกเลิกบันทึกอัตโนมัติ",
+        );
+        if (isConfirmed) {
+          store.deleteRecurringRule(rule.id);
+        }
+      });
 
     listContainer.appendChild(card);
   });
 }
 
 function showAddRecurringModal() {
-  const overlay = document.getElementById('modal-overlay');
+  const overlay = document.getElementById("modal-overlay");
   if (!overlay) return;
 
   let ruleIsIncome = false;
-  let ruleSelectedCategory = 'Food';
+  let ruleSelectedCategory = "Food";
 
   overlay.innerHTML = `
     <div class="modal-dialog">
@@ -215,27 +234,30 @@ function showAddRecurringModal() {
 
   // Prefill today's date
   const today = new Date();
-  const pad = (num) => String(num).padStart(2, '0');
-  overlay.querySelector('#modal-due-date').value = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  const pad = (num) => String(num).padStart(2, "0");
+  overlay.querySelector("#modal-due-date").value =
+    `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
   // Category Picker Rendering helper inside Modal
   function renderModalCategoryPicker() {
-    const listContainer = overlay.querySelector('#modal-category-picker-container');
-    listContainer.innerHTML = '';
+    const listContainer = overlay.querySelector(
+      "#modal-category-picker-container",
+    );
+    listContainer.innerHTML = "";
     const list = ruleIsIncome ? incomeCategories : expenseCategories;
-    
-    if (!list.some(c => c.name === ruleSelectedCategory)) {
+
+    if (!list.some((c) => c.name === ruleSelectedCategory)) {
       ruleSelectedCategory = list[0].name;
     }
 
-    list.forEach(cat => {
+    list.forEach((cat) => {
       const info = getCategoryInfo(cat.name);
       const isSelected = cat.name === ruleSelectedCategory;
 
-      const item = document.createElement('div');
-      item.className = `category-picker-item ${isSelected ? 'selected' : ''}`;
-      item.style.padding = '8px 4px';
-      
+      const item = document.createElement("div");
+      item.className = `category-picker-item ${isSelected ? "selected" : ""}`;
+      item.style.padding = "8px 4px";
+
       if (isSelected) {
         item.style.borderColor = info.color;
         item.style.background = `${info.color}15`;
@@ -249,7 +271,7 @@ function showAddRecurringModal() {
         <div class="category-picker-label" style="font-size: 11px;">${info.label}</div>
       `;
 
-      item.addEventListener('click', () => {
+      item.addEventListener("click", () => {
         ruleSelectedCategory = cat.name;
         renderModalCategoryPicker();
       });
@@ -261,92 +283,106 @@ function showAddRecurringModal() {
   renderModalCategoryPicker();
 
   // Show Modal Overlay
-  overlay.classList.remove('hidden');
+  overlay.classList.remove("hidden");
 
   // Handle Close buttons
   const closeModal = () => {
-    overlay.classList.add('hidden');
-    overlay.innerHTML = '';
+    overlay.classList.add("hidden");
+    overlay.innerHTML = "";
   };
 
-  overlay.querySelector('#modal-close').addEventListener('click', closeModal);
-  overlay.addEventListener('click', (e) => {
+  overlay.querySelector("#modal-close").addEventListener("click", closeModal);
+  overlay.addEventListener("click", (e) => {
     if (e.target === overlay) closeModal();
   });
 
   // Switch Expense / Income
-  const expBtn = overlay.querySelector('#modal-switch-expense');
-  const incBtn = overlay.querySelector('#modal-switch-income');
+  const expBtn = overlay.querySelector("#modal-switch-expense");
+  const incBtn = overlay.querySelector("#modal-switch-income");
 
-  expBtn.addEventListener('click', () => {
+  expBtn.addEventListener("click", () => {
     ruleIsIncome = false;
-    expBtn.classList.add('active');
-    incBtn.classList.remove('active');
-    ruleSelectedCategory = 'Food';
+    expBtn.classList.add("active");
+    incBtn.classList.remove("active");
+    ruleSelectedCategory = "Food";
     renderModalCategoryPicker();
   });
 
-  incBtn.addEventListener('click', () => {
+  incBtn.addEventListener("click", () => {
     ruleIsIncome = true;
-    incBtn.classList.add('active');
-    expBtn.classList.remove('active');
-    ruleSelectedCategory = 'Salary';
+    incBtn.classList.add("active");
+    expBtn.classList.remove("active");
+    ruleSelectedCategory = "Salary";
     renderModalCategoryPicker();
   });
 
   // Custom Days toggle depending on type select
-  const freqSelect = overlay.querySelector('#modal-freq-type');
-  const customDaysWrap = overlay.querySelector('#modal-custom-days-wrapper');
-  freqSelect.addEventListener('change', (e) => {
-    if (e.target.value === 'custom') {
-      customDaysWrap.classList.remove('hidden');
+  const freqSelect = overlay.querySelector("#modal-freq-type");
+  const customDaysWrap = overlay.querySelector("#modal-custom-days-wrapper");
+  freqSelect.addEventListener("change", (e) => {
+    if (e.target.value === "custom") {
+      customDaysWrap.classList.remove("hidden");
     } else {
-      customDaysWrap.classList.add('hidden');
+      customDaysWrap.classList.add("hidden");
     }
   });
 
   // Handle Form submit
-  overlay.querySelector('#recurring-modal-form').addEventListener('submit', (e) => {
-    e.preventDefault();
+  overlay
+    .querySelector("#recurring-modal-form")
+    .addEventListener("submit", (e) => {
+      e.preventDefault();
 
-    const amountVal = parseFloat(overlay.querySelector('#modal-amount').value);
-    const titleVal = overlay.querySelector('#modal-title').value;
-    const typeVal = freqSelect.value;
-    const customDaysVal = parseInt(overlay.querySelector('#modal-custom-days').value) || 30;
-    const dueDateVal = new Date(overlay.querySelector('#modal-due-date').value);
+      const amountVal = parseFloat(
+        overlay.querySelector("#modal-amount").value,
+      );
+      const titleVal = overlay.querySelector("#modal-title").value;
+      const typeVal = freqSelect.value;
+      const customDaysVal =
+        parseInt(overlay.querySelector("#modal-custom-days").value) || 30;
+      const dueDateVal = new Date(
+        overlay.querySelector("#modal-due-date").value,
+      );
 
-    if (isNaN(amountVal) || amountVal <= 0) {
-      alerts.warning(store.settings.language === 'en' ? 'Please enter a valid amount' : 'กรุณากรอกจำนวนเงินให้ถูกต้อง');
-      return;
-    }
+      if (isNaN(amountVal) || amountVal <= 0) {
+        alerts.warning(
+          store.settings.language === "en"
+            ? "Please enter a valid amount"
+            : "กรุณากรอกจำนวนเงินให้ถูกต้อง",
+        );
+        return;
+      }
 
-    // Convert display currency back to THB base currency
-    const thbAmount = store.settings.selectedCurrency === 'THB' 
-      ? amountVal 
-      : amountVal / store.toDisplay(1.0);
+      // Convert display currency back to THB base currency
+      const thbAmount =
+        store.settings.selectedCurrency === "THB"
+          ? amountVal
+          : amountVal / store.toDisplay(1.0);
 
-    store.addRecurringRule({
-      title: titleVal,
-      amount: thbAmount,
-      isIncome: ruleIsIncome,
-      category: ruleSelectedCategory,
-      type: typeVal,
-      customDays: customDaysVal,
-      nextDueDate: dueDateVal
+      store.addRecurringRule({
+        title: titleVal,
+        amount: thbAmount,
+        isIncome: ruleIsIncome,
+        category: ruleSelectedCategory,
+        type: typeVal,
+        customDays: customDaysVal,
+        nextDueDate: dueDateVal,
+      });
+
+      closeModal();
     });
-
-    closeModal();
-  });
 }
 
 function escapeHTML(str) {
-  return str.replace(/[&<>'"]/g, 
-    tag => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      "'": '&#39;',
-      '"': '&quot;'
-    }[tag] || tag)
+  return str.replace(
+    /[&<>'"]/g,
+    (tag) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      })[tag] || tag,
   );
 }

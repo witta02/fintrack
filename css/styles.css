@@ -1930,3 +1930,17 @@ input:focus, select:focus, textarea:focus {
 .fintrack-home-widget .widget-action-btn:active {
   transform: translateY(0);
 }
+
+/* ─── Authentication Loader Spinner ──────────────────────────────────── */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  border-top-color: var(--gold);
+  animation: spin-loader 0.8s linear infinite;
+  display: inline-block;
+}
+@keyframes spin-loader {
+  to { transform: rotate(360deg); }
+}

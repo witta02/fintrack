@@ -1,64 +1,83 @@
-import { getLanguage } from './i18n.js';
+import { getLanguage } from "./i18n.js";
 
 export const categoryColors = {
-  'Food': '#FF8F00',
-  'Transport': '#58A6FF',
-  'Shopping': '#BC8CFF',
-  'Salary': '#3FB950',
-  'Bills': '#F85149',
-  'Entertainment': '#FF7B72',
-  'Health': '#DA3633',
-  'Other': '#8B949E',
-  'Education': '#79C0FF',
-  'Investment': '#56D364',
-  'Gift': '#D2A8FF',
-  'Travel': '#FFA657',
+  Food: "#FF8F00",
+  Transport: "#58A6FF",
+  Shopping: "#BC8CFF",
+  Salary: "#3FB950",
+  Bills: "#F85149",
+  Entertainment: "#FF7B72",
+  Health: "#DA3633",
+  Other: "#8B949E",
+  Education: "#79C0FF",
+  Investment: "#56D364",
+  Gift: "#D2A8FF",
+  Travel: "#FFA657",
 };
 
 export const expenseCategories = [
-  { name: 'Food', icon: 'lucide-utensils', emoji: '🍔', label: 'อาหาร' },
-  { name: 'Transport', icon: 'lucide-car', emoji: '🚗', label: 'เดินทาง' },
-  { name: 'Shopping', icon: 'lucide-shopping-bag', emoji: '🛍️', label: 'ช้อปปิ้ง' },
-  { name: 'Bills', icon: 'lucide-receipt', emoji: '🧾', label: 'ค่าใช้จ่าย' },
-  { name: 'Entertainment', icon: 'lucide-film', emoji: '🎬', label: 'บันเทิง' },
-  { name: 'Health', icon: 'lucide-heart', emoji: '🏥', label: 'สุขภาพ' },
-  { name: 'Education', icon: 'lucide-graduation-cap', emoji: '🎓', label: 'การศึกษา' },
-  { name: 'Travel', icon: 'lucide-plane', emoji: '✈️', label: 'ท่องเที่ยว' },
-  { name: 'Other', icon: 'lucide-grid', emoji: '📦', label: 'อื่นๆ' },
+  { name: "Food", icon: "lucide-utensils", emoji: "🍔", label: "อาหาร" },
+  { name: "Transport", icon: "lucide-car", emoji: "🚗", label: "เดินทาง" },
+  {
+    name: "Shopping",
+    icon: "lucide-shopping-bag",
+    emoji: "🛍️",
+    label: "ช้อปปิ้ง",
+  },
+  { name: "Bills", icon: "lucide-receipt", emoji: "🧾", label: "ค่าใช้จ่าย" },
+  { name: "Entertainment", icon: "lucide-film", emoji: "🎬", label: "บันเทิง" },
+  { name: "Health", icon: "lucide-heart", emoji: "🏥", label: "สุขภาพ" },
+  {
+    name: "Education",
+    icon: "lucide-graduation-cap",
+    emoji: "🎓",
+    label: "การศึกษา",
+  },
+  { name: "Travel", icon: "lucide-plane", emoji: "✈️", label: "ท่องเที่ยว" },
+  { name: "Other", icon: "lucide-grid", emoji: "📦", label: "อื่นๆ" },
 ];
 
 export const incomeCategories = [
-  { name: 'Salary', icon: 'lucide-wallet', emoji: '💰', label: 'เงินเดือน' },
-  { name: 'Investment', icon: 'lucide-trending-up', emoji: '📈', label: 'ลงทุน' },
-  { name: 'Gift', icon: 'lucide-gift', emoji: '🎁', label: 'ของขวัญ' },
-  { name: 'Other', icon: 'lucide-grid', emoji: '➕', label: 'อื่นๆ' },
+  { name: "Salary", icon: "lucide-wallet", emoji: "💰", label: "เงินเดือน" },
+  {
+    name: "Investment",
+    icon: "lucide-trending-up",
+    emoji: "📈",
+    label: "ลงทุน",
+  },
+  { name: "Gift", icon: "lucide-gift", emoji: "🎁", label: "ของขวัญ" },
+  { name: "Other", icon: "lucide-grid", emoji: "➕", label: "อื่นๆ" },
 ];
 
 export function getCategoryInfo(name) {
   const all = [...expenseCategories, ...incomeCategories];
-  const cat = all.find(c => c.name === name);
+  const cat = all.find((c) => c.name === name);
   const englishLabels = {
-    Food: 'Food',
-    Transport: 'Transport',
-    Shopping: 'Shopping',
-    Salary: 'Salary',
-    Bills: 'Bills',
-    Entertainment: 'Entertainment',
-    Health: 'Health',
-    Education: 'Education',
-    Investment: 'Investment',
-    Gift: 'Gift',
-    Travel: 'Travel',
-    Other: 'Other'
+    Food: "Food",
+    Transport: "Transport",
+    Shopping: "Shopping",
+    Salary: "Salary",
+    Bills: "Bills",
+    Entertainment: "Entertainment",
+    Health: "Health",
+    Education: "Education",
+    Investment: "Investment",
+    Gift: "Gift",
+    Travel: "Travel",
+    Other: "Other",
   };
-  const isEnglish = getLanguage() === 'en';
+  const isEnglish = getLanguage() === "en";
   return {
     name: name,
-    label: isEnglish ? (englishLabels[name] || 'Other') : (cat ? cat.label : 'อื่นๆ'),
-    icon: cat ? cat.icon : 'lucide-grid',
-    emoji: cat ? cat.emoji : '📦',
+    label: isEnglish
+      ? englishLabels[name] || "Other"
+      : cat
+        ? cat.label
+        : "อื่นๆ",
+    icon: cat ? cat.icon : "lucide-grid",
+    emoji: cat ? cat.emoji : "📦",
     svg: getCategorySvg(name),
-    color: categoryColors[name] || '#FFB800'
+    color: categoryColors[name] || "#FFB800",
   };
 }
 
@@ -75,7 +94,7 @@ export function getCategorySvg(name) {
     Other: `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
     Salary: `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14a2 2 0 0 1 2 2v3"/><path d="M21 12H7a2 2 0 0 0 0 4h14Z"/></svg>`,
     Investment: `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`,
-    Gift: `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 5a3 3 0 1 0-3 3h6a3 3 0 1 0-3-3Z"/><path d="M12 2v20"/><path d="M19 12H5"/></svg>`
+    Gift: `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 5a3 3 0 1 0-3 3h6a3 3 0 1 0-3-3Z"/><path d="M12 2v20"/><path d="M19 12H5"/></svg>`,
   };
   return svgs[name] || svgs.Other;
 }

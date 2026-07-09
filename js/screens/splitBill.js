@@ -1,9 +1,15 @@
-import { store } from '../store.js';
-import { router } from '../router.js';
-import { t } from '../i18n.js';
-import jsQR from 'jsqr';
-import { runLocalOCR, parseReceiptText, parseBankSlipAmount, detectIfBankSlip, parseBankSlipReceiver } from '../utils/ocrParser.js';
-import { alerts } from '../utils/alertHelper.js';
+import { store } from "../store.js";
+import { router } from "../router.js";
+import { t } from "../i18n.js";
+import jsQR from "jsqr";
+import {
+  runLocalOCR,
+  parseReceiptText,
+  parseBankSlipAmount,
+  detectIfBankSlip,
+  parseBankSlipReceiver,
+} from "../utils/ocrParser.js";
+import { alerts } from "../utils/alertHelper.js";
 
 // State variables
 let payee = "";
@@ -23,7 +29,6 @@ let receiptDate = "";
 let isTaxIncluded = false;
 
 export function renderSplitBill(container) {
-
   container.innerHTML = `
     <style>
       .screen-container {
@@ -480,19 +485,19 @@ function loadMockupTemplate() {
   receiptDate = "4/1/26 9:04 AM";
   isTaxIncluded = false;
   items = [
-    { id: "1", name: "Egg Sandwich", price: 14.00, qty: 1 },
-    { id: "2", name: "Biscuits & Gravy", price: 18.00, qty: 1 },
-    { id: "3", name: "Avocado Toast", price: 14.00, qty: 1 },
-    { id: "4", name: "Aimee's Breakfast", price: 18.00, qty: 1 },
-    { id: "5", name: "Country Loaf", price: 10.00, qty: 1 },
+    { id: "1", name: "Egg Sandwich", price: 14.0, qty: 1 },
+    { id: "2", name: "Biscuits & Gravy", price: 18.0, qty: 1 },
+    { id: "3", name: "Avocado Toast", price: 14.0, qty: 1 },
+    { id: "4", name: "Aimee's Breakfast", price: 18.0, qty: 1 },
+    { id: "5", name: "Country Loaf", price: 10.0, qty: 1 },
   ];
 
-  selectedItems = { "1": true };
-  selectedQuantities = { "1": 1 };
+  selectedItems = { 1: true };
+  selectedQuantities = { 1: 1 };
 }
 
 function getSubtotal() {
-  return items.reduce((sum, item) => sum + (item.price * item.qty), 0.0);
+  return items.reduce((sum, item) => sum + item.price * item.qty, 0.0);
 }
 
 function getTotalDue() {
@@ -504,9 +509,9 @@ function getUserShare() {
   if (sub === 0) return 0.0;
 
   let userSubtotal = 0.0;
-  Object.keys(selectedItems).forEach(id => {
+  Object.keys(selectedItems).forEach((id) => {
     if (selectedItems[id]) {
-      const item = items.find(i => i.id === id);
+      const item = items.find((i) => i.id === id);
       if (item) {
         const qty = selectedQuantities[id] || 1;
         userSubtotal += item.price * qty;
@@ -522,12 +527,12 @@ function getUserShare() {
 }
 
 function renderReceiptPaper(container) {
-  const paper = container.querySelector('#receipt-paper-container');
+  const paper = container.querySelector("#receipt-paper-container");
   const symbol = store.getCurrencySymbol();
   const subtotal = getSubtotal();
   const total = getTotalDue();
 
-  let itemsHTML = '';
+  let itemsHTML = "";
   if (items.length === 0) {
     itemsHTML = `
       <div style="text-align: center; color: #9CA3AF; padding: 30px 0;">
@@ -535,7 +540,9 @@ function renderReceiptPaper(container) {
       </div>
     `;
   } else {
-    itemsHTML = items.map((item, idx) => `
+    itemsHTML = items
+      .map(
+        (item, idx) => `
       <div class="receipt-item-row">
         <div class="receipt-item-name">${escapeHTML(item.name)} (x${item.qty})</div>
         <div class="receipt-item-price">${symbol}${(item.price * item.qty).toFixed(2)}</div>
@@ -543,26 +550,30 @@ function renderReceiptPaper(container) {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </div>
       </div>
-    `).join('');
+    `,
+      )
+      .join("");
   }
 
   // Build metadata HTML rows dynamically based on parsed values
-  const addressHTML = receiptAddress ? `<div class="receipt-address">${escapeHTML(receiptAddress).replace(/\n/g, '<br/>')}</div>` : '';
-  
-  let metaHTML = '';
+  const addressHTML = receiptAddress
+    ? `<div class="receipt-address">${escapeHTML(receiptAddress).replace(/\n/g, "<br/>")}</div>`
+    : "";
+
+  let metaHTML = "";
   if (receiptServer || receiptTable) {
     metaHTML += `
       <div class="receipt-meta-row">
-        <span>${receiptServer ? `Server: ${escapeHTML(receiptServer)}` : ''}</span>
-        <span>${receiptTable ? `Table: ${escapeHTML(receiptTable)}` : ''}</span>
+        <span>${receiptServer ? `Server: ${escapeHTML(receiptServer)}` : ""}</span>
+        <span>${receiptTable ? `Table: ${escapeHTML(receiptTable)}` : ""}</span>
       </div>
     `;
   }
   if (receiptCheck || receiptDate) {
     metaHTML += `
       <div class="receipt-meta-row">
-        <span>${receiptCheck ? `Check #${escapeHTML(receiptCheck)}` : ''}</span>
-        <span>${receiptDate ? `${escapeHTML(receiptDate)}` : ''}</span>
+        <span>${receiptCheck ? `Check #${escapeHTML(receiptCheck)}` : ""}</span>
+        <span>${receiptDate ? `${escapeHTML(receiptDate)}` : ""}</span>
       </div>
     `;
   }
@@ -583,18 +594,26 @@ function renderReceiptPaper(container) {
         <span>Subtotal</span>
         <span>${symbol}${subtotal.toFixed(2)}</span>
       </div>
-      ${tax > 0 ? `
+      ${
+        tax > 0
+          ? `
         <div class="receipt-total-row">
-          <span>Tax${isTaxIncluded ? ' (Included)' : ''}</span>
+          <span>Tax${isTaxIncluded ? " (Included)" : ""}</span>
           <span>${symbol}${tax.toFixed(2)}</span>
         </div>
-      ` : ''}
-      ${tip > 0 ? `
+      `
+          : ""
+      }
+      ${
+        tip > 0
+          ? `
         <div class="receipt-total-row">
           <span>Tip</span>
           <span>${symbol}${tip.toFixed(2)}</span>
         </div>
-      ` : ''}
+      `
+          : ""
+      }
       <div class="receipt-total-due">
         <span>TOTAL DUE</span>
         <span>${symbol}${total.toFixed(2)}</span>
@@ -608,33 +627,36 @@ function renderReceiptPaper(container) {
   `;
 
   // Bind Delete item button clicks
-  paper.querySelectorAll('.receipt-item-delete').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+  paper.querySelectorAll(".receipt-item-delete").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const idx = parseInt(btn.getAttribute('data-idx'));
+      const idx = parseInt(btn.getAttribute("data-idx"));
       const item = items[idx];
       items.splice(idx, 1);
       delete selectedItems[item.id];
       delete selectedQuantities[item.id];
-      
+
       renderReceiptPaper(container);
       renderShareSheetChecklist(container);
     });
   });
 
   // Bind manual Add Item button
-  paper.querySelector('#receipt-add-item-btn').addEventListener('click', () => {
+  paper.querySelector("#receipt-add-item-btn").addEventListener("click", () => {
     showAddItemModal(container);
   });
 }
 
 function renderShareSheetChecklist(container) {
-  const checklist = container.querySelector('#sheet-items-checklist');
+  const checklist = container.querySelector("#sheet-items-checklist");
   const symbol = store.getCurrencySymbol();
-  const selectedCount = Object.keys(selectedItems).filter(id => selectedItems[id]).length;
+  const selectedCount = Object.keys(selectedItems).filter(
+    (id) => selectedItems[id],
+  ).length;
 
   // Render subtitle text
-  container.querySelector('#selected-items-count-text').textContent = `${selectedCount} Item${selectedCount === 1 ? '' : 's'} Selected`;
+  container.querySelector("#selected-items-count-text").textContent =
+    `${selectedCount} Item${selectedCount === 1 ? "" : "s"} Selected`;
 
   if (items.length === 0) {
     checklist.innerHTML = `
@@ -646,13 +668,14 @@ function renderShareSheetChecklist(container) {
     return;
   }
 
-  checklist.innerHTML = items.map(item => {
-    const isChecked = !!selectedItems[item.id];
-    const selQty = selectedQuantities[item.id] || 1;
-    const totalPrice = item.price * selQty;
+  checklist.innerHTML = items
+    .map((item) => {
+      const isChecked = !!selectedItems[item.id];
+      const selQty = selectedQuantities[item.id] || 1;
+      const totalPrice = item.price * selQty;
 
-    return `
-      <div class="sheet-item ${isChecked ? 'selected' : ''}" data-id="${item.id}">
+      return `
+      <div class="sheet-item ${isChecked ? "selected" : ""}" data-id="${item.id}">
         <div class="sheet-checkbox">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
@@ -674,31 +697,32 @@ function renderShareSheetChecklist(container) {
         <div class="sheet-item-price">${symbol}${totalPrice.toFixed(2)}</div>
       </div>
     `;
-  }).join('');
+    })
+    .join("");
 
   // Bind clicks on item rows
-  checklist.querySelectorAll('.sheet-item').forEach(row => {
-    row.addEventListener('click', (e) => {
+  checklist.querySelectorAll(".sheet-item").forEach((row) => {
+    row.addEventListener("click", (e) => {
       // Prevent double trigger when tapping stepper buttons
-      if (e.target.closest('.qty-stepper')) return;
+      if (e.target.closest(".qty-stepper")) return;
 
-      const id = row.getAttribute('data-id');
+      const id = row.getAttribute("data-id");
       selectedItems[id] = !selectedItems[id];
       if (selectedItems[id] && !selectedQuantities[id]) {
         selectedQuantities[id] = 1;
       }
-      
+
       renderShareSheetChecklist(container);
     });
   });
 
   // Bind Stepper buttons
-  checklist.querySelectorAll('.qty-stepper').forEach(stepper => {
-    const id = stepper.getAttribute('data-id');
-    const item = items.find(i => i.id === id);
+  checklist.querySelectorAll(".qty-stepper").forEach((stepper) => {
+    const id = stepper.getAttribute("data-id");
+    const item = items.find((i) => i.id === id);
     if (!item) return;
 
-    stepper.querySelector('.btn-dec').addEventListener('click', (e) => {
+    stepper.querySelector(".btn-dec").addEventListener("click", (e) => {
       e.stopPropagation();
       const current = selectedQuantities[id] || 1;
       if (current > 1) {
@@ -709,7 +733,7 @@ function renderShareSheetChecklist(container) {
       renderShareSheetChecklist(container);
     });
 
-    stepper.querySelector('.btn-inc').addEventListener('click', (e) => {
+    stepper.querySelector(".btn-inc").addEventListener("click", (e) => {
       e.stopPropagation();
       const current = selectedQuantities[id] || 1;
       if (current < item.qty) {
@@ -723,46 +747,49 @@ function renderShareSheetChecklist(container) {
 }
 
 function updatePayButton(container) {
-  const payBtn = container.querySelector('#sheet-action-pay-btn');
+  const payBtn = container.querySelector("#sheet-action-pay-btn");
   const userShare = getUserShare();
   const symbol = store.getCurrencySymbol();
-  const hasSelected = Object.values(selectedItems).some(v => v);
+  const hasSelected = Object.values(selectedItems).some((v) => v);
 
   payBtn.disabled = !hasSelected;
-  payBtn.textContent = `Pay ${payee || 'Molly Wiebe'} ${symbol}${userShare.toFixed(2)}`;
+  payBtn.textContent = `Pay ${payee || "Molly Wiebe"} ${symbol}${userShare.toFixed(2)}`;
 }
 
 function setupScreenListeners(container) {
   // Back Button
-  container.querySelector('#split-back-btn').addEventListener('click', () => {
-    router.navigate('dashboard');
+  container.querySelector("#split-back-btn").addEventListener("click", () => {
+    router.navigate("dashboard");
   });
 
   // Reset/Sample template Button
-  container.querySelector('#btn-reset-sample').addEventListener('click', () => {
+  container.querySelector("#btn-reset-sample").addEventListener("click", () => {
     loadMockupTemplate();
     renderReceiptPaper(container);
     renderShareSheetChecklist(container);
   });
 
   // Edit Meta Button
-  container.querySelector('#btn-edit-bill-meta').addEventListener('click', () => {
-    showEditMetaModal(container);
-  });
+  container
+    .querySelector("#btn-edit-bill-meta")
+    .addEventListener("click", () => {
+      showEditMetaModal(container);
+    });
 
   // Snap/Scan Receipt Button
-  const fileInput = container.querySelector('#split-ocr-file-input');
-  container.querySelector('#btn-snap-receipt').addEventListener('click', () => {
+  const fileInput = container.querySelector("#split-ocr-file-input");
+  container.querySelector("#btn-snap-receipt").addEventListener("click", () => {
     fileInput.click();
   });
 
-  fileInput.addEventListener('change', async (e) => {
+  fileInput.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const spinner = container.querySelector('#ocr-spinner-overlay');
-      const statusSubtitle = container.querySelector('#ocr-spinner-overlay p') || spinner;
-      spinner.classList.remove('hidden');
-      
+      const spinner = container.querySelector("#ocr-spinner-overlay");
+      const statusSubtitle =
+        container.querySelector("#ocr-spinner-overlay p") || spinner;
+      spinner.classList.remove("hidden");
+
       try {
         // 1. Try local QR scanner first
         const qrData = await scanImageQR(file);
@@ -776,49 +803,63 @@ function setupScreenListeners(container) {
             receiptServer = "";
             receiptTable = "";
             receiptCheck = parsed.ref || "";
-            receiptDate = parsed.date || new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+            receiptDate =
+              parsed.date ||
+              new Date().toLocaleDateString() +
+                " " +
+                new Date().toLocaleTimeString();
             isTaxIncluded = false;
-            
+
             let amountVal = parsed.amount;
             if (!amountVal) {
               try {
                 const originalText = statusSubtitle.textContent;
                 if (statusSubtitle) {
-                  statusSubtitle.textContent = store.settings.language === 'en' 
-                    ? 'Reading transaction amount from slip...' 
-                    : 'กำลังอ่านยอดเงินจากสลิป...';
+                  statusSubtitle.textContent =
+                    store.settings.language === "en"
+                      ? "Reading transaction amount from slip..."
+                      : "กำลังอ่านยอดเงินจากสลิป...";
                 }
-                
+
                 const rawText = await runLocalOCR(file, (msg) => {
                   if (statusSubtitle) statusSubtitle.textContent = msg;
                 });
-                
+
                 if (statusSubtitle) statusSubtitle.textContent = originalText;
-                
+
                 amountVal = parseBankSlipAmount(rawText);
               } catch (ocrErr) {
-                console.error("Failed to read amount from slip via OCR:", ocrErr);
+                console.error(
+                  "Failed to read amount from slip via OCR:",
+                  ocrErr,
+                );
               }
             }
-            
+
             // Create a single item list for the parsed bank slip/payment details
             items = [
               {
                 id: Math.random().toString(36).substring(2, 11),
-                name: parsed.type === 'slip' ? 'รายการโอนเงิน' : 'ชำระเงินพร้อมเพย์',
+                name:
+                  parsed.type === "slip"
+                    ? "รายการโอนเงิน"
+                    : "ชำระเงินพร้อมเพย์",
                 price: amountVal || 0.0,
-                qty: 1
-              }
+                qty: 1,
+              },
             ];
-            
+
             selectedItems = { [items[0].id]: true };
             selectedQuantities = { [items[0].id]: 1 };
-            
-            alerts.success(store.settings.language === 'en'
-              ? `Successfully scanned QR!`
-              : `สแกน QR Code สำเร็จ!`, parsed.title);
-            
-            spinner.classList.add('hidden');
+
+            alerts.success(
+              store.settings.language === "en"
+                ? `Successfully scanned QR!`
+                : `สแกน QR Code สำเร็จ!`,
+              parsed.title,
+            );
+
+            spinner.classList.add("hidden");
             renderReceiptPaper(container);
             renderShareSheetChecklist(container);
             return;
@@ -827,16 +868,16 @@ function setupScreenListeners(container) {
       } catch (qrErr) {
         console.error("Local QR Scan failed, falling back to OCR:", qrErr);
       }
-      
+
       // 2. Fallback to Local OCR scanner
       try {
         const originalText = statusSubtitle.textContent;
         const rawText = await runLocalOCR(file, (msg) => {
           if (statusSubtitle) statusSubtitle.textContent = msg;
         });
-        
+
         if (statusSubtitle) statusSubtitle.textContent = originalText;
-        
+
         if (detectIfBankSlip(rawText)) {
           // It's a bank/e-wallet slip without a QR code
           payee = parseBankSlipReceiver(rawText);
@@ -846,27 +887,33 @@ function setupScreenListeners(container) {
           receiptServer = "";
           receiptTable = "";
           receiptCheck = "";
-          receiptDate = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+          receiptDate =
+            new Date().toLocaleDateString() +
+            " " +
+            new Date().toLocaleTimeString();
           isTaxIncluded = false;
-          
+
           const amountVal = parseBankSlipAmount(rawText);
-          
+
           items = [
             {
               id: Math.random().toString(36).substring(2, 11),
               name: "รายการโอนเงิน / ชำระเงิน",
               price: amountVal || 0.0,
-              qty: 1
-            }
+              qty: 1,
+            },
           ];
-          
-          alerts.success(store.settings.language === 'en'
-            ? `Successfully scanned bank slip!`
-            : `สแกนสลิปธนาคารสำเร็จ!`, payee);
+
+          alerts.success(
+            store.settings.language === "en"
+              ? `Successfully scanned bank slip!`
+              : `สแกนสลิปธนาคารสำเร็จ!`,
+            payee,
+          );
         } else {
           // It's a regular receipt
           const parsed = parseReceiptText(rawText);
-          
+
           payee = parsed.payee || "ร้านค้า";
           tax = parsed.tax || 0.0;
           tip = parsed.tip || 0.0;
@@ -874,40 +921,53 @@ function setupScreenListeners(container) {
           receiptServer = parsed.server || "";
           receiptTable = parsed.table || "";
           receiptCheck = parsed.check || "";
-          receiptDate = parsed.date || new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+          receiptDate =
+            parsed.date ||
+            new Date().toLocaleDateString() +
+              " " +
+              new Date().toLocaleTimeString();
           isTaxIncluded = parsed.taxIncluded || false;
-          
+
           if (parsed.items.length > 0) {
             items = parsed.items;
-            alerts.success(store.settings.language === 'en'
-              ? `Successfully scanned receipt!`
-              : `สแกนใบเสร็จสำเร็จ!`, payee);
+            alerts.success(
+              store.settings.language === "en"
+                ? `Successfully scanned receipt!`
+                : `สแกนใบเสร็จสำเร็จ!`,
+              payee,
+            );
           } else {
             // If no items, we add one manual placeholder item
             items = [
               {
                 id: Math.random().toString(36).substring(2, 11),
                 name: "อาหาร / เครื่องดื่ม (ระบุข้อมูลเอง)",
-                price: parsed.total > 0 ? (parsed.total - (parsed.taxIncluded ? 0.0 : tax) - tip) : 100.0,
-                qty: 1
-              }
+                price:
+                  parsed.total > 0
+                    ? parsed.total - (parsed.taxIncluded ? 0.0 : tax) - tip
+                    : 100.0,
+                qty: 1,
+              },
             ];
-            alerts.warning(store.settings.language === 'en'
-              ? "Could not auto-extract items. You can add them manually."
-              : "ระบบไม่สามารถดึงข้อมูลรายการอาหารได้อัตโนมัติ คุณสามารถเพิ่มและแก้ไขรายการเองได้เลยค่ะ");
+            alerts.warning(
+              store.settings.language === "en"
+                ? "Could not auto-extract items. You can add them manually."
+                : "ระบบไม่สามารถดึงข้อมูลรายการอาหารได้อัตโนมัติ คุณสามารถเพิ่มและแก้ไขรายการเองได้เลยค่ะ",
+            );
           }
         }
-        
+
         selectedItems = {};
         selectedQuantities = {};
-        
       } catch (ocrErr) {
         console.error("Local OCR failed:", ocrErr);
-        alerts.error(store.settings.language === 'en'
-          ? 'Failed to scan receipt. Please enter items manually.'
-          : 'สแกนใบเสร็จล้มเหลว ขออภัยในความไม่สะดวกค่ะ คุณสามารถเพิ่มรายการเองได้เลย');
+        alerts.error(
+          store.settings.language === "en"
+            ? "Failed to scan receipt. Please enter items manually."
+            : "สแกนใบเสร็จล้มเหลว ขออภัยในความไม่สะดวกค่ะ คุณสามารถเพิ่มรายการเองได้เลย",
+        );
       } finally {
-        spinner.classList.add('hidden');
+        spinner.classList.add("hidden");
         renderReceiptPaper(container);
         renderShareSheetChecklist(container);
       }
@@ -915,17 +975,19 @@ function setupScreenListeners(container) {
   });
 
   // Sheet Pay Button Actions
-  container.querySelector('#sheet-action-pay-btn').addEventListener('click', () => {
-    executePayment(container);
-  });
+  container
+    .querySelector("#sheet-action-pay-btn")
+    .addEventListener("click", () => {
+      executePayment(container);
+    });
 }
 
 function showEditMetaModal(container) {
   const isDark = store.settings.isDarkMode;
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
   modal.innerHTML = `
-    <div class="modal-dialog" style="background: ${isDark ? '#1C2128' : '#FFFFFF'}; color: var(--text-primary); max-width: 440px;">
+    <div class="modal-dialog" style="background: ${isDark ? "#1C2128" : "#FFFFFF"}; color: var(--text-primary); max-width: 440px;">
       <div class="modal-header">
         <h3 class="modal-title">แก้ไขข้อมูลใบเสร็จ</h3>
         <button class="modal-close-btn">&times;</button>
@@ -970,7 +1032,7 @@ function showEditMetaModal(container) {
           </div>
         </div>
         <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-          <input type="checkbox" id="edit-tax-included" style="width: 18px; height: 18px; cursor: pointer;" ${isTaxIncluded ? 'checked' : ''} />
+          <input type="checkbox" id="edit-tax-included" style="width: 18px; height: 18px; cursor: pointer;" ${isTaxIncluded ? "checked" : ""} />
           <label for="edit-tax-included" style="font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-secondary);">ภาษีรวมในราคาแล้ว (Tax Included / VAT)</label>
         </div>
       </div>
@@ -984,19 +1046,19 @@ function showEditMetaModal(container) {
   document.body.appendChild(modal);
 
   const close = () => document.body.removeChild(modal);
-  modal.querySelector('.modal-close-btn').onclick = close;
-  modal.querySelector('.modal-cancel-btn').onclick = close;
-  modal.querySelector('.modal-save-btn').onclick = () => {
-    payee = modal.querySelector('#edit-payee-name').value.trim() || "ร้านค้า";
-    receiptAddress = modal.querySelector('#edit-receipt-address').value.trim();
-    receiptServer = modal.querySelector('#edit-receipt-server').value.trim();
-    receiptTable = modal.querySelector('#edit-receipt-table').value.trim();
-    receiptCheck = modal.querySelector('#edit-receipt-check').value.trim();
-    receiptDate = modal.querySelector('#edit-receipt-date').value.trim();
-    tax = parseFloat(modal.querySelector('#edit-tax-val').value) || 0.0;
-    tip = parseFloat(modal.querySelector('#edit-tip-val').value) || 0.0;
-    isTaxIncluded = modal.querySelector('#edit-tax-included').checked;
-    
+  modal.querySelector(".modal-close-btn").onclick = close;
+  modal.querySelector(".modal-cancel-btn").onclick = close;
+  modal.querySelector(".modal-save-btn").onclick = () => {
+    payee = modal.querySelector("#edit-payee-name").value.trim() || "ร้านค้า";
+    receiptAddress = modal.querySelector("#edit-receipt-address").value.trim();
+    receiptServer = modal.querySelector("#edit-receipt-server").value.trim();
+    receiptTable = modal.querySelector("#edit-receipt-table").value.trim();
+    receiptCheck = modal.querySelector("#edit-receipt-check").value.trim();
+    receiptDate = modal.querySelector("#edit-receipt-date").value.trim();
+    tax = parseFloat(modal.querySelector("#edit-tax-val").value) || 0.0;
+    tip = parseFloat(modal.querySelector("#edit-tip-val").value) || 0.0;
+    isTaxIncluded = modal.querySelector("#edit-tax-included").checked;
+
     close();
     renderReceiptPaper(container);
     renderShareSheetChecklist(container);
@@ -1005,10 +1067,10 @@ function showEditMetaModal(container) {
 
 function showAddItemModal(container) {
   const isDark = store.settings.isDarkMode;
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
   modal.innerHTML = `
-    <div class="modal-dialog" style="background: ${isDark ? '#1C2128' : '#FFFFFF'}; color: var(--text-primary);">
+    <div class="modal-dialog" style="background: ${isDark ? "#1C2128" : "#FFFFFF"}; color: var(--text-primary);">
       <div class="modal-header">
         <h3 class="modal-title">เพิ่มรายการอาหาร</h3>
         <button class="modal-close-btn">&times;</button>
@@ -1039,12 +1101,13 @@ function showAddItemModal(container) {
   document.body.appendChild(modal);
 
   const close = () => document.body.removeChild(modal);
-  modal.querySelector('.modal-close-btn').onclick = close;
-  modal.querySelector('.modal-cancel-btn').onclick = close;
-  modal.querySelector('.modal-save-btn').onclick = () => {
-    const name = modal.querySelector('#add-item-name').value.trim();
-    const price = parseFloat(modal.querySelector('#add-item-price').value) || 0.0;
-    const qty = parseInt(modal.querySelector('#add-item-qty').value) || 1;
+  modal.querySelector(".modal-close-btn").onclick = close;
+  modal.querySelector(".modal-cancel-btn").onclick = close;
+  modal.querySelector(".modal-save-btn").onclick = () => {
+    const name = modal.querySelector("#add-item-name").value.trim();
+    const price =
+      parseFloat(modal.querySelector("#add-item-price").value) || 0.0;
+    const qty = parseInt(modal.querySelector("#add-item-qty").value) || 1;
 
     if (!name || price <= 0 || qty <= 0) return;
 
@@ -1052,7 +1115,7 @@ function showAddItemModal(container) {
       id: Math.random().toString(36).substring(2, 11),
       name: name,
       price: price,
-      qty: qty
+      qty: qty,
     });
 
     close();
@@ -1061,16 +1124,15 @@ function showAddItemModal(container) {
   };
 }
 
-
-
 function executePayment(container) {
   const shareVal = getUserShare();
   if (shareVal <= 0) return;
 
   // Convert display share amount back to base THB currency for store storage
-  const thbShare = store.settings.selectedCurrency === 'THB'
-    ? shareVal
-    : shareVal / store.toDisplay(1.0);
+  const thbShare =
+    store.settings.selectedCurrency === "THB"
+      ? shareVal
+      : shareVal / store.toDisplay(1.0);
 
   // Add transaction to store
   store.addTransaction({
@@ -1078,13 +1140,13 @@ function executePayment(container) {
     amount: thbShare,
     isIncome: false,
     category: "Food",
-    date: new Date()
+    date: new Date(),
   });
 
   // Show premium success overlay/modal
   const isDark = store.settings.isDarkMode;
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
   modal.innerHTML = `
     <div class="modal-dialog" style="background: #1C2128; border-radius: 20px; text-align: center; color: white;">
       <div style="padding: 10px 0;">
@@ -1100,21 +1162,23 @@ function executePayment(container) {
 
   document.body.appendChild(modal);
 
-  modal.querySelector('#success-done-btn').onclick = () => {
+  modal.querySelector("#success-done-btn").onclick = () => {
     document.body.removeChild(modal);
-    router.navigate('dashboard');
+    router.navigate("dashboard");
   };
 }
 
 function escapeHTML(str) {
-  return str.replace(/[&<>'"]/g, 
-    tag => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      "'": '&#39;',
-      '"': '&quot;'
-    }[tag] || tag)
+  return str.replace(
+    /[&<>'"]/g,
+    (tag) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      })[tag] || tag,
   );
 }
 
@@ -1124,10 +1188,10 @@ function scanImageQR(file) {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = img.width;
         canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0);
         try {
           const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -1146,8 +1210,8 @@ function scanImageQR(file) {
 }
 
 function parseSlipQR(qrData) {
-  if (!qrData.startsWith('00')) return null;
-  
+  if (!qrData.startsWith("00")) return null;
+
   // Helper to parse TLV
   const parseTLV = (s) => {
     const res = {};
@@ -1164,31 +1228,31 @@ function parseSlipQR(qrData) {
   };
 
   const outerTags = parseTLV(qrData);
-  
+
   // Detect if it is a Slip Verification QR (Mini QR)
-  if (outerTags['00'] && outerTags['00'].length > 10) {
-    const subTags = parseTLV(outerTags['00']);
-    const sendingBankCode = subTags['01'] || '';
-    const ref = subTags['02'] || '';
-    const amountVal = subTags['04'] ? parseFloat(subTags['04']) : null;
-    
+  if (outerTags["00"] && outerTags["00"].length > 10) {
+    const subTags = parseTLV(outerTags["00"]);
+    const sendingBankCode = subTags["01"] || "";
+    const ref = subTags["02"] || "";
+    const amountVal = subTags["04"] ? parseFloat(subTags["04"]) : null;
+
     // Map bank code to name
     const bankMap = {
-      '002': 'ธนาคารกรุงเทพ',
-      '004': 'ธนาคารกสิกรไทย',
-      '006': 'ธนาคารกรุงไทย',
-      '011': 'ธนาคารทหารไทยธนชาต',
-      '014': 'ธนาคารไทยพาณิชย์',
-      '025': 'ธนาคารกรุงศรีอยุธยา',
-      '030': 'ธนาคารออมสิน',
-      '034': 'ธ.ก.ส.',
-      '065': 'ธนาคารอาคารสงเคราะห์',
-      '073': 'ธนาคารแลนด์ แอนด์ เฮ้าส์'
+      "002": "ธนาคารกรุงเทพ",
+      "004": "ธนาคารกสิกรไทย",
+      "006": "ธนาคารกรุงไทย",
+      "011": "ธนาคารทหารไทยธนชาต",
+      "014": "ธนาคารไทยพาณิชย์",
+      "025": "ธนาคารกรุงศรีอยุธยา",
+      "030": "ธนาคารออมสิน",
+      "034": "ธ.ก.ส.",
+      "065": "ธนาคารอาคารสงเคราะห์",
+      "073": "ธนาคารแลนด์ แอนด์ เฮ้าส์",
     };
-    const bankName = bankMap[sendingBankCode] || 'ธนาคาร';
+    const bankName = bankMap[sendingBankCode] || "ธนาคาร";
 
     // Parse date from ref (YYYYMMDDHHmm)
-    let parsedDate = '';
+    let parsedDate = "";
     if (ref.length >= 12) {
       const match = ref.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/);
       if (match) {
@@ -1197,24 +1261,24 @@ function parseSlipQR(qrData) {
     }
 
     return {
-      type: 'slip',
+      type: "slip",
       title: `โอนเงินผ่าน${bankName}`,
       amount: amountVal,
       date: parsedDate,
       bankCode: sendingBankCode,
-      ref: ref
+      ref: ref,
     };
   }
-  
+
   // Detect if it is a Payment PromptPay QR
-  if (outerTags['29'] || outerTags['30']) {
-    const amountVal = outerTags['54'] ? parseFloat(outerTags['54']) : null;
+  if (outerTags["29"] || outerTags["30"]) {
+    const amountVal = outerTags["54"] ? parseFloat(outerTags["54"]) : null;
     return {
-      type: 'payment',
-      title: 'สแกนจ่ายพร้อมเพย์',
+      type: "payment",
+      title: "สแกนจ่ายพร้อมเพย์",
       amount: amountVal,
-      date: '',
-      ref: ''
+      date: "",
+      ref: "",
     };
   }
 

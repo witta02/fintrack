@@ -1,6 +1,6 @@
-import { store } from '../store.js';
-import { getCategoryInfo } from '../categories.js';
-import { t } from '../i18n.js';
+import { store } from "../store.js";
+import { getCategoryInfo } from "../categories.js";
+import { t } from "../i18n.js";
 
 let messages = [
   {
@@ -12,8 +12,8 @@ let messages = [
 • วางแผนใช้เงิน เช่น "มี 5000 ใช้ 20 วัน"
 • ช่วยแบ่งงบเพื่อเป้าหมาย เช่น "เก็บ 30000 ใน 6 เดือน"
 
-ลองพิมพ์จำนวนเงิน เป้าหมาย หรือรายการที่ต้องการบันทึกได้เลยค่ะ`
-  }
+ลองพิมพ์จำนวนเงิน เป้าหมาย หรือรายการที่ต้องการบันทึกได้เลยค่ะ`,
+  },
 ];
 
 export function renderPlanner(container) {
@@ -28,10 +28,10 @@ export function renderPlanner(container) {
           <h1 class="brand-title" style="font-size: 17px; margin: 0; font-weight: 800; letter-spacing: -0.3px;">Finny Assistant</h1>
           <span id="planner-status" style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
             <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span>
-            ${t('plannerReady')}
+            ${t("plannerReady")}
           </span>
         </div>
-        <button id="quick-sum-btn" class="quick-action" title="${t('quickSummary')}" style="padding: 8px; border-radius: 10px; background: var(--card);">
+        <button id="quick-sum-btn" class="quick-action" title="${t("quickSummary")}" style="padding: 8px; border-radius: 10px; background: var(--card);">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
       </div>
@@ -53,7 +53,7 @@ export function renderPlanner(container) {
           <input 
             type="text" 
             id="chat-input" 
-            placeholder="${t('plannerPlaceholder')}" 
+            placeholder="${t("plannerPlaceholder")}" 
             autocomplete="off"
             required 
           />
@@ -73,46 +73,46 @@ export function renderPlanner(container) {
 }
 
 function setupEventListeners(container) {
-  const form = container.querySelector('#chat-form');
-  const input = container.querySelector('#chat-input');
-  
+  const form = container.querySelector("#chat-form");
+  const input = container.querySelector("#chat-input");
+
   // Submit message handler
-  form.addEventListener('submit', (e) => {
+  form.addEventListener("submit", (e) => {
     e.preventDefault();
     const val = input.value.trim();
     if (val) {
       handleUserSendMessage(container, val);
-      input.value = '';
+      input.value = "";
     }
   });
 
   // Suggestion chip click
-  container.querySelectorAll('.chat-suggestion').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const val = chip.getAttribute('data-val');
+  container.querySelectorAll(".chat-suggestion").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const val = chip.getAttribute("data-val");
       handleUserSendMessage(container, val);
     });
   });
 
   // Quick Action Buttons
-  container.querySelector('#quick-sum-btn').addEventListener('click', () => {
-    handleUserSendMessage(container, 'สรุป');
+  container.querySelector("#quick-sum-btn").addEventListener("click", () => {
+    handleUserSendMessage(container, "สรุป");
   });
 }
 
 function renderMessages(container) {
-  const msgContainer = container.querySelector('#chat-messages-container');
+  const msgContainer = container.querySelector("#chat-messages-container");
   if (!msgContainer) return;
 
-  msgContainer.innerHTML = '';
+  msgContainer.innerHTML = "";
 
-  messages.forEach(msg => {
-    const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${msg.isUser ? 'user' : 'planner'}`;
-    
+  messages.forEach((msg) => {
+    const bubble = document.createElement("div");
+    bubble.className = `chat-bubble ${msg.isUser ? "user" : "planner"}`;
+
     bubble.innerHTML = `
       <div class="chat-bubble-text">${formatMessageText(msg.text)}</div>
-      ${msg.transaction ? renderTransactionNotice(msg.transaction) : ''}
+      ${msg.transaction ? renderTransactionNotice(msg.transaction) : ""}
     `;
 
     msgContainer.appendChild(bubble);
@@ -122,26 +122,26 @@ function renderMessages(container) {
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
   // Toggle suggestion chips visibility (hide after the first real exchange)
-  const sugContainer = container.querySelector('#suggestion-chips-container');
+  const sugContainer = container.querySelector("#suggestion-chips-container");
   if (sugContainer) {
     if (messages.length > 2) {
-      sugContainer.style.display = 'none';
+      sugContainer.style.display = "none";
     } else {
-      sugContainer.style.display = 'flex';
+      sugContainer.style.display = "flex";
     }
   }
 }
 
 function renderTransactionNotice(t) {
   const cat = getCategoryInfo(t.category);
-  const typeLabel = t.isIncome ? 'รายรับ' : 'รายจ่าย';
+  const typeLabel = t.isIncome ? "รายรับ" : "รายจ่าย";
   const symbol = store.getCurrencySymbol();
-  
+
   return `
     <div class="chat-transaction-notice" style="margin-top: 12px; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
         <span style="font-size: 10px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">จดบันทึกสำเร็จ ✨</span>
-        <span style="font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: ${t.isIncome ? 'rgba(74, 222, 128, 0.2)' : 'rgba(248, 113, 113, 0.2)'}; color: ${t.isIncome ? 'var(--income)' : 'var(--expense)'}">${typeLabel}</span>
+        <span style="font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: ${t.isIncome ? "rgba(74, 222, 128, 0.2)" : "rgba(248, 113, 113, 0.2)"}; color: ${t.isIncome ? "var(--income)" : "var(--expense)"}">${typeLabel}</span>
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
         <div style="width: 32px; height: 32px; background: ${cat.color}20; color: ${cat.color}; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
@@ -162,14 +162,20 @@ function renderTransactionNotice(t) {
 function formatMessageText(text) {
   // Convert newlines to breaks
   let html = escapeHTML(text);
-  
+
   // Format bullet points
-  html = html.replace(/^[•\-\*]\s*(.+)$/gm, '<div style="display: flex; gap: 8px; margin-bottom: 4px;"><span style="color: var(--gold);">•</span><span>$1</span></div>');
+  html = html.replace(
+    /^[•\-\*]\s*(.+)$/gm,
+    '<div style="display: flex; gap: 8px; margin-bottom: 4px;"><span style="color: var(--gold);">•</span><span>$1</span></div>',
+  );
 
   // Convert bold formatting
-  html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--gold);">$1</strong>');
+  html = html.replace(
+    /\*\*(.*?)\*\*/g,
+    '<strong style="color: var(--gold);">$1</strong>',
+  );
 
-  return html.replace(/\n/g, '<br/>');
+  return html.replace(/\n/g, "<br/>");
 }
 
 async function handleUserSendMessage(container, text) {
@@ -177,20 +183,20 @@ async function handleUserSendMessage(container, text) {
   messages.push({
     isUser: true,
     text: text,
-    time: new Date()
+    time: new Date(),
   });
 
   renderMessages(container);
 
   // Set loading status
-  const statusEl = container.querySelector('#planner-status');
-  statusEl.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span> ${t('plannerTyping')}`;
-  statusEl.style.color = 'var(--gold)';
+  const statusEl = container.querySelector("#planner-status");
+  statusEl.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span> ${t("plannerTyping")}`;
+  statusEl.style.color = "var(--gold)";
 
   // Append temporary Typing indicator
-  const msgContainer = container.querySelector('#chat-messages-container');
-  const typingEl = document.createElement('div');
-  typingEl.className = 'typing-indicator';
+  const msgContainer = container.querySelector("#chat-messages-container");
+  const typingEl = document.createElement("div");
+  typingEl.className = "typing-indicator";
   typingEl.innerHTML = `
     <span class="typing-dot"></span>
     <span class="typing-dot"></span>
@@ -210,34 +216,35 @@ async function handleUserSendMessage(container, text) {
     let newTransaction = null;
     if (result.transaction_to_add) {
       const tx = result.transaction_to_add;
-      
+
       // Auto-insert transaction in base THB currency
-      const thbAmount = store.settings.selectedCurrency === 'THB' 
-        ? tx.amount 
-        : tx.amount / store.toDisplay(1.0);
+      const thbAmount =
+        store.settings.selectedCurrency === "THB"
+          ? tx.amount
+          : tx.amount / store.toDisplay(1.0);
 
       newTransaction = {
-        title: tx.title || 'รายการด่วนจาก Finny',
+        title: tx.title || "รายการด่วนจาก Finny",
         amount: thbAmount,
         isIncome: !!tx.isIncome,
-        category: tx.category || 'Other',
-        date: new Date()
+        category: tx.category || "Other",
+        date: new Date(),
       };
-      
+
       store.addTransaction(newTransaction);
     }
 
     // Append planner response
     messages.push({
       isUser: false,
-      text: result.response || 'มีปัญหาระหว่างคำนวณผลลัพธ์ค่ะ',
+      text: result.response || "มีปัญหาระหว่างคำนวณผลลัพธ์ค่ะ",
       transaction: newTransaction,
-      time: new Date()
+      time: new Date(),
     });
 
     // Restore status text
-    statusEl.innerHTML = `<span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span> ${t('plannerReady')}`;
-    statusEl.style.color = 'var(--text-secondary)';
+    statusEl.innerHTML = `<span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span> ${t("plannerReady")}`;
+    statusEl.style.color = "var(--text-secondary)";
 
     renderMessages(container);
   }, 600); // Small delay to feel natural
@@ -247,13 +254,13 @@ function getOfflinePlannerResponse(input) {
   const lowerText = input.toLowerCase();
   const metrics = store.getFinanceMetrics();
   const symbol = store.getCurrencySymbol();
-  const isEnglish = store.settings.language === 'en';
+  const isEnglish = store.settings.language === "en";
 
   const interestPlan = parseCompoundInterest(input);
   if (interestPlan) {
     return {
       response: formatInterestResponse(interestPlan, symbol, isEnglish),
-      transaction_to_add: null
+      transaction_to_add: null,
     };
   }
 
@@ -261,36 +268,49 @@ function getOfflinePlannerResponse(input) {
   if (plan) {
     return {
       response: formatOfflinePlan(plan, symbol, isEnglish),
-      transaction_to_add: null
+      transaction_to_add: null,
     };
   }
 
   // Summary / Analysis Keywords
-  if (lowerText.includes('สรุป') || lowerText.includes('วิเคราะห์') || lowerText.includes('แนะนำ')) {
-    const rate = metrics.monthlyIncome > 0 
-      ? ((metrics.monthlyIncome - metrics.monthlyExpense) / metrics.monthlyIncome * 100)
-      : 0;
+  if (
+    lowerText.includes("สรุป") ||
+    lowerText.includes("วิเคราะห์") ||
+    lowerText.includes("แนะนำ")
+  ) {
+    const rate =
+      metrics.monthlyIncome > 0
+        ? ((metrics.monthlyIncome - metrics.monthlyExpense) /
+            metrics.monthlyIncome) *
+          100
+        : 0;
 
-    let advice = '';
+    let advice = "";
     if (rate >= 30) {
-      advice = '🌟 คุณบริหารเงินได้ยอดเยี่ยมมากค่ะ มีเงินเหลือเก็บเกิน 30% รักษามาตรฐานนี้นะคะ!';
+      advice =
+        "🌟 คุณบริหารเงินได้ยอดเยี่ยมมากค่ะ มีเงินเหลือเก็บเกิน 30% รักษามาตรฐานนี้นะคะ!";
     } else if (rate >= 10) {
-      advice = '👍 การเงินอยู่ในเกณฑ์ดีค่ะ แต่ถ้าลองลดรายจ่ายฟุ่มเฟือยลงอีกนิด จะมีเงินออมเพิ่มขึ้นนะคะ';
+      advice =
+        "👍 การเงินอยู่ในเกณฑ์ดีค่ะ แต่ถ้าลองลดรายจ่ายฟุ่มเฟือยลงอีกนิด จะมีเงินออมเพิ่มขึ้นนะคะ";
     } else if (rate > 0) {
-      advice = '⚠️ เดือนนี้ใช้จ่ายค่อนข้างตึงตัวนะคะ แนะนำให้ลองตรวจสอบหมวดหมู่ที่จ่ายเยอะสุดดูค่ะ';
+      advice =
+        "⚠️ เดือนนี้ใช้จ่ายค่อนข้างตึงตัวนะคะ แนะนำให้ลองตรวจสอบหมวดหมู่ที่จ่ายเยอะสุดดูค่ะ";
     } else {
-      advice = '🚨 สัญญาณอันตราย! เดือนนี้ใช้จ่ายเกินรายรับแล้วค่ะ แนะนำให้งดการใช้จ่ายที่ไม่จำเป็นทันทีนะคะ';
+      advice =
+        "🚨 สัญญาณอันตราย! เดือนนี้ใช้จ่ายเกินรายรับแล้วค่ะ แนะนำให้งดการใช้จ่ายที่ไม่จำเป็นทันทีนะคะ";
     }
 
     return {
-      response: isEnglish ? `Financial summary for this month
+      response: isEnglish
+        ? `Financial summary for this month
 
 Income: ${symbol}${metrics.monthlyIncome.toFixed(2)}
 Expense: ${symbol}${metrics.monthlyExpense.toFixed(2)}
 Remaining: ${symbol}${metrics.monthlyBalance.toFixed(2)}
 
 Planner note:
-${advice}` : `สรุปและวิเคราะห์การเงินเดือนนี้ค่ะ
+${advice}`
+        : `สรุปและวิเคราะห์การเงินเดือนนี้ค่ะ
 
 รายรับ: ${symbol}${metrics.monthlyIncome.toFixed(2)}
 รายจ่าย: ${symbol}${metrics.monthlyExpense.toFixed(2)}
@@ -298,17 +318,21 @@ ${advice}` : `สรุปและวิเคราะห์การเงิ
 
 คำแนะนำจากตัววางแผน:
 ${advice}`,
-      transaction_to_add: null
+      transaction_to_add: null,
     };
   }
 
   // Balance keywords
-  if (lowerText.includes('ยอด') || lowerText.includes('เงินเหลือ') || lowerText.includes('คงเหลือ')) {
+  if (
+    lowerText.includes("ยอด") ||
+    lowerText.includes("เงินเหลือ") ||
+    lowerText.includes("คงเหลือ")
+  ) {
     return {
       response: isEnglish
         ? `Your remaining balance this month is ${symbol}${metrics.monthlyBalance.toFixed(2)}. Type "analyze" if you want a deeper breakdown.`
         : `ยอดเงินคงเหลือของคุณตอนนี้คือ ${symbol}${metrics.monthlyBalance.toFixed(2)} สำหรับเดือนนี้ค่ะ \nหากต้องการดูภาพรวมเพิ่มเติมพิมพ์ 'วิเคราะห์' ได้เลยนะคะ`,
-      transaction_to_add: null
+      transaction_to_add: null,
     };
   }
 
@@ -317,70 +341,106 @@ ${advice}`,
   if (amountMatch) {
     const amount = parseFloat(amountMatch[0]);
     if (!isNaN(amount) && amount > 0) {
-      const isInc = lowerText.includes('เงินเดือน') || lowerText.includes('รายรับ') || lowerText.includes('ได้เงิน') || lowerText.includes('ขายของ');
-      
-      let category = isInc ? 'Salary' : 'Other';
-      if (lowerText.includes('ข้าว') || lowerText.includes('อาหาร') || lowerText.includes('ชาบู')) {
-        category = 'Food';
-      } else if (lowerText.includes('รถ') || lowerText.includes('เดินทาง') || lowerText.includes('bts') || lowerText.includes('แท็กซี่')) {
-        category = 'Transport';
-      } else if (lowerText.includes('ซื้อ') || lowerText.includes('ช้อป') || lowerText.includes('เสื้อ')) {
-        category = 'Shopping';
-      } else if (lowerText.includes('ค่าไฟ') || lowerText.includes('ค่าน้ำ') || lowerText.includes('เน็ต') || lowerText.includes('บิล')) {
-        category = 'Bills';
+      const isInc =
+        lowerText.includes("เงินเดือน") ||
+        lowerText.includes("รายรับ") ||
+        lowerText.includes("ได้เงิน") ||
+        lowerText.includes("ขายของ");
+
+      let category = isInc ? "Salary" : "Other";
+      if (
+        lowerText.includes("ข้าว") ||
+        lowerText.includes("อาหาร") ||
+        lowerText.includes("ชาบู")
+      ) {
+        category = "Food";
+      } else if (
+        lowerText.includes("รถ") ||
+        lowerText.includes("เดินทาง") ||
+        lowerText.includes("bts") ||
+        lowerText.includes("แท็กซี่")
+      ) {
+        category = "Transport";
+      } else if (
+        lowerText.includes("ซื้อ") ||
+        lowerText.includes("ช้อป") ||
+        lowerText.includes("เสื้อ")
+      ) {
+        category = "Shopping";
+      } else if (
+        lowerText.includes("ค่าไฟ") ||
+        lowerText.includes("ค่าน้ำ") ||
+        lowerText.includes("เน็ต") ||
+        lowerText.includes("บิล")
+      ) {
+        category = "Bills";
       }
 
-      const cleanTitle = input
-        .replace(amountMatch[0], '')
-        .replace('บาท', '')
-        .trim() || (isInc ? 'รายรับเพิ่มเติม' : 'รายจ่ายเพิ่มเติม');
+      const cleanTitle =
+        input.replace(amountMatch[0], "").replace("บาท", "").trim() ||
+        (isInc ? "รายรับเพิ่มเติม" : "รายจ่ายเพิ่มเติม");
 
       return {
         response: isEnglish
           ? `Saved "${cleanTitle}" for ${symbol}${amount.toFixed(2)} in ${category}.`
           : `รับทราบค่ะ! บันทึกรายการ "${cleanTitle}" จำนวน ${symbol}${amount.toFixed(2)} ในหมวดหมู่ ${category} เรียบร้อยแล้วนะคะ`,
-      transaction_to_add: {
+        transaction_to_add: {
           title: cleanTitle,
           amount: amount,
           isIncome: isInc,
-          category: category
-      }
-    };
+          category: category,
+        },
+      };
     }
   }
 
   // Greeting
-  if (lowerText.includes('สวัสดี') || lowerText.includes('หวัดดี') || lowerText.includes('hi') || lowerText.includes('hello')) {
+  if (
+    lowerText.includes("สวัสดี") ||
+    lowerText.includes("หวัดดี") ||
+    lowerText.includes("hi") ||
+    lowerText.includes("hello")
+  ) {
     return {
       response: isEnglish
         ? `Hi! The Finny Assistant is ready to help you track spending, analyze cash flow, and plan your money.`
         : `สวัสดีค่ะ! ตัววางแผนออฟไลน์พร้อมช่วยจัดการและวิเคราะห์การเงินให้คุณแล้ววันนี้\nอยากให้บันทึกรายจ่าย หรือวิเคราะห์ภาพรวมการเงิน บอกได้เลยค่ะ!`,
-      transaction_to_add: null
+      transaction_to_add: null,
     };
   }
 
   // Standard Fallback instructions
   return {
-    response: isEnglish ? `The Finny Assistant can help with examples like:
+    response: isEnglish
+      ? `The Finny Assistant can help with examples like:
 • "I have 5000 for 20 days"
 • "Save 30000 in 6 months"
 • "Lunch 150"
-• "Analyze my spending"` : `Finny ยังไม่เข้าใจคำถามนี้ค่ะ ลองบอกรายละเอียดให้ชัดเจนขึ้นดูนะคะ เช่น:
+• "Analyze my spending"`
+      : `Finny ยังไม่เข้าใจคำถามนี้ค่ะ ลองบอกรายละเอียดให้ชัดเจนขึ้นดูนะคะ เช่น:
 • บันทึกรายรับ: "ได้ค่าของ 800 บาท"
 • บันทึกรายจ่าย: "จ่ายค่าเดินทาง 60"
 • วางแผนเงิน: "มีเงิน 5000 ใช้ 20 วัน"
 • วิเคราะห์ภาพรวม: "วิเคราะห์" หรือ "สรุป"`,
-    transaction_to_add: null
+    transaction_to_add: null,
   };
 }
 
 function parseMoneyPlan(input) {
-  const normalized = input.toLowerCase().replace(/,/g, '');
-  const numbers = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map(match => parseFloat(match[1]));
+  const normalized = input.toLowerCase().replace(/,/g, "");
+  const numbers = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map((match) =>
+    parseFloat(match[1]),
+  );
   if (numbers.length < 2) return null;
 
-  const hasTimeline = /(วัน|day|days|เดือน|month|months|ปี|year|years|week|weeks|สัปดาห์)/i.test(normalized);
-  const hasPlanningIntent = /(ใช้|พอ|plan|budget|save|saving|เก็บ|เป้าหมาย|goal|need|ต้องการ|อยาก)/i.test(normalized);
+  const hasTimeline =
+    /(วัน|day|days|เดือน|month|months|ปี|year|years|week|weeks|สัปดาห์)/i.test(
+      normalized,
+    );
+  const hasPlanningIntent =
+    /(ใช้|พอ|plan|budget|save|saving|เก็บ|เป้าหมาย|goal|need|ต้องการ|อยาก)/i.test(
+      normalized,
+    );
   if (!hasTimeline && !hasPlanningIntent) return null;
 
   const amount = numbers[0];
@@ -397,7 +457,7 @@ function parseMoneyPlan(input) {
     amount,
     duration,
     days: Math.max(1, Math.round(days)),
-    isSavingsGoal
+    isSavingsGoal,
   };
 }
 
@@ -430,8 +490,8 @@ Weekly limit: ${symbol}${weekly.toFixed(2)}
 Suggested split:
 • Essentials: ${symbol}${(daily * 0.65).toFixed(2)} per day
 • Food/transport: ${symbol}${(daily * 0.25).toFixed(2)} per day
-• Buffer: ${symbol}${(daily * 0.10).toFixed(2)} per day
-${needsTightBudget ? '\nThis is a tight budget, so avoid non-essential spending until the timeline ends.' : ''}`;
+• Buffer: ${symbol}${(daily * 0.1).toFixed(2)} per day
+${needsTightBudget ? "\nThis is a tight budget, so avoid non-essential spending until the timeline ends." : ""}`;
   }
 
   if (plan.isSavingsGoal) {
@@ -456,16 +516,19 @@ ${needsTightBudget ? '\nThis is a tight budget, so avoid non-essential spending 
 แบ่งงบแนะนำ:
 • จำเป็น: ${symbol}${(daily * 0.65).toFixed(2)} ต่อวัน
 • อาหาร/เดินทาง: ${symbol}${(daily * 0.25).toFixed(2)} ต่อวัน
-• กันพลาด: ${symbol}${(daily * 0.10).toFixed(2)} ต่อวัน
-${needsTightBudget ? '\nงบนี้ค่อนข้างตึง ควรงดรายจ่ายที่ไม่จำเป็นจนกว่าจะครบระยะเวลานี้ค่ะ' : ''}`;
+• กันพลาด: ${symbol}${(daily * 0.1).toFixed(2)} ต่อวัน
+${needsTightBudget ? "\nงบนี้ค่อนข้างตึง ควรงดรายจ่ายที่ไม่จำเป็นจนกว่าจะครบระยะเวลานี้ค่ะ" : ""}`;
 }
 
 function parseCompoundInterest(input) {
-  const normalized = input.toLowerCase().replace(/,/g, '');
-  const isInterestQuery = /(ดอกเบี้ย|ทบต้น|compound|interest|ลงทุน|invest)/i.test(normalized);
+  const normalized = input.toLowerCase().replace(/,/g, "");
+  const isInterestQuery =
+    /(ดอกเบี้ย|ทบต้น|compound|interest|ลงทุน|invest)/i.test(normalized);
   if (!isInterestQuery) return null;
 
-  const numbers = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map(match => parseFloat(match[1]));
+  const numbers = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map((match) =>
+    parseFloat(match[1]),
+  );
   if (numbers.length < 2) return null;
 
   // Assume numbers are: Principal, Rate (%), Years.
@@ -477,7 +540,7 @@ function parseCompoundInterest(input) {
   return {
     principal,
     rate,
-    years
+    years,
   };
 }
 
@@ -498,13 +561,13 @@ function formatInterestResponse(plan, symbol, isEnglish) {
 • Duration: ${years} years
 
 Results:
-• Future Value: ${symbol}${total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
-• Interest Earned: ${symbol}${interest.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
-• Real Value (2% Inflation adjusted): ${symbol}${realTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
+• Future Value: ${symbol}${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+• Interest Earned: ${symbol}${interest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+• Real Value (2% Inflation adjusted): ${symbol}${realTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 
 Advisory Note:
 - Compound interest is the 8th wonder of the world.
-- Adjusted for a historical 2% inflation rate, the purchasing power of your future sum is equivalent to ${symbol}${realTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} today.`;
+- Adjusted for a historical 2% inflation rate, the purchasing power of your future sum is equivalent to ${symbol}${realTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} today.`;
   } else {
     return `📈 แผนคำนวณดอกเบี้ยทบต้นและอัตราเงินเฟ้อ:
 • เงินต้น: ${symbol}${principal.toLocaleString()}
@@ -512,24 +575,26 @@ Advisory Note:
 • ระยะเวลา: ${years} ปี
 
 ผลลัพธ์:
-• มูลค่าในอนาคต: ${symbol}${total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
-• ดอกเบี้ยสะสม: ${symbol}${interest.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
-• มูลค่าที่แท้จริง (ปรับเงินเฟ้อ 2%): ${symbol}${realTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
+• มูลค่าในอนาคต: ${symbol}${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+• ดอกเบี้ยสะสม: ${symbol}${interest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+• มูลค่าที่แท้จริง (ปรับเงินเฟ้อ 2%): ${symbol}${realTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 
 คำแนะนำทางการเงิน:
 - พลังของดอกเบี้ยทบต้นจะเติบโตแบบก้าวกระโดดเมื่อระยะเวลาเพิ่มขึ้น
-- เมื่อปรับลดมูลค่าด้วยเงินเฟ้อเฉลี่ย 2% ต่อปี เงินในอนาคตจำนวนนี้จะมีอำนาจซื้อเท่ากับเงิน ${symbol}${realTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} ในปัจจุบันค่ะ`;
+- เมื่อปรับลดมูลค่าด้วยเงินเฟ้อเฉลี่ย 2% ต่อปี เงินในอนาคตจำนวนนี้จะมีอำนาจซื้อเท่ากับเงิน ${symbol}${realTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ในปัจจุบันค่ะ`;
   }
 }
 
 function escapeHTML(str) {
-  return str.replace(/[&<>'"]/g, 
-    tag => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      "'": '&#39;',
-      '"': '&quot;'
-    }[tag] || tag)
+  return str.replace(
+    /[&<>'"]/g,
+    (tag) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      })[tag] || tag,
   );
 }
