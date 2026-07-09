@@ -4,6 +4,7 @@ import { t } from "../i18n.js";
 import { alerts } from "../utils/alertHelper.js";
 import { exportToCloud, importFromCloud } from "../utils/dataTransfer.js";
 import { supabase } from "../supabase.js";
+import { router } from "../router.js";
 
 // Reusable setting row helper
 function settingRow(iconSvg, iconBg, title, subtitle, rightSlot, extras = "") {
@@ -250,15 +251,20 @@ export function renderSettings(container) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
           <div style="text-align: left;">
-            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">${t("profile")}</div>
-            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">${store.user ? store.user.email : 'ไม่ได้เข้าสู่ระบบ'}</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">${store.user ? t('profile') : t('signIn') + ' / ' + t('signUp')}</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">
+              ${store.user ? store.user.email : 'เข้าสู่ระบบเพื่อบันทึกข้อมูลบน Cloud'}
+            </div>
           </div>
         </div>
-        ${store.user ? `
-          <button id="auth-signout-btn" class="btn-primary" style="background: #ef4444; border-color: #ef4444; color: #fff; padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all var(--transition);">
-            ${t("signOut")}
-          </button>
-        ` : ''}
+        ${store.user
+          ? `<button id="auth-signout-btn" class="btn-primary" style="background: #ef4444; border-color: #ef4444; color: #fff; padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all var(--transition);">
+              ${t('signOut')}
+            </button>`
+          : `<button id="auth-login-btn" class="btn-primary" style="padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all var(--transition); white-space: nowrap;">
+              ${t('signIn')} / ${t('signUp')}
+            </button>`
+        }
       </div>
     </div>
 
@@ -360,6 +366,13 @@ function setupEventListeners(container) {
     signOutBtn.addEventListener("click", async () => {
       const { error } = await supabase.auth.signOut();
       if (error) console.error('Sign out error:', error);
+    });
+  }
+
+  const loginBtn = container.querySelector("#auth-login-btn");
+  if (loginBtn) {
+    loginBtn.addEventListener("click", () => {
+      router.navigate('auth');
     });
   }
 }

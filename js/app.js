@@ -14,17 +14,13 @@ document.addEventListener("DOMContentLoaded", () => {
   router.init();
   updateStaticLabels();
 
-  // Listen for auth state changes — this also fires on first load as INITIAL_SESSION
+  // Listen for auth state changes — INITIAL_SESSION fires on every page load
   supabase.auth.onAuthStateChange(async (event, session) => {
     store.user = session ? session.user : null;
 
     if (event === 'INITIAL_SESSION') {
-      // On first load: route to dashboard if logged in, otherwise show auth screen
-      if (store.user) {
-        router.navigate('dashboard');
-      } else {
-        router.navigate('auth');
-      }
+      // Always start at dashboard — login is optional via Settings
+      router.navigate('dashboard');
     } else if (event === 'SIGNED_IN') {
       await store.handleLoginSync(session.user);
       store.notify();
@@ -32,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (event === 'SIGNED_OUT') {
       store.clearUserData();
       store.notify();
-      router.navigate('auth');
+      router.navigate('dashboard');
     }
   });
 
