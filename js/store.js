@@ -171,7 +171,7 @@ export const store = {
     this.user = user;
 
     try {
-      // Fetch settings from Supabase
+      // 1. Fetch settings from Supabase
       const { data: dbSettings, error: settingsError } = await supabase
         .from('settings')
         .select('*')
@@ -180,7 +180,7 @@ export const store = {
 
       if (settingsError) throw settingsError;
 
-      // Fetch transactions
+      // 2. Fetch transactions
       const { data: dbTransactions, error: txError } = await supabase
         .from('transactions')
         .select('*')
@@ -188,7 +188,7 @@ export const store = {
 
       if (txError) throw txError;
 
-      // Fetch recurring rules
+      // 3. Fetch recurring rules
       const { data: dbRules, error: rulesError } = await supabase
         .from('recurring_rules')
         .select('*')
@@ -196,13 +196,22 @@ export const store = {
 
       if (rulesError) throw rulesError;
 
-      const hasCloudData = (dbTransactions && dbTransactions.length > 0) || dbSettings || (dbRules && dbRules.length > 0);
-
-      if (!hasCloudData) {
-        // LocalStorage -> Supabase Migration (First login sync)
-        console.log('Migrating local storage data to Supabase cloud...');
-
-        // Migrate Settings
+      // --- SETTINGS SYNC ---
+      if (dbSettings) {
+        // Use cloud settings, merging into local
+        this.settings = {
+          ...this.settings,
+          selectedCurrency: dbSettings.selected_currency,
+          isDarkMode: dbSettings.is_dark_mode,
+          language: dbSettings.language,
+          taxPersonalDeduction: parseFloat(dbSettings.tax_personal_deduction),
+          taxSocialSecurity: parseFloat(dbSettings.tax_social_security),
+          taxProvidentFund: parseFloat(dbSettings.tax_provident_fund),
+          taxMutualFunds: parseFloat(dbSettings.tax_mutual_funds),
+          taxOtherDeductions: parseFloat(dbSettings.tax_other_deductions)
+        };
+      } else {
+        // No cloud settings, upload local settings
         const settingsPayload = {
           user_id: user.id,
           selected_currency: this.settings.selectedCurrency || 'THB',
@@ -215,84 +224,101 @@ export const store = {
           tax_other_deductions: this.settings.taxOtherDeductions || 0
         };
         await supabase.from('settings').upsert(settingsPayload);
+      }
 
-        // Migrate Transactions
-        if (this.transactions.length > 0) {
-          const txsToInsert = this.transactions.map(t => ({
-            id: t.id,
+      // --- TRANSACTIONS SYNC (Two-Way Merge) ---
+      const localTxsMap = new Map(this.transactions.map(t => [t.id, t]));
+      const cloudTxsMap = new Map((dbTransactions || []).map(t => [t.id, t]));
+
+      const txsToUpload = [];
+      
+      // Check which local transactions need to be uploaded
+      for (const [id, localTx] of localTxsMap) {
+        if (!cloudTxsMap.has(id)) {
+          txsToUpload.push({
+            id: localTx.id,
             user_id: user.id,
-            title: t.title,
-            amount: t.amount,
-            is_income: t.isIncome,
-            category: t.category,
-            date: t.date instanceof Date ? t.date.toISOString() : new Date(t.date).toISOString(),
-            recurring_id: t.recurringId || null
-          }));
-          await supabase.from('transactions').insert(txsToInsert);
-        }
-
-        // Migrate Recurring Rules
-        if (this.recurringRules.length > 0) {
-          const rulesToInsert = this.recurringRules.map(r => ({
-            id: r.id,
-            user_id: user.id,
-            title: r.title,
-            amount: r.amount,
-            is_income: r.isIncome,
-            category: r.category,
-            type: r.type,
-            custom_days: r.customDays,
-            next_due_date: r.nextDueDate instanceof Date ? r.nextDueDate.toISOString() : new Date(r.nextDueDate).toISOString(),
-            is_active: r.isActive,
-            created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : new Date(r.createdAt).toISOString()
-          }));
-          await supabase.from('recurring_rules').insert(rulesToInsert);
-        }
-      } else {
-        // Supabase -> LocalStorage (Standard pull sync)
-        if (dbSettings) {
-          this.settings = {
-            ...this.settings,
-            selectedCurrency: dbSettings.selected_currency,
-            isDarkMode: dbSettings.is_dark_mode,
-            language: dbSettings.language,
-            taxPersonalDeduction: parseFloat(dbSettings.tax_personal_deduction),
-            taxSocialSecurity: parseFloat(dbSettings.tax_social_security),
-            taxProvidentFund: parseFloat(dbSettings.tax_provident_fund),
-            taxMutualFunds: parseFloat(dbSettings.tax_mutual_funds),
-            taxOtherDeductions: parseFloat(dbSettings.tax_other_deductions)
-          };
-        }
-
-        if (dbTransactions) {
-          this.transactions = dbTransactions.map(t => ({
-            id: t.id,
-            title: t.title,
-            amount: parseFloat(t.amount),
-            isIncome: t.is_income,
-            category: t.category,
-            date: new Date(t.date),
-            recurringId: t.recurring_id
-          }));
-        }
-
-        if (dbRules) {
-          this.recurringRules = dbRules.map(r => ({
-            id: r.id,
-            title: r.title,
-            amount: parseFloat(r.amount),
-            isIncome: r.is_income,
-            category: r.category,
-            type: r.type,
-            customDays: r.custom_days,
-            nextDueDate: new Date(r.next_due_date),
-            isActive: r.is_active,
-            createdAt: new Date(r.created_at)
-          }));
+            title: localTx.title,
+            amount: localTx.amount,
+            is_income: localTx.isIncome,
+            category: localTx.category,
+            date: localTx.date instanceof Date ? localTx.date.toISOString() : new Date(localTx.date).toISOString(),
+            recurring_id: localTx.recurringId || null
+          });
         }
       }
 
-      // Update LocalStorage cache
+      // Add cloud transactions that do not exist locally
+      for (const [id, cloudTx] of cloudTxsMap) {
+        if (!localTxsMap.has(id)) {
+          this.transactions.push({
+            id: cloudTx.id,
+            title: cloudTx.title,
+            amount: parseFloat(cloudTx.amount),
+            isIncome: cloudTx.is_income,
+            category: cloudTx.category,
+            date: new Date(cloudTx.date),
+            recurringId: cloudTx.recurring_id
+          });
+        }
+      }
+
+      // Upload new local transactions to Supabase
+      if (txsToUpload.length > 0) {
+        const { error: uploadError } = await supabase.from('transactions').insert(txsToUpload);
+        if (uploadError) console.error("Error uploading transactions:", uploadError);
+      }
+
+      // --- RECURRING RULES SYNC (Two-Way Merge) ---
+      const localRulesMap = new Map(this.recurringRules.map(r => [r.id, r]));
+      const cloudRulesMap = new Map((dbRules || []).map(r => [r.id, r]));
+
+      const rulesToUpload = [];
+
+      // Check which local rules need to be uploaded
+      for (const [id, localRule] of localRulesMap) {
+        if (!cloudRulesMap.has(id)) {
+          rulesToUpload.push({
+            id: localRule.id,
+            user_id: user.id,
+            title: localRule.title,
+            amount: localRule.amount,
+            is_income: localRule.isIncome,
+            category: localRule.category,
+            type: localRule.type,
+            custom_days: localRule.customDays,
+            next_due_date: localRule.nextDueDate instanceof Date ? localRule.nextDueDate.toISOString() : new Date(localRule.nextDueDate).toISOString(),
+            is_active: localRule.isActive,
+            created_at: localRule.createdAt instanceof Date ? localRule.createdAt.toISOString() : new Date(localRule.createdAt).toISOString()
+          });
+        }
+      }
+
+      // Add cloud rules that do not exist locally
+      for (const [id, cloudRule] of cloudRulesMap) {
+        if (!localRulesMap.has(id)) {
+          this.recurringRules.push({
+            id: cloudRule.id,
+            title: cloudRule.title,
+            amount: parseFloat(cloudRule.amount),
+            isIncome: cloudRule.is_income,
+            category: cloudRule.category,
+            type: cloudRule.type,
+            customDays: cloudRule.custom_days,
+            nextDueDate: new Date(cloudRule.next_due_date),
+            isActive: cloudRule.is_active,
+            createdAt: new Date(cloudRule.created_at)
+          });
+        }
+      }
+
+      // Upload new local rules to Supabase
+      if (rulesToUpload.length > 0) {
+        const { error: uploadRulesError } = await supabase.from('recurring_rules').insert(rulesToUpload);
+        if (uploadRulesError) console.error("Error uploading recurring rules:", uploadRulesError);
+      }
+
+      // Save merged data to LocalStorage
       localStorage.setItem("fintrack_transactions", JSON.stringify(this.transactions));
       localStorage.setItem("fintrack_recurring_rules", JSON.stringify(this.recurringRules));
       localStorage.setItem("fintrack_settings", JSON.stringify(this.settings));

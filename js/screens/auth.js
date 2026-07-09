@@ -4,8 +4,6 @@ import { router } from '../router.js';
 import { t } from '../i18n.js';
 import { alerts } from '../utils/alertHelper.js';
 
-let isSignUpMode = false;
-
 export function renderAuth(container) {
   container.innerHTML = `
     <div class="auth-page-wrapper">
@@ -16,16 +14,13 @@ export function renderAuth(container) {
             <img src="/icons/icon-192.png" alt="FinTrack" style="width:44px;height:44px;border-radius:14px;" onerror="this.style.display='none';this.parentElement.innerHTML='<svg width=32 height=32 viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.5&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><path d=&quot;M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z&quot;/></svg>'" />
           </div>
           <div class="auth-brand-name">FinTrack</div>
-          <div class="auth-brand-tagline">จัดการเงินอย่างมีสไตล์ · Track Money in Style</div>
         </div>
 
         <!-- Form Card -->
         <div class="auth-form-card">
-          <div class="auth-mode-title">${isSignUpMode ? t('signUp') : t('signIn')}</div>
+          <div class="auth-mode-title">${t('authTitleCombined')}</div>
           <div class="auth-mode-subtitle">
-            ${isSignUpMode
-              ? 'สร้างบัญชีเพื่อบันทึกข้อมูลบน Cloud และใช้งานในทุกอุปกรณ์'
-              : 'ยินดีต้อนรับกลับ — ข้อมูลของคุณรออยู่ในคลาวด์'}
+            ${t('authSubtitleCombined')}
           </div>
 
           <form id="auth-form">
@@ -36,27 +31,21 @@ export function renderAuth(container) {
 
             <div class="auth-input-group">
               <label class="auth-input-label" for="auth-password">${t('password')}</label>
-              <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" minlength="6" required autocomplete="${isSignUpMode ? 'new-password' : 'current-password'}" />
+              <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" minlength="6" required autocomplete="current-password" />
             </div>
 
             <button type="submit" id="auth-submit-btn" class="auth-submit-btn">
-              <span id="auth-btn-text">${isSignUpMode ? t('signUp') : t('signIn')}</span>
+              <span id="auth-btn-text">${t('authTitleCombined')}</span>
               <div id="auth-spinner" class="spinner hidden"></div>
             </button>
           </form>
-
-          <div class="auth-divider"><span>หรือ</span></div>
-
-          <button id="auth-toggle-mode" class="auth-toggle-btn">
-            ${isSignUpMode ? t('authSwitchToSignIn') : t('authSwitchToSignUp')}
-          </button>
         </div>
 
         <!-- Back link -->
         <div style="text-align: center; margin-top: 20px;">
           <button id="auth-back-btn" style="background: none; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: color var(--transition); display: inline-flex; align-items: center; gap: 6px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            กลับไปหน้าแรก
+            ${store.settings.language === 'en' ? 'Back to Home' : 'กลับไปหน้าแรก'}
           </button>
         </div>
       </div>
@@ -66,21 +55,70 @@ export function renderAuth(container) {
   setupEventListeners(container);
 }
 
+function translateAuthError(errMessage, lang = 'th') {
+  const msg = errMessage ? errMessage.toLowerCase() : '';
+  
+  if (lang === 'th') {
+    if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+      return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+    }
+    if (msg.includes('user already registered') || msg.includes('user_already_exists')) {
+      return 'อีเมลนี้ถูกลงทะเบียนไว้แล้วด้วยรหัสผ่านอื่น (กรุณาลองป้อนรหัสผ่านใหม่)';
+    }
+    if (msg.includes('password should be at least 6 characters')) {
+      return 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร';
+    }
+    if (msg.includes('signup requires a valid password')) {
+      return 'กรุณากรอกรหัสผ่านที่ถูกต้อง';
+    }
+    if (msg.includes('unable to validate email address') || msg.includes('email structure is invalid') || msg.includes('invalid email')) {
+      return 'รูปแบบของอีเมลไม่ถูกต้อง';
+    }
+    if (msg.includes('rate limit exceeded') || msg.includes('too many requests')) {
+      return 'ส่งคำขอถี่เกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง';
+    }
+    if (msg.includes('email not confirmed') || msg.includes('email_not_confirmed')) {
+      return 'อีเมลนี้ยังไม่ได้ยืนยันตัวตน กรุณาตรวจสอบลิงก์ในกล่องจดหมายของคุณ';
+    }
+    return `ข้อผิดพลาด: ${errMessage}`;
+  } else {
+    // English
+    if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+      return 'Invalid email or password.';
+    }
+    if (msg.includes('user already registered') || msg.includes('user_already_exists')) {
+      return 'This email is already registered with a different password.';
+    }
+    if (msg.includes('password should be at least 6 characters')) {
+      return 'Password should be at least 6 characters.';
+    }
+    if (msg.includes('signup requires a valid password')) {
+      return 'Please enter a valid password.';
+    }
+    if (msg.includes('unable to validate email address') || msg.includes('invalid email')) {
+      return 'Invalid email format.';
+    }
+    if (msg.includes('rate limit')) {
+      return 'Too many requests. Please try again later.';
+    }
+    if (msg.includes('email not confirmed')) {
+      return 'Email address is not confirmed yet. Please verify via confirmation email.';
+    }
+    return errMessage;
+  }
+}
+
 function setupEventListeners(container) {
   const form = container.querySelector('#auth-form');
-  const toggleBtn = container.querySelector('#auth-toggle-mode');
   const submitBtn = container.querySelector('#auth-submit-btn');
   const btnText = container.querySelector('#auth-btn-text');
   const spinner = container.querySelector('#auth-spinner');
   const backBtn = container.querySelector('#auth-back-btn');
 
+  const lang = store.settings.language || 'th';
+
   backBtn.addEventListener('click', () => {
     router.navigate('dashboard');
-  });
-
-  toggleBtn.addEventListener('click', () => {
-    isSignUpMode = !isSignUpMode;
-    renderAuth(container);
   });
 
   form.addEventListener('submit', async (e) => {
@@ -89,36 +127,63 @@ function setupEventListeners(container) {
     const password = container.querySelector('#auth-password').value;
 
     submitBtn.disabled = true;
-    btnText.textContent = isSignUpMode ? 'กำลังสมัคร...' : 'กำลังเข้าสู่ระบบ...';
+    btnText.textContent = lang === 'en' ? 'Processing...' : 'กำลังดำเนินการ...';
     spinner.classList.remove('hidden');
 
     try {
-      if (isSignUpMode) {
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        if (data.session) {
+      // 1. Attempt login first
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (!signInError) {
+        // Login successful
+        btnText.textContent = t('syncingData');
+        await store.handleLoginSync(signInData.user);
+        alerts.success(t('authSuccess'));
+        router.navigate('dashboard');
+        return;
+      }
+
+      // 2. If login fails with "Invalid login credentials", it could mean the user doesn't exist yet.
+      // So, let's attempt to Register them.
+      const isInvalidCredentials = signInError.message.toLowerCase().includes('invalid login credentials') ||
+                                   signInError.status === 400;
+
+      if (isInvalidCredentials) {
+        // Attempt sign up
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password
+        });
+
+        if (signUpError) {
+          // If signUp fails with "User already registered", it means the email exists but password was wrong
+          throw new Error(translateAuthError(signUpError.message, lang));
+        }
+
+        // SignUp successful
+        if (signUpData.session) {
           btnText.textContent = t('syncingData');
-          await store.handleLoginSync(data.user);
+          await store.handleLoginSync(signUpData.user);
           alerts.success(t('signUpSuccess'));
           router.navigate('dashboard');
         } else {
-          alerts.success('ลงทะเบียนสำเร็จ', 'กรุณาตรวจสอบกล่องอีเมลของคุณเพื่อยืนยันบัญชี');
-          isSignUpMode = false;
-          renderAuth(container);
+          // Email verification is enabled
+          alerts.success(t('authCheckEmailTitle'), t('authCheckEmailDesc'));
+          router.navigate('dashboard');
         }
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        btnText.textContent = t('syncingData');
-        await store.handleLoginSync(data.user);
-        alerts.success(t('authSuccess'));
-        router.navigate('dashboard');
+        // Other login errors (like rate limits, email not confirmed, etc.)
+        throw new Error(translateAuthError(signInError.message, lang));
       }
+
     } catch (err) {
       console.error(err);
-      alerts.error('ล้มเหลว', err.message || t('authError', { error: err.message }));
+      alerts.error(lang === 'en' ? 'Failure' : 'ล้มเหลว', err.message);
       submitBtn.disabled = false;
-      btnText.textContent = isSignUpMode ? t('signUp') : t('signIn');
+      btnText.textContent = t('authTitleCombined');
       spinner.classList.add('hidden');
     }
   });

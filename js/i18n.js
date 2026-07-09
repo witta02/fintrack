@@ -147,6 +147,10 @@ const dictionary = {
     signOutSuccess: 'ออกจากระบบแล้ว!',
     authError: 'การยืนยันตัวตนล้มเหลว: {error}',
     syncingData: 'กำลังซิงค์ข้อมูลกับคลาวด์...',
+    authTitleCombined: 'เข้าใช้งาน FinTrack Cloud',
+    authSubtitleCombined: 'กรอกอีเมลและรหัสผ่านเพื่อเข้าใช้งาน หากไม่มีบัญชีระบบจะสมัครสมาชิกให้อัตโนมัติ',
+    authCheckEmailTitle: 'ยืนยันอีเมลของคุณ ✉️',
+    authCheckEmailDesc: 'เราได้ส่งลิงก์ยืนยันตัวตนไปที่อีเมลของคุณแล้ว กรุณากดลิงก์ในอีเมลเพื่อเข้าใช้งาน (หากไม่พบ กรุณาตรวจสอบในโฟลเดอร์ จดหมายขยะ/Spam)',
   },
   en: {
     emptyrecur: "Still empty",
@@ -298,6 +302,10 @@ const dictionary = {
     signOutSuccess: 'Logged out!',
     authError: 'Authentication failed: {error}',
     syncingData: 'Syncing data with cloud...',
+    authTitleCombined: 'Access FinTrack Cloud',
+    authSubtitleCombined: 'Enter your email and password. We will log you in, or register a new account automatically.',
+    authCheckEmailTitle: 'Confirm your email ✉️',
+    authCheckEmailDesc: 'We have sent a verification link to your email. Please click the link to activate your account (Check your Spam folder too).',
   },
 };
 

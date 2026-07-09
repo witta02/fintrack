@@ -15,13 +15,13 @@ let analysisMonth = new Date().getMonth();
 let analysisYear = new Date().getFullYear();
 
 export function renderDashboard(container) {
-  const greeting = (() => {
-    const h = new Date().getHours();
-    if (h < 12) return 'สวัสดีตอนเช้า 🌅';
-    if (h < 17) return 'สวัสดีตอนบ่าย ☀️';
-    if (h < 21) return 'สวัสดีตอนเย็น 🌆';
-    return 'สวัสดีตอนดึก 🌙';
-  })();
+  // const greeting = (() => {
+  //   const h = new Date().getHours();
+  //   if (h < 12) return 'สวัสดีตอนเช้า';
+  //   if (h < 17) return 'สวัสดีตอนบ่าย';
+  //   if (h < 21) return 'สวัสดีตอนเย็น';
+  //   return 'สวัสดีตอนดึก';
+  // })();
   const userInitial = store.user ? store.user.email.charAt(0).toUpperCase() : null;
 
   container.innerHTML = `
