@@ -258,9 +258,14 @@ export function renderSettings(container) {
           </div>
         </div>
         ${store.user
-          ? `<button id="auth-signout-btn" class="btn-primary" style="background: #ef4444; border-color: #ef4444; color: #fff; padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all var(--transition);">
-              ${t('signOut')}
-            </button>`
+          ? `<div style="display: flex; gap: 8px;">
+              <button id="auth-changepwd-btn" class="btn-primary" style="background: rgba(255, 184, 0, 0.08); border: 1.5px solid rgba(255, 184, 0, 0.25); color: var(--gold); padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all var(--transition); white-space: nowrap; box-shadow: none;">
+                ${store.settings.language === 'en' ? 'Change Password' : 'เปลี่ยนรหัสผ่าน'}
+              </button>
+              <button id="auth-signout-btn" class="btn-primary" style="background: #ef4444; border-color: #ef4444; color: #fff; padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all var(--transition); box-shadow: none;">
+                ${t('signOut')}
+              </button>
+             </div>`
           : `<button id="auth-login-btn" class="btn-primary" style="padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all var(--transition); white-space: nowrap;">
               ${t('signIn')} / ${t('signUp')}
             </button>`
@@ -366,6 +371,27 @@ function setupEventListeners(container) {
     signOutBtn.addEventListener("click", async () => {
       const { error } = await supabase.auth.signOut();
       if (error) console.error('Sign out error:', error);
+    });
+  }
+
+  const changePwdBtn = container.querySelector("#auth-changepwd-btn");
+  if (changePwdBtn) {
+    changePwdBtn.addEventListener("click", async () => {
+      const newPassword = await alerts.promptPasswordChange();
+      if (newPassword) {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) {
+          alerts.error(
+            store.settings.language === 'en' ? 'Update Failed' : 'อัปเดตล้มเหลว',
+            error.message
+          );
+        } else {
+          alerts.success(
+            store.settings.language === 'en' ? 'Success' : 'สำเร็จ',
+            store.settings.language === 'en' ? 'Password updated successfully!' : 'เปลี่ยนรหัสผ่านเสร็จเรียบร้อยแล้ว!'
+          );
+        }
+      }
     });
   }
 

@@ -89,4 +89,57 @@ export const alerts = {
     });
     return result.isConfirmed;
   },
+
+  async promptPasswordChange() {
+    const isDark = store.settings.isDarkMode;
+    const lang = store.settings.language;
+    const { value: newPassword } = await Swal.fire({
+      title: lang === 'en' ? 'Change Password' : 'เปลี่ยนรหัสผ่าน',
+      input: 'password',
+      inputLabel: lang === 'en' ? 'Enter new password (at least 6 characters)' : 'ป้อนรหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)',
+      inputPlaceholder: '••••••••',
+      inputAttributes: {
+        minlength: '6',
+        autocapitalize: 'off',
+        autocorrect: 'off'
+      },
+      showCancelButton: true,
+      background: isDark ? "#1C2128" : "#FFFFFF",
+      color: isDark ? "#FFFFFF" : "#1F2937",
+      confirmButtonColor: "#FFB800",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: lang === 'en' ? 'Update' : 'อัปเดต',
+      cancelButtonText: lang === 'en' ? 'Cancel' : 'ยกเลิก',
+      inputValidator: (value) => {
+        if (!value || value.length < 6) {
+          return lang === 'en' ? 'Password must be at least 6 characters!' : 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร!';
+        }
+      }
+    });
+    return newPassword;
+  },
+
+  async promptForgotPassword() {
+    const isDark = store.settings.isDarkMode;
+    const lang = store.settings.language;
+    const { value: email } = await Swal.fire({
+      title: lang === 'en' ? 'Forgot Password' : 'ลืมรหัสผ่าน',
+      input: 'email',
+      inputLabel: lang === 'en' ? 'Enter your email address' : 'ป้อนอีเมลของคุณเพื่อรับลิงก์รีเซ็ตรหัสผ่าน',
+      inputPlaceholder: 'email@example.com',
+      showCancelButton: true,
+      background: isDark ? "#1C2128" : "#FFFFFF",
+      color: isDark ? "#FFFFFF" : "#1F2937",
+      confirmButtonColor: "#FFB800",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: lang === 'en' ? 'Send Link' : 'ส่งลิงก์',
+      cancelButtonText: lang === 'en' ? 'Cancel' : 'ยกเลิก',
+      inputValidator: (value) => {
+        if (!value) {
+          return lang === 'en' ? 'Please enter a valid email!' : 'กรุณากรอกอีเมลที่ถูกต้อง!';
+        }
+      }
+    });
+    return email;
+  },
 };

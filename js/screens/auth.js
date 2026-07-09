@@ -34,6 +34,12 @@ export function renderAuth(container) {
               <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" minlength="6" required autocomplete="current-password" />
             </div>
 
+            <div style="text-align: right; margin-top: -8px; margin-bottom: 16px;">
+              <button type="button" id="auth-forgot-btn" style="background: none; border: none; color: var(--gold); font-size: 12px; font-weight: 700; cursor: pointer; transition: color var(--transition);">
+                ${store.settings.language === 'en' ? 'Forgot Password?' : 'ลืมรหัสผ่านใช่หรือไม่?'}
+              </button>
+            </div>
+
             <button type="submit" id="auth-submit-btn" class="auth-submit-btn">
               <span id="auth-btn-text">${t('authTitleCombined')}</span>
               <div id="auth-spinner" class="spinner hidden"></div>
@@ -114,12 +120,37 @@ function setupEventListeners(container) {
   const btnText = container.querySelector('#auth-btn-text');
   const spinner = container.querySelector('#auth-spinner');
   const backBtn = container.querySelector('#auth-back-btn');
+  const forgotBtn = container.querySelector('#auth-forgot-btn');
 
   const lang = store.settings.language || 'th';
 
   backBtn.addEventListener('click', () => {
     router.navigate('dashboard');
   });
+
+  if (forgotBtn) {
+    forgotBtn.addEventListener('click', async () => {
+      const email = await alerts.promptForgotPassword();
+      if (email) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin
+        });
+        if (error) {
+          alerts.error(
+            lang === 'en' ? 'Reset Failed' : 'ล้มเหลว',
+            translateAuthError(error.message, lang)
+          );
+        } else {
+          alerts.success(
+            lang === 'en' ? 'Link Sent' : 'ส่งลิงก์สำเร็จ',
+            lang === 'en' 
+              ? 'A reset password link has been sent to your email address.' 
+              : 'เราได้ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว กรุณาตรวจสอบและดำเนินการต่อ'
+          );
+        }
+      }
+    });
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

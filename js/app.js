@@ -3,6 +3,7 @@ import { store } from "./store.js";
 import { router } from "./router.js";
 import { t } from "./i18n.js";
 import { supabase } from "./supabase.js";
+import { alerts } from "./utils/alertHelper.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("FinTrack: Initializing...");
@@ -29,6 +30,26 @@ document.addEventListener("DOMContentLoaded", () => {
       store.clearUserData();
       store.notify();
       router.navigate('dashboard');
+    } else if (event === 'PASSWORD_RECOVERY') {
+      // Prompt the user to update password immediately
+      setTimeout(async () => {
+        const newPassword = await alerts.promptPasswordChange();
+        if (newPassword) {
+          const { error } = await supabase.auth.updateUser({ password: newPassword });
+          if (error) {
+            alerts.error(
+              store.settings.language === 'en' ? 'Update Failed' : 'อัปเดตล้มเหลว',
+              error.message
+            );
+          } else {
+            alerts.success(
+              store.settings.language === 'en' ? 'Success' : 'สำเร็จ',
+              store.settings.language === 'en' ? 'Password updated successfully!' : 'เปลี่ยนรหัสผ่านเสร็จเรียบร้อยแล้ว!'
+            );
+            router.navigate('dashboard');
+          }
+        }
+      }, 500);
     }
   });
 
