@@ -14,12 +14,30 @@ let analysisPeriod = "monthly";
 let analysisMonth = new Date().getMonth();
 let analysisYear = new Date().getFullYear();
 export function renderDashboard(container) {
-  const greeting = (() => {
+  const greetingData = (() => {
     const h = new Date().getHours();
-    if (h < 12) return 'สวัสดีตอนเช้า 🌅';
-    if (h < 17) return 'สวัสดีตอนบ่าย ☀️';
-    if (h < 21) return 'สวัสดีตอนเย็น 🌆';
-    return 'สวัสดีตอนดึก 🌙';
+    if (h < 12) {
+      return {
+        text: store.settings.language === 'en' ? 'Good morning' : 'สวัสดีตอนเช้า',
+        svg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M22 22H2"/><circle cx="12" cy="16" r="4"/><path d="m8 12 4-4 4 4"/><path d="M12 8v8"/></svg>`
+      };
+    }
+    if (h < 17) {
+      return {
+        text: store.settings.language === 'en' ? 'Good afternoon' : 'สวัสดีตอนบ่าย',
+        svg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F5C842" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`
+      };
+    }
+    if (h < 21) {
+      return {
+        text: store.settings.language === 'en' ? 'Good evening' : 'สวัสดีตอนเย็น',
+        svg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F0A500" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M22 22H2"/><circle cx="12" cy="16" r="4"/><path d="m16 16-4 4-4-4"/><path d="M12 12v8"/></svg>`
+      };
+    }
+    return {
+      text: store.settings.language === 'en' ? 'Good night' : 'สวัสดีตอนดึก',
+      svg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C5CFC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`
+    };
   })();
   const userInitial = store.user ? store.user.email.charAt(0).toUpperCase() : null;
 
@@ -31,7 +49,10 @@ export function renderDashboard(container) {
           <div>
             <h1 class="brand-title shimmer-text desktop-hide" style="font-size: 26px; font-weight: 900; letter-spacing: -1px; margin-bottom: 0;">FinTrack</h1>
             <h1 class="screen-title-desktop desktop-only" style="font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin-bottom: 0;">ภาพรวม</h1>
-            <div class="greeting-text desktop-hide" style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${greeting}</div>
+            <div class="greeting-text desktop-hide" style="font-size: 12px; color: var(--text-secondary); margin-top: 3px; display: inline-flex; align-items: center; gap: 6px;">
+              ${greetingData.svg}
+              <span>${greetingData.text}</span>
+            </div>
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
