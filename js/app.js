@@ -18,12 +18,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   router.init();
   updateStaticLabels();
 
-  // Listen for auth changes to sync and route
+  // Listen for auth state changes — this also fires on first load as INITIAL_SESSION
   supabase.auth.onAuthStateChange(async (event, session) => {
-    const prevUser = store.user;
     store.user = session ? session.user : null;
 
-    if (event === 'SIGNED_IN' && !prevUser) {
+    if (event === 'INITIAL_SESSION') {
+      // On first load: route to dashboard if logged in, otherwise show auth screen
+      if (store.user) {
+        router.navigate('dashboard');
+      } else {
+        router.navigate('auth');
+      }
+    } else if (event === 'SIGNED_IN') {
       await store.handleLoginSync(session.user);
       store.notify();
       router.navigate('dashboard');

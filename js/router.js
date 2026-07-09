@@ -7,7 +7,6 @@ import { renderPlanner } from "./screens/planner.js";
 import { renderExport } from "./screens/export.js";
 import { renderSplitBill } from "./screens/splitBill.js";
 import { renderAuth } from "./screens/auth.js";
-import { store } from "./store.js";
 
 let currentScreen = "dashboard";
 let currentParams = null;
@@ -34,19 +33,11 @@ export const router = {
       });
     });
 
-    // Initial navigation
-    this.navigate("dashboard");
+    // Note: initial navigation is handled by onAuthStateChange in app.js
   },
 
   navigate(screenKey, params = null) {
-    // Auth Guards: If user is not logged in, force to auth page
-    if (!store.user && screenKey !== 'auth') {
-      screenKey = 'auth';
-    } else if (store.user && screenKey === 'auth') {
-      // If logged in, don't show login page
-      screenKey = 'dashboard';
-    }
-
+    // If screen not found, do nothing
     if (!screens[screenKey]) {
       console.error(`Screen "${screenKey}" not found.`);
       return;
