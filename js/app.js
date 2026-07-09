@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
       store.notify();
       router.navigate('dashboard');
     } else if (event === 'SIGNED_OUT') {
-      store.clearUserData();
+      store.user = null;
       store.notify();
       router.navigate('dashboard');
     } else if (event === 'PASSWORD_RECOVERY') {

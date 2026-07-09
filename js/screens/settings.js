@@ -412,6 +412,9 @@ function setupEventListeners(container) {
     signOutBtn.addEventListener("click", async () => {
       const { error } = await supabase.auth.signOut();
       if (error) console.error('Sign out error:', error);
+      store.clearUserData();
+      store.notify();
+      router.navigate('dashboard');
     });
   }
 
