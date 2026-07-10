@@ -388,7 +388,8 @@ input:focus, select:focus, textarea:focus {
 
 .nav-add-btn {
   background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--amber));
-  border-radius: 50%;
+  border-radius: 14px;
+  corner-shape: squircle; /* Native progressive squircle corner shape */
   width: 46px;
   height: 46px;
   display: flex;
@@ -440,6 +441,7 @@ input:focus, select:focus, textarea:focus {
   background: var(--surface);
   backdrop-filter: blur(12px);
   border-radius: 13px;
+  corner-shape: squircle; /* Native progressive squircle corner shape */
   border: 1px solid var(--border);
   color: var(--text-secondary);
   transition: all var(--transition);
@@ -473,6 +475,7 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 16px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 1px 0 rgba(255,255,255,0.04) inset;
   transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  corner-shape: squircle; /* Native progressive squircle corner shape where supported */
 }
 
 .card:hover, .chart-card:hover, .starter-guide:hover {
@@ -491,6 +494,43 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 2px 16px rgba(15,23,60,0.06), 0 1px 0 rgba(255,255,255,0.9) inset;
 }
 
+/* Houdini Paint Worklet progressive enhancement for perfect squircles (Chrome/Edge/Opera) */
+@supports (mask-image: paint(smooth-corners)) or (-webkit-mask-image: paint(smooth-corners)) {
+  .card, .chart-card, .starter-guide, .empty-state {
+    background: transparent !important;
+    border-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .card::before, .chart-card::before, .starter-guide::before, .empty-state::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    --smooth-corners: 4.2; /* Smooth curvature exponent */
+    mask-image: paint(smooth-corners);
+    -webkit-mask-image: paint(smooth-corners);
+    transition: background var(--transition), border-color var(--transition);
+  }
+
+  .card:hover::before, .chart-card:hover::before, .starter-guide:hover::before {
+    border-color: rgba(245, 200, 66, 0.15);
+  }
+
+  [data-theme="light"] .card::before,
+  [data-theme="light"] .chart-card::before,
+  [data-theme="light"] .starter-guide::before,
+  [data-theme="light"] .empty-state::before {
+    background: var(--card);
+    border: 1px solid var(--border);
+  }
+}
+
 /* ─── Balance Card ────────────────────────────────────────────────────── */
 .balance-card {
   background: var(--balance-bg);
@@ -500,6 +540,7 @@ input:focus, select:focus, textarea:focus {
     0 0 0 1px rgba(245, 200, 66, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.10);
   border-radius: var(--radius-xl);
+  corner-shape: squircle; /* Native progressive squircle corner shape */
   padding: 26px 22px 22px;
   margin-bottom: 20px;
   display: flex;
@@ -1027,6 +1068,7 @@ input:focus, select:focus, textarea:focus {
   font-weight: 700;
   font-size: 15px;
   border-radius: var(--radius-lg);
+  corner-shape: squircle; /* Native progressive squircle corner shape */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1530,6 +1572,7 @@ input:focus, select:focus, textarea:focus {
     border: none;
     padding: 12px;
     border-radius: 12px;
+    corner-shape: squircle; /* Native progressive squircle corner shape */
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;

@@ -8,6 +8,13 @@ import { alerts } from "./utils/alertHelper.js";
 document.addEventListener("DOMContentLoaded", () => {
   console.log("FinTrack: Initializing...");
 
+  // Register Houdini Paint Worklet for smooth-corners (squircles)
+  if ("paintWorklet" in CSS) {
+    CSS.paintWorklet.addModule("/squircle.js").catch((err) => {
+      console.warn("Houdini PaintWorklet registration failed:", err);
+    });
+  }
+
   // Initialize the store (synchronous — loads from LocalStorage only)
   store.init();
 
