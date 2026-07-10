@@ -2,7 +2,6 @@ import { store } from "../store.js";
 import { currencies } from "../currency.js";
 import { t } from "../i18n.js";
 import { alerts } from "../utils/alertHelper.js";
-import { exportToCloud, importFromCloud } from "../utils/dataTransfer.js";
 import { supabase } from "../supabase.js";
 import { router } from "../router.js";
 
@@ -133,57 +132,6 @@ export function renderSettings(container) {
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- ── Data Transfer ───────────────────────────────── -->
-    <div class="section-eyebrow" style="margin-bottom: 8px; padding: 0 4px; text-align: center;">${t("dataTransferTitle")}</div>
-    <div class="card" style="padding: 14px; margin-bottom: 20px;">
-      ${settingRow(
-        `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #34d399;"><path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.42-1.89-1.78-3.5-3.5-3.5a5.5 5.5 0 0 0-5.5 5.5c0 .34.02.68.06 1A4.5 4.5 0 0 0 7.5 19Z"/></svg>`,
-        "rgba(16,185,129,0.15)",
-        t("dataTransferTitle"),
-        t("dataTransferDesc"),
-        "",
-        `
-        <div style="margin-top: 6px;">
-          <div style="background: rgba(248,113,113,0.07); border: 1px dashed rgba(248,113,113,0.3); color: var(--expense); padding: 12px; border-radius: 12px; font-size: 11px; margin-bottom: 12px; line-height: 1.6; display: flex; align-items: flex-start; gap: 8px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-top: 1px; flex-shrink: 0;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div>
-              <strong style="font-weight: 700; color: var(--expense); display: block; margin-bottom: 2px;">${t("dataLossWarningTitle")}</strong>
-              ${t("dataLossWarningDesc")}
-            </div>
-          </div>
-          <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${t("cloudSyncSectionDesc")}</p>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button id="data-export-cloud-btn" class="btn-primary" style="
-              display: flex; align-items: center; justify-content: center; gap: 6px;
-              background: linear-gradient(135deg, #10b981, #059669); color: #fff;
-              box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); border: none;
-              padding: 11px 10px; border-radius: 12px;
-              font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
-              ${t("exportCloudBtn")}
-            </button>
-            <button id="data-import-cloud-btn" style="
-              display: flex; align-items: center; justify-content: center; gap: 6px;
-              background: rgba(16,185,129,0.08); border: 1.5px solid rgba(16,185,129,0.22);
-              color: #34d399; padding: 11px 10px; border-radius: 12px;
-              font-weight: 700; font-size: 12px; cursor: pointer; transition: all var(--transition);">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              ${t("importCloudBtn")}
-            </button>
-          </div>
-        </div>
-        `,
-      )}
     </div>
 
     <!-- ── Notifications ───────────────────────────────── -->
@@ -325,13 +273,6 @@ export function renderSettings(container) {
 }
 
 function setupEventListeners(container) {
-  container
-    .querySelector("#data-export-cloud-btn")
-    .addEventListener("click", () => exportToCloud());
-  container
-    .querySelector("#data-import-cloud-btn")
-    .addEventListener("click", () => importFromCloud());
-
   container
     .querySelector("#setting-darkmode-chk")
     .addEventListener("change", () => {
