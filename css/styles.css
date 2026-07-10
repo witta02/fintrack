@@ -466,6 +466,7 @@ input:focus, select:focus, textarea:focus {
 
 /* ─── Cards ───────────────────────────────────────────────────────────── */
 .card, .balance-card, .chart-card, .starter-guide, .empty-state {
+  position: relative;
   background: var(--card);
   backdrop-filter: blur(20px) saturate(1.5);
   -webkit-backdrop-filter: blur(20px) saturate(1.5);
