@@ -26,6 +26,7 @@ export const store = {
     taxMutualFunds: 0,
     taxOtherDeductions: 0,
     dataVersion: 4,
+    geminiApiKey: "",
   },
 
   subscribe(listener) {

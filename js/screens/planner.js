@@ -20,6 +20,11 @@ let messages = [
 ];
 
 export function renderPlanner(container) {
+  const userApiKey = store.settings.geminiApiKey;
+  const defaultApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = (userApiKey && userApiKey.trim()) || defaultApiKey;
+  const hasKey = apiKey && apiKey.trim();
+
   container.innerHTML = `
     <div class="chat-container">
       <!-- Header -->
@@ -27,8 +32,14 @@ export function renderPlanner(container) {
         <div class="chat-avatar">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
         </div>
-        <div style="flex: 1;">
-          <h1 class="brand-title" style="font-size: 17px; margin: 0; font-weight: 800; letter-spacing: -0.3px;">Finny Assistant</h1>
+        <div style="flex: 1; text-align: left;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <h1 class="brand-title" style="font-size: 17px; margin: 0; font-weight: 800; letter-spacing: -0.3px;">Finny Assistant</h1>
+            ${hasKey 
+              ? `<span class="ai-badge" style="background: rgba(245, 184, 0, 0.15); color: var(--gold); font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(245, 184, 0, 0.25);">AI</span>` 
+              : `<span class="offline-badge" style="background: rgba(156, 163, 175, 0.15); color: var(--text-secondary); font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(156, 163, 175, 0.25);">Offline</span>`
+            }
+          </div>
           <span id="planner-status" style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
             <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span>
             ${t("plannerReady")}
@@ -251,6 +262,93 @@ function formatMessageText(text) {
   return html.replace(/\n/g, "<br/>");
 }
 
+async function callGeminiAPI(text, apiKey, lang, symbol) {
+  const metrics = store.getFinanceMetrics();
+  const currentCash = store.netWorth.assets.cash || 0;
+
+  const recentTxs = store.transactions.slice(-10).map((t) => ({
+    title: t.title,
+    amount: t.amount,
+    isIncome: t.isIncome,
+    category: t.category,
+    date: t.date instanceof Date ? t.date.toISOString() : t.date,
+  }));
+
+  // Build last 6 messages of context
+  const history = messages.slice(-6).map((m) => ({
+    role: m.isUser ? "user" : "model",
+    parts: [{ text: m.text }],
+  }));
+
+  const contents = [
+    ...history,
+    {
+      role: "user",
+      parts: [{ text: text }],
+    },
+  ];
+
+  const systemInstructionText = `You are Finny, a friendly, intelligent AI financial assistant for the FinTrack app.
+Your goals:
+1. Help users track their expenses/income.
+2. Analyze their cash flow and monthly spending habits.
+3. Suggest budgets (like 50/30/20 rule) and emergency funds.
+4. Keep replies concise, polite, and encouraging.
+
+Context details:
+- Current Local Time: ${new Date().toString()}
+- User's Selected Currency: ${symbol}
+- User's Language: ${lang === 'en' ? 'English' : 'Thai'}
+- Current Month Metrics: Income = ${symbol}${metrics.monthlyIncome.toFixed(2)}, Expense = ${symbol}${metrics.monthlyExpense.toFixed(2)}, Balance = ${symbol}${metrics.monthlyBalance.toFixed(2)}
+- Current Cash Portfolio: ${symbol}${currentCash.toLocaleString()}
+- Recent Transactions: ${JSON.stringify(recentTxs)}
+
+IMPORTANT: Always respond in the user's selected language (${lang === 'en' ? 'English' : 'Thai'}).
+
+You MUST respond ONLY with a JSON object matching this schema:
+{
+  "response": "string (your conversational response to the user, formatted with standard text and newlines. Use markdown bold **text** for emphasis, which will render as gold text)",
+  "transaction_to_add": null OR {
+    "title": "string (clean transaction description, e.g. 'กินข้าวกลางวัน', 'Taxi')",
+    "amount": number (the transaction amount in the user's selected currency: ${symbol}),
+    "isIncome": boolean,
+    "category": "Food" | "Transport" | "Shopping" | "Bills" | "Salary" | "Other",
+    "date": "ISO string (parse relative dates like 'เมื่อวาน', 'yesterday' correctly based on the current local time: ${new Date().toISOString()})"
+  },
+  "customHTML": null OR "string (optional raw HTML block for rendering custom cards like budget charts, emergency fund progress, compound interest lists, etc. Use premium, dark/light theme-aware styles matching the app)"
+}`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: systemInstructionText }]
+        },
+        contents: contents,
+        generationConfig: {
+          responseMimeType: "application/json"
+        }
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error?.message || `HTTP error ${response.status}`);
+  }
+
+  const data = await response.json();
+  const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!rawText) throw new Error("Empty response from AI");
+
+  return JSON.parse(rawText.trim());
+}
+
 async function handleUserSendMessage(container, text) {
   // Append User message
   messages.push({
@@ -278,9 +376,42 @@ async function handleUserSendMessage(container, text) {
   msgContainer.appendChild(typingEl);
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
+  // AI Configuration
+  const userApiKey = store.settings.geminiApiKey;
+  const defaultApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = (userApiKey && userApiKey.trim()) || defaultApiKey;
+  const lang = store.settings.language;
+  const symbol = store.getCurrencySymbol();
+
+  let useAI = false;
+  let result = null;
+
+  if (apiKey && apiKey.trim()) {
+    try {
+      result = await callGeminiAPI(text, apiKey, lang, symbol);
+      useAI = true;
+    } catch (err) {
+      console.warn("Gemini API call failed, falling back to offline parser:", err);
+      
+      const isForbidden = err.message.includes("denied") || err.message.includes("403");
+      const errorMsg = isForbidden
+        ? (lang === "en" 
+           ? "Gemini API key is blocked or denied access. Falling back to offline mode." 
+           : "รหัส Gemini API Key ถูกระงับการใช้งาน ระบบจะเปลี่ยนเป็นโหมดออฟไลน์")
+        : `${lang === "en" ? "Gemini API error" : "ข้อผิดพลาดของ Gemini API"}: ${err.message}`;
+      
+      alerts.error(
+        lang === "en" ? "AI Assistant Warning" : "คำเตือนระบบ AI",
+        errorMsg
+      );
+    }
+  }
+
   // Use offline mock response directly
   setTimeout(() => {
-    const result = getOfflinePlannerResponse(text);
+    if (!useAI) {
+      result = getOfflinePlannerResponse(text);
+    }
 
     // Remove typing bubble
     typingEl.remove();
@@ -289,6 +420,13 @@ async function handleUserSendMessage(container, text) {
     let newTransaction = null;
     if (result.transaction_to_add) {
       const tx = result.transaction_to_add;
+
+      // Convert date string safely
+      let txDate = new Date();
+      if (tx.date) {
+        const parsed = new Date(tx.date);
+        if (!isNaN(parsed.getTime())) txDate = parsed;
+      }
 
       // Auto-insert transaction in base THB currency
       const thbAmount =
@@ -301,7 +439,7 @@ async function handleUserSendMessage(container, text) {
         amount: thbAmount,
         isIncome: !!tx.isIncome,
         category: tx.category || "Other",
-        date: tx.date || new Date(),
+        date: txDate,
       };
     }
 
@@ -321,7 +459,7 @@ async function handleUserSendMessage(container, text) {
     statusEl.style.color = "var(--text-secondary)";
 
     renderMessages(container);
-  }, 600); // Small delay to feel natural
+  }, useAI ? 100 : 600); // Reduce mock delay if already fetched from LLM
 }
 
 function getOfflinePlannerResponse(input) {
@@ -937,4 +1075,3 @@ function escapeHTML(str) {
       })[tag] || tag,
   );
 }
-
