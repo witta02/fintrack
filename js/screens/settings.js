@@ -232,39 +232,6 @@ export function renderSettings(container) {
       `}
     </div>
 
-    <!-- AI Assistant Configuration -->
-    <div class="card" style="padding: 18px; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--card);">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-        <div class="setting-icon-badge" style="background: rgba(245, 184, 0, 0.12); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--gold);">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </div>
-        <div style="text-align: left;">
-          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">${store.settings.language === 'en' ? 'AI Assistant (Finny)' : 'ตัวช่วยอัจฉริยะ (Finny)'}</div>
-          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">
-            ${store.settings.language === 'en' ? 'Configure Google Gemini API' : 'ตั้งค่ารหัสความปลอดภัยของ Google Gemini API'}
-          </div>
-        </div>
-      </div>
-      
-      <div class="form-group" style="margin-bottom: 0;">
-        <label class="form-label" style="font-size: 11px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <span>${store.settings.language === 'en' ? 'Gemini API Key' : 'รหัส API Key ของ Gemini'}</span>
-          <a href="https://aistudio.google.com/" target="_blank" style="color: var(--gold); text-decoration: none; font-weight: 700; font-size: 10px;">${store.settings.language === 'en' ? 'Get Free Key ↗' : 'รับรหัสฟรี ↗'}</a>
-        </label>
-        <div style="position: relative; display: flex; align-items: center;">
-          <input type="password" id="setting-gemini-key-input" class="form-control" style="font-size: 12px; padding: 10px 40px 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); width: 100%;" value="${store.settings.geminiApiKey || ''}" placeholder="AQ.Ab8RN..." />
-          <button id="toggle-gemini-key-visibility" type="button" style="position: absolute; right: 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-        </div>
-        <small style="color: var(--text-secondary); font-size: 10px; display: block; margin-top: 6px; line-height: 1.4;">
-          ${store.settings.language === 'en' 
-            ? '* Leave blank to use the default embedded API key or offline rules.' 
-            : '* เว้นว่างไว้เพื่อใช้งานรหัส API เริ่มต้นของระบบ หรือใช้งานระบบถอดความแบบออฟไลน์'}
-        </small>
-      </div>
-    </div>
-
     <!-- Cloud Account & Sync -->
     <div class="card ${store.user ? 'profile-card-logged-in' : ''}" style="padding: 18px; margin-bottom: 20px; border-radius: 16px;">
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
@@ -446,25 +413,6 @@ function setupEventListeners(container) {
     loginBtn.addEventListener("click", () => {
       router.navigate('auth');
     });
-  }
-
-  const geminiInput = container.querySelector("#setting-gemini-key-input");
-  if (geminiInput) {
-    geminiInput.addEventListener("change", (e) => {
-      store.settings.geminiApiKey = e.target.value.trim();
-      store.save();
-    });
-    
-    const toggleBtn = container.querySelector("#toggle-gemini-key-visibility");
-    if (toggleBtn) {
-      toggleBtn.addEventListener("click", () => {
-        const isPassword = geminiInput.type === "password";
-        geminiInput.type = isPassword ? "text" : "password";
-        toggleBtn.innerHTML = isPassword 
-          ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
-          : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-      });
-    }
   }
 }
 
