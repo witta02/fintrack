@@ -423,44 +423,56 @@ async function handleUserSendMessage(container, text) {
     const lang = store.settings.language;
     const symbol = store.getCurrencySymbol();
 
-    // 1. Transaction Parsing (supports multiple or single entries)
-    const results = parseTransactionsFromInput(text, lang === "en");
+    // 1. Try to parse planning or budgeting queries first
+    const offlineResult = getOfflinePlannerResponse(text);
 
-    if (results.length > 0) {
-      const totalAmount = results.reduce((acc, t) => acc + t.amount, 0);
-      let responseText = "";
-
-      if (results.length === 1) {
-        const t = results[0];
-        const dateStr = t.date.toLocaleDateString(lang === "en" ? "en-US" : "th-TH", { month: "short", day: "numeric" });
-        responseText = lang === "en"
-          ? `Do you want to save "${t.title}" for ${symbol}${t.amount.toFixed(2)} in ${t.category} on ${dateStr}?`
-          : `ต้องการบันทึกรายการ "${t.title}" จำนวน ${symbol}${t.amount.toFixed(2)} ในหมวดหมู่ ${t.category} ของวันที่ ${dateStr} หรือไม่คะ?`;
-      } else {
-        responseText = lang === "en"
-          ? `I detected ${results.length} transactions totaling ${symbol}${totalAmount.toFixed(2)}. Would you like to record them?`
-          : `พบรายการทั้งหมด ${results.length} รายการ รวมเป็นเงิน ${symbol}${totalAmount.toFixed(2)} ค่ะ ต้องการบันทึกหรือไม่คะ?`;
-      }
-
+    if (offlineResult && !offlineResult.isFallback) {
+      // It's a matched planning query! Use it.
       messages.push({
         id: "msg-planner-" + Date.now(),
         isUser: false,
-        text: responseText,
-        pendingTxs: results,
-        status: "pending",
+        text: offlineResult.response || "มีปัญหาระหว่างคำนวณผลลัพธ์ค่ะ",
+        customHTML: offlineResult.customHTML || null,
         time: new Date(),
       });
     } else {
-      // 2. Planning, Budgeting, and Analytics Queries
-      const result = getOfflinePlannerResponse(text);
+      // 2. If it wasn't a planning query, try basic transaction parsing (single or multiple)
+      const results = parseTransactionsFromInput(text, lang === "en");
 
-      messages.push({
-        id: "msg-planner-" + Date.now(),
-        isUser: false,
-        text: result.response || "มีปัญหาระหว่างคำนวณผลลัพธ์ค่ะ",
-        customHTML: result.customHTML || null,
-        time: new Date(),
-      });
+      if (results.length > 0) {
+        const totalAmount = results.reduce((acc, t) => acc + t.amount, 0);
+        let responseText = "";
+
+        if (results.length === 1) {
+          const t = results[0];
+          const dateStr = t.date.toLocaleDateString(lang === "en" ? "en-US" : "th-TH", { month: "short", day: "numeric" });
+          responseText = lang === "en"
+            ? `Do you want to save "${t.title}" for ${symbol}${t.amount.toFixed(2)} in ${t.category} on ${dateStr}?`
+            : `ต้องการบันทึกรายการ "${t.title}" จำนวน ${symbol}${t.amount.toFixed(2)} ในหมวดหมู่ ${t.category} ของวันที่ ${dateStr} หรือไม่คะ?`;
+        } else {
+          responseText = lang === "en"
+            ? `I detected ${results.length} transactions totaling ${symbol}${totalAmount.toFixed(2)}. Would you like to record them?`
+            : `พบรายการทั้งหมด ${results.length} รายการ รวมเป็นเงิน ${symbol}${totalAmount.toFixed(2)} ค่ะ ต้องการบันทึกหรือไม่คะ?`;
+        }
+
+        messages.push({
+          id: "msg-planner-" + Date.now(),
+          isUser: false,
+          text: responseText,
+          pendingTxs: results,
+          status: "pending",
+          time: new Date(),
+        });
+      } else {
+        // 3. Fallback to standard instructions
+        messages.push({
+          id: "msg-planner-" + Date.now(),
+          isUser: false,
+          text: offlineResult.response,
+          customHTML: null,
+          time: new Date(),
+        });
+      }
     }
 
     // Restore status text
@@ -690,6 +702,7 @@ ${advice}`,
 
   // Standard Fallback instructions
   return {
+    isFallback: true,
     response: isEnglish
       ? `The Finny Assistant can help with examples like:
 • "I have 5000 for 20 days"
