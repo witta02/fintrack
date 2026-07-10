@@ -5,10 +5,13 @@ import { alerts } from "../utils/alertHelper.js";
 
 let messages = [
   {
+    id: "init-msg",
     isUser: false,
     text: `สวัสดีค่ะ! Finny ยินดีรับใช้ค่ะ 👋
     นี่คือตัวอย่างรายการที่ Finny ทำได้ค่ะ
-• บันทึกรายการ เช่น "กินข้าว 150 บาท" หรือ "เมื่อวาน ช็อปปิ้ง 1200"
+• บันทึกรายรายการเดี่ยว หรือหลายรายการพร้อมกัน เช่น:
+  - "กินข้าว 150 ค่าแท็กซี่ 80"
+  - "เมื่อวาน ช็อปปิ้ง 1200 และได้เงินคืน 200"
 • สรุปและวิเคราะห์เงิน เช่น "วิเคราะห์" หรือ "สรุป"
 • วางแผนแบ่งเงิน 50/30/20 เช่น "แบ่งเงิน 30000"
 • วางแผนเงินสำรอง เช่น "คำนวณเงินสำรองฉุกเฉิน"
@@ -19,15 +22,60 @@ let messages = [
   },
 ];
 
+let renderedCount = 0;
+
 export function renderPlanner(container) {
+  renderedCount = 0; // Reset counter to redraw chat history upon screen load
+
   container.innerHTML = `
+    <style>
+      .chat-bubble.planner {
+        position: relative;
+        padding-right: 32px !important;
+      }
+      .chat-bubble.planner:hover .copy-bubble-btn {
+        opacity: 1;
+      }
+      .copy-bubble-btn {
+        position: absolute; 
+        right: 8px; 
+        top: 8px; 
+        background: none; 
+        border: none;
+        color: var(--text-secondary); 
+        cursor: pointer; 
+        opacity: 0; 
+        transition: opacity 0.2s, color 0.2s, background-color 0.2s;
+        padding: 4px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        border-radius: 6px;
+      }
+      .copy-bubble-btn:hover {
+        color: var(--gold) !important;
+        background: rgba(255, 184, 0, 0.08) !important;
+      }
+      .chat-suggestions::-webkit-scrollbar {
+        height: 4px;
+      }
+      .chat-suggestions::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+      .chat-transaction-notice {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        transition: opacity 0.3s ease;
+      }
+    </style>
+
     <div class="chat-container">
       <!-- Header -->
       <div class="chat-header">
         <div class="chat-avatar">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
         </div>
-        <div style="flex: 1;">
+        <div style="flex: 1; text-align: left;">
           <h1 class="brand-title" style="font-size: 17px; margin: 0; font-weight: 800; letter-spacing: -0.3px;">Finny Assistant</h1>
           <span id="planner-status" style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
             <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span>
@@ -49,7 +97,7 @@ export function renderPlanner(container) {
         <div id="suggestion-chips-container" class="chat-suggestions">
           <button class="chat-suggestion" data-val="แบ่งเงิน 30000">แบ่งเงิน 50/30/20</button>
           <button class="chat-suggestion" data-val="คำนวณเงินสำรองฉุกเฉิน">คำนวณเงินสำรอง</button>
-          <button class="chat-suggestion" data-val="เมื่อวาน กินข้าว 150 บาท">เมื่อวาน กินข้าว 150</button>
+          <button class="chat-suggestion" data-val="กินข้าว 150 ค่าบีทีเอส 60">กินข้าว 150 ค่าบีทีเอส 60</button>
           <button class="chat-suggestion" data-val="มีเงิน 5000 ใช้ 20 วัน">มีเงิน 5000 ใช้ 20 วัน</button>
         </div>
         
@@ -108,54 +156,48 @@ function renderMessages(container) {
   const msgContainer = container.querySelector("#chat-messages-container");
   if (!msgContainer) return;
 
-  msgContainer.innerHTML = "";
-
   const isDarkMode = store.settings.isDarkMode;
   const lang = store.settings.language;
 
-  messages.forEach((msg) => {
+  // Clear if resetting or initial rendering
+  if (renderedCount === 0 || msgContainer.children.length === 0) {
+    msgContainer.innerHTML = "";
+    renderedCount = 0;
+  }
+
+  // Draw any new messages
+  for (let i = renderedCount; i < messages.length; i++) {
+    const msg = messages[i];
     const bubble = document.createElement("div");
     bubble.className = `chat-bubble ${msg.isUser ? "user" : "planner"}`;
+    bubble.id = `bubble-${msg.id || i}`;
 
     bubble.innerHTML = `
       <div class="chat-bubble-text">${formatMessageText(msg.text)}</div>
       ${msg.customHTML || ""}
-      ${msg.pendingTx ? renderPendingTransactionCard(msg, isDarkMode, lang) : ""}
+      ${msg.pendingTxs ? renderPendingTransactionsCard(msg, isDarkMode, lang) : ""}
+      ${!msg.isUser ? `
+        <button class="copy-bubble-btn" title="${lang === 'en' ? 'Copy Text' : 'คัดลอกข้อความ'}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        </button>
+      ` : ""}
     `;
 
     msgContainer.appendChild(bubble);
-  });
+  }
 
-  // Bind confirm/cancel click events for pending transactions
-  msgContainer.querySelectorAll(".confirm-tx-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const msgId = btn.getAttribute("data-msg-id");
-      const msg = messages.find((m) => m.id === msgId);
-      if (msg && msg.status === "pending") {
-        store.addTransaction(msg.pendingTx);
-        msg.status = "confirmed";
-        alerts.success(
-          store.settings.language === "en" ? "Success" : "สำเร็จ",
-          store.settings.language === "en" ? "Transaction recorded!" : "บันทึกรายการเรียบร้อยแล้ว!"
-        );
-        renderMessages(container);
-      }
+  renderedCount = messages.length;
+
+  // Bind active buttons
+  bindMessageListeners(container);
+
+  // Smooth scroll to bottom with layout stabilization delay
+  setTimeout(() => {
+    msgContainer.scrollTo({
+      top: msgContainer.scrollHeight,
+      behavior: "smooth",
     });
-  });
-
-  msgContainer.querySelectorAll(".cancel-tx-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const msgId = btn.getAttribute("data-msg-id");
-      const msg = messages.find((m) => m.id === msgId);
-      if (msg && msg.status === "pending") {
-        msg.status = "cancelled";
-        renderMessages(container);
-      }
-    });
-  });
-
-  // Scroll to bottom
-  msgContainer.scrollTop = msgContainer.scrollHeight;
+  }, 50);
 
   // Toggle suggestion chips visibility (hide after the first real exchange)
   const sugContainer = container.querySelector("#suggestion-chips-container");
@@ -168,41 +210,145 @@ function renderMessages(container) {
   }
 }
 
-function renderPendingTransactionCard(msg, isDark, lang) {
-  const t = msg.pendingTx;
-  const cat = getCategoryInfo(t.category);
-  const typeLabel = t.isIncome ? (lang === "en" ? "Income" : "รายรับ") : (lang === "en" ? "Expense" : "รายจ่าย");
-  const symbol = store.getCurrencySymbol();
-  const dateStr = t.date.toLocaleDateString(lang === "en" ? "en-US" : "th-TH", { month: "short", day: "numeric" });
+function updateMessageState(container, msgId, newStatus) {
+  const msg = messages.find((m) => m.id === msgId);
+  if (!msg) return;
+  msg.status = newStatus;
 
+  const isDarkMode = store.settings.isDarkMode;
+  const lang = store.settings.language;
+
+  const bubble = container.querySelector(`#bubble-${msgId}`);
+  if (bubble) {
+    bubble.innerHTML = `
+      <div class="chat-bubble-text">${formatMessageText(msg.text)}</div>
+      ${msg.customHTML || ""}
+      ${msg.pendingTxs ? renderPendingTransactionsCard(msg, isDarkMode, lang) : ""}
+      <button class="copy-bubble-btn" title="${lang === 'en' ? 'Copy Text' : 'คัดลอกข้อความ'}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+      </button>
+    `;
+    bindMessageListeners(container);
+  }
+}
+
+function bindMessageListeners(container) {
+  const msgContainer = container.querySelector("#chat-messages-container");
+  if (!msgContainer) return;
+
+  // 1. Confirm All Transactions
+  msgContainer.querySelectorAll(".confirm-txs-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const msgId = btn.getAttribute("data-msg-id");
+      const msg = messages.find((m) => m.id === msgId);
+      if (msg && msg.status === "pending") {
+        msg.pendingTxs.forEach((tx) => {
+          const thbAmount =
+            store.settings.selectedCurrency === "THB"
+              ? tx.amount
+              : tx.amount / store.toDisplay(1.0);
+
+          store.addTransaction({
+            title: tx.title,
+            amount: thbAmount,
+            isIncome: tx.isIncome,
+            category: tx.category,
+            date: tx.date || new Date(),
+          });
+        });
+
+        updateMessageState(container, msgId, "confirmed");
+        alerts.success(
+          store.settings.language === "en" ? "Success" : "สำเร็จ",
+          store.settings.language === "en"
+            ? "Transactions recorded successfully!"
+            : "บันทึกข้อมูลธุรกรรมเรียบร้อยแล้ว!"
+        );
+      }
+    });
+  });
+
+  // 2. Cancel Transactions
+  msgContainer.querySelectorAll(".cancel-txs-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const msgId = btn.getAttribute("data-msg-id");
+      updateMessageState(container, msgId, "cancelled");
+    });
+  });
+
+  // 3. Copy Chat Bubble Text
+  msgContainer.querySelectorAll(".copy-bubble-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const bubble = btn.closest(".chat-bubble");
+      const textEl = bubble.querySelector(".chat-bubble-text");
+      if (textEl) {
+        navigator.clipboard.writeText(textEl.innerText).then(() => {
+          btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+          btn.style.color = "#34d399";
+          setTimeout(() => {
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`;
+            btn.style.color = "";
+          }, 2000);
+        });
+      }
+    });
+  });
+}
+
+function renderPendingTransactionsCard(msg, isDark, lang) {
+  const symbol = store.getCurrencySymbol();
+  const txs = msg.pendingTxs;
   const statusClass = msg.status;
+  
+  let rowsHTML = "";
+  txs.forEach((t) => {
+    const cat = getCategoryInfo(t.category);
+    const typeLabel = t.isIncome ? (lang === "en" ? "Income" : "รายรับ") : (lang === "en" ? "Expense" : "รายจ่าย");
+    const dateStr = t.date.toLocaleDateString(lang === "en" ? "en-US" : "th-TH", { month: "short", day: "numeric" });
+    
+    rowsHTML += `
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; border-bottom: 1px dashed ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}; padding-bottom: 8px; width: 100%;">
+        <div style="width: 30px; height: 30px; background: ${cat.color}18; color: ${cat.color}; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;">
+          <span style="display: flex; align-items: center; justify-content: center; width: 14px; height: 14px;">${cat.svg}</span>
+        </div>
+        <div style="flex: 1; min-width: 0; text-align: left;">
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHTML(t.title)}</div>
+          <div style="font-size: 10px; color: ${cat.color}; font-weight: 600;">${cat.label} (${typeLabel}) • ${dateStr}</div>
+        </div>
+        <div style="font-size: 13px; font-weight: 800; color: var(--text-primary); text-decoration: ${statusClass === "cancelled" ? "line-through" : "none"}; flex-shrink: 0;">
+          ${symbol}${t.amount.toFixed(2)}
+        </div>
+      </div>
+    `;
+  });
+
   let buttonsHTML = "";
   let badgeHTML = "";
 
   if (statusClass === "pending") {
     buttonsHTML = `
       <div style="display: flex; gap: 8px; margin-top: 12px; width: 100%;">
-        <button class="confirm-tx-btn" data-msg-id="${msg.id}" style="
+        <button class="confirm-txs-btn" data-msg-id="${msg.id}" style="
           flex: 1; padding: 8px 10px; border-radius: 8px; border: none;
           background: linear-gradient(135deg, #10b981, #059669); color: #fff;
           font-weight: 700; font-size: 11px; cursor: pointer; transition: all 0.2s;
           display: flex; align-items: center; justify-content: center; gap: 4px;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          ${lang === "en" ? "Confirm" : "ยืนยัน"}
+          ${lang === "en" ? "Confirm All" : "ยืนยันทั้งหมด"}
         </button>
-        <button class="cancel-tx-btn" data-msg-id="${msg.id}" style="
+        <button class="cancel-txs-btn" data-msg-id="${msg.id}" style="
           flex: 1; padding: 8px 10px; border-radius: 8px;
           background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.22);
           color: var(--expense); font-weight: 700; font-size: 11px; cursor: pointer; transition: all 0.2s;
           display: flex; align-items: center; justify-content: center; gap: 4px;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          ${lang === "en" ? "Cancel" : "ยกเลิก"}
+          ${lang === "en" ? "Cancel All" : "ยกเลิก"}
         </button>
       </div>
     `;
-    badgeHTML = `<span style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: rgba(245, 158, 11, 0.15); color: var(--gold);">${lang === "en" ? "Awaiting Confirm" : "รอการยืนยัน"}</span>`;
+    badgeHTML = `<span style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: rgba(245, 158, 11, 0.15); color: var(--gold);">${lang === "en" ? "Pending Confirm" : "รอการยืนยัน"}</span>`;
   } else if (statusClass === "confirmed") {
-    badgeHTML = `<span style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: rgba(74, 222, 128, 0.15); color: var(--income);">${lang === "en" ? "Recorded ✓" : "บันทึกสำเร็จ ✓"}</span>`;
+    badgeHTML = `<span style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: rgba(74, 222, 128, 0.15); color: var(--income);">${lang === "en" ? "Recorded All ✓" : "บันทึกเรียบร้อย ✓"}</span>`;
   } else {
     badgeHTML = `<span style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: rgba(156, 163, 175, 0.15); color: var(--text-secondary);">${lang === "en" ? "Cancelled ✗" : "ยกเลิกแล้ว ✗"}</span>`;
   }
@@ -210,22 +356,13 @@ function renderPendingTransactionCard(msg, isDark, lang) {
   const opacity = statusClass === "cancelled" ? "opacity: 0.65;" : "";
 
   return `
-    <div class="chat-transaction-notice" style="margin-top: 12px; padding: 12px; background: ${isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(243, 244, 246, 0.8)"}; border-radius: 12px; border: 1px solid ${isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)"}; ${opacity}">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-        <span style="font-size: 9px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">${lang === "en" ? "Quick Record" : "บันทึกด่วน"} • ${dateStr}</span>
+    <div class="chat-transaction-notice" style="margin-top: 12px; padding: 12px; background: ${isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(243, 244, 246, 0.8)"}; border-radius: 12px; border: 1px solid ${isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)"}; ${opacity} width: 100%; box-sizing: border-box;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; width: 100%;">
+        <span style="font-size: 9px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">${lang === "en" ? "Awaiting Confirmation" : "ตรวจสอบรายการบันทึก"}</span>
         ${badgeHTML}
       </div>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <div style="width: 32px; height: 32px; background: ${cat.color}18; color: ${cat.color}; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
-          <span style="display: flex; align-items: center; justify-content: center; width: 16px; height: 16px;">${cat.svg}</span>
-        </div>
-        <div style="flex: 1; min-width: 0;">
-          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHTML(t.title)}</div>
-          <div style="font-size: 10px; color: ${cat.color}; font-weight: 600;">${cat.label} (${typeLabel})</div>
-        </div>
-        <div style="font-size: 14px; font-weight: 800; color: var(--text-primary); text-decoration: ${statusClass === "cancelled" ? "line-through" : "none"}">
-          ${symbol}${t.amount.toFixed(2)}
-        </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+        ${rowsHTML}
       </div>
       ${buttonsHTML}
     </div>
@@ -233,7 +370,6 @@ function renderPendingTransactionCard(msg, isDark, lang) {
 }
 
 function formatMessageText(text) {
-  // Convert newlines to breaks
   let html = escapeHTML(text);
 
   // Format bullet points
@@ -254,6 +390,7 @@ function formatMessageText(text) {
 async function handleUserSendMessage(container, text) {
   // Append User message
   messages.push({
+    id: "msg-usr-" + Date.now(),
     isUser: true,
     text: text,
     time: new Date(),
@@ -280,48 +417,154 @@ async function handleUserSendMessage(container, text) {
 
   // Use offline mock response directly
   setTimeout(() => {
-    const result = getOfflinePlannerResponse(text);
-
     // Remove typing bubble
     typingEl.remove();
 
-    // Process Transaction auto-creation if supplied
-    let newTransaction = null;
-    if (result.transaction_to_add) {
-      const tx = result.transaction_to_add;
+    const lang = store.settings.language;
+    const symbol = store.getCurrencySymbol();
 
-      // Auto-insert transaction in base THB currency
-      const thbAmount =
-        store.settings.selectedCurrency === "THB"
-          ? tx.amount
-          : tx.amount / store.toDisplay(1.0);
+    // 1. Transaction Parsing (supports multiple or single entries)
+    const results = parseTransactionsFromInput(text, lang === "en");
 
-      newTransaction = {
-        title: tx.title || "รายการด่วนจาก Finny",
-        amount: thbAmount,
-        isIncome: !!tx.isIncome,
-        category: tx.category || "Other",
-        date: tx.date || new Date(),
-      };
+    if (results.length > 0) {
+      const totalAmount = results.reduce((acc, t) => acc + t.amount, 0);
+      let responseText = "";
+
+      if (results.length === 1) {
+        const t = results[0];
+        const dateStr = t.date.toLocaleDateString(lang === "en" ? "en-US" : "th-TH", { month: "short", day: "numeric" });
+        responseText = lang === "en"
+          ? `Do you want to save "${t.title}" for ${symbol}${t.amount.toFixed(2)} in ${t.category} on ${dateStr}?`
+          : `ต้องการบันทึกรายการ "${t.title}" จำนวน ${symbol}${t.amount.toFixed(2)} ในหมวดหมู่ ${t.category} ของวันที่ ${dateStr} หรือไม่คะ?`;
+      } else {
+        responseText = lang === "en"
+          ? `I detected ${results.length} transactions totaling ${symbol}${totalAmount.toFixed(2)}. Would you like to record them?`
+          : `พบรายการทั้งหมด ${results.length} รายการ รวมเป็นเงิน ${symbol}${totalAmount.toFixed(2)} ค่ะ ต้องการบันทึกหรือไม่คะ?`;
+      }
+
+      messages.push({
+        id: "msg-planner-" + Date.now(),
+        isUser: false,
+        text: responseText,
+        pendingTxs: results,
+        status: "pending",
+        time: new Date(),
+      });
+    } else {
+      // 2. Planning, Budgeting, and Analytics Queries
+      const result = getOfflinePlannerResponse(text);
+
+      messages.push({
+        id: "msg-planner-" + Date.now(),
+        isUser: false,
+        text: result.response || "มีปัญหาระหว่างคำนวณผลลัพธ์ค่ะ",
+        customHTML: result.customHTML || null,
+        time: new Date(),
+      });
     }
-
-    // Append planner response
-    messages.push({
-      id: "msg-" + Date.now(),
-      isUser: false,
-      text: result.response || "มีปัญหาระหว่างคำนวณผลลัพธ์ค่ะ",
-      customHTML: result.customHTML || null,
-      pendingTx: newTransaction,
-      status: newTransaction ? "pending" : "confirmed",
-      time: new Date(),
-    });
 
     // Restore status text
     statusEl.innerHTML = `<span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span> ${t("plannerReady")}`;
     statusEl.style.color = "var(--text-secondary)";
 
     renderMessages(container);
-  }, 600); // Small delay to feel natural
+  }, 450); // Natural visual delay
+}
+
+function parseTransactionsFromInput(input, isEnglish) {
+  const normalized = input.toLowerCase().replace(/,/g, "");
+  
+  // Split on common connectors: "+", "และ", "and", ",", newline
+  const parts = normalized.split(/(?:และ|and|\+|,|\n)/i);
+  const results = [];
+  const targetDate = parseRelativeDate(input);
+
+  parts.forEach((part) => {
+    const amountMatch = part.match(/(\d+(?:\.\d{1,2})?)/);
+    if (!amountMatch) return;
+
+    const amount = parseFloat(amountMatch[0]);
+    if (isNaN(amount) || amount <= 0) return;
+
+    const isInc =
+      part.includes("เงินเดือน") ||
+      part.includes("รายรับ") ||
+      part.includes("ได้เงิน") ||
+      part.includes("ขายของ") ||
+      part.includes("salary") ||
+      part.includes("income");
+
+    let category = isInc ? "Salary" : "Other";
+    if (
+      part.includes("ข้าว") ||
+      part.includes("อาหาร") ||
+      part.includes("ชาบู") ||
+      part.includes("หมูกระทะ") ||
+      part.includes("สตาร์บัคส์") ||
+      part.includes("กาแฟ") ||
+      part.includes("ก๋วยเตี๋ยว") ||
+      part.includes("ขนม") ||
+      part.includes("food") ||
+      part.includes("coffee")
+    ) {
+      category = "Food";
+    } else if (
+      part.includes("รถ") ||
+      part.includes("เดินทาง") ||
+      part.includes("bts") ||
+      part.includes("mrt") ||
+      part.includes("แท็กซี่") ||
+      part.includes("น้ำมัน") ||
+      part.includes("grab") ||
+      part.includes("bolt") ||
+      part.includes("transport")
+    ) {
+      category = "Transport";
+    } else if (
+      part.includes("ซื้อ") ||
+      part.includes("ช้อป") ||
+      part.includes("เสื้อ") ||
+      part.includes("ห้าง") ||
+      part.includes("shopee") ||
+      part.includes("lazada") ||
+      part.includes("shopping")
+    ) {
+      category = "Shopping";
+    } else if (
+      part.includes("ไฟ") ||
+      part.includes("น้ำ") ||
+      part.includes("เน็ต") ||
+      part.includes("บิล") ||
+      part.includes("netflix") ||
+      part.includes("youtube") ||
+      part.includes("สมัคร") ||
+      part.includes("bill")
+    ) {
+      category = "Bills";
+    }
+
+    let cleanTitle = part.replace(amountMatch[0], "").replace("บาท", "").trim();
+    cleanTitle = cleanTitle
+      .replace(/เมื่อวานซืน|เมื่อวาน|วานซืน/gi, "")
+      .replace(/เมื่อ\s*\d+\s*วันก่อน|เมื่อ\s*\d+\s*วันที่แล้ว/gi, "")
+      .replace(/yesterday|day before yesterday|\d+\s*days?\s*ago/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!cleanTitle) {
+      cleanTitle = isInc ? "รายรับเพิ่มเติม" : "รายจ่ายเพิ่มเติม";
+    }
+
+    results.push({
+      title: cleanTitle,
+      amount: amount,
+      isIncome: isInc,
+      category: category,
+      date: targetDate,
+    });
+  });
+
+  return results;
 }
 
 function getOfflinePlannerResponse(input) {
@@ -338,7 +581,6 @@ function getOfflinePlannerResponse(input) {
         ? `Here is your 50/30/20 budget breakdown for ${symbol}${budgetTotal.toLocaleString()}:`
         : `นี่คือการวิเคราะห์การแบ่งสัดส่วนเงิน ${symbol}${budgetTotal.toLocaleString()} ตามกฎ 50/30/20 ค่ะ:`,
       customHTML: formatBudget503020Response(budgetTotal, symbol, isEnglish),
-      transaction_to_add: null,
     };
   }
 
@@ -351,7 +593,6 @@ function getOfflinePlannerResponse(input) {
         ? `Here is your emergency fund analysis:`
         : `วิเคราะห์เงินสำรองฉุกเฉินให้คุณเรียบร้อยแล้วค่ะ:`,
       customHTML: formatEmergencyFundResponse(avgExpense, symbol, isEnglish, currentCash),
-      transaction_to_add: null,
     };
   }
 
@@ -360,7 +601,6 @@ function getOfflinePlannerResponse(input) {
   if (interestPlan) {
     return {
       response: formatInterestResponse(interestPlan, symbol, isEnglish),
-      transaction_to_add: null,
     };
   }
 
@@ -369,7 +609,6 @@ function getOfflinePlannerResponse(input) {
   if (plan) {
     return {
       response: formatOfflinePlan(plan, symbol, isEnglish),
-      transaction_to_add: null,
     };
   }
 
@@ -419,7 +658,6 @@ ${advice}`
  
 คำแนะนำจากตัววางแผน:
 ${advice}`,
-      transaction_to_add: null,
     };
   }
 
@@ -433,88 +671,7 @@ ${advice}`,
       response: isEnglish
         ? `Your remaining balance this month is ${symbol}${metrics.monthlyBalance.toFixed(2)}. Type "analyze" if you want a deeper breakdown.`
         : `ยอดเงินคงเหลือของคุณตอนนี้คือ ${symbol}${metrics.monthlyBalance.toFixed(2)} สำหรับเดือนนี้ค่ะ \nหากต้องการดูภาพรวมเพิ่มเติมพิมพ์ 'วิเคราะห์' ได้เลยนะคะ`,
-      transaction_to_add: null,
     };
-  }
-
-  // 5. Basic transaction pattern parsing: e.g. "เมื่อวาน กินข้าว 150 บาท", "เติมเงิน 200"
-  const amountMatch = input.match(/(\d+(?:\.\d{1,2})?)/);
-  if (amountMatch) {
-    const amount = parseFloat(amountMatch[0]);
-    if (!isNaN(amount) && amount > 0) {
-      const isInc =
-        lowerText.includes("เงินเดือน") ||
-        lowerText.includes("รายรับ") ||
-        lowerText.includes("ได้เงิน") ||
-        lowerText.includes("ขายของ");
-
-      let category = isInc ? "Salary" : "Other";
-      if (
-        lowerText.includes("ข้าว") ||
-        lowerText.includes("อาหาร") ||
-        lowerText.includes("ชาบู") ||
-        lowerText.includes("หมูกระทะ") ||
-        lowerText.includes("สตาร์บัคส์") ||
-        lowerText.includes("กาแฟ")
-      ) {
-        category = "Food";
-      } else if (
-        lowerText.includes("รถ") ||
-        lowerText.includes("เดินทาง") ||
-        lowerText.includes("bts") ||
-        lowerText.includes("mrt") ||
-        lowerText.includes("แท็กซี่") ||
-        lowerText.includes("น้ำมัน")
-      ) {
-        category = "Transport";
-      } else if (
-        lowerText.includes("ซื้อ") ||
-        lowerText.includes("ช้อป") ||
-        lowerText.includes("เสื้อ") ||
-        lowerText.includes("ห้าง")
-      ) {
-        category = "Shopping";
-      } else if (
-        lowerText.includes("ค่าไฟ") ||
-        lowerText.includes("ค่าน้ำ") ||
-        lowerText.includes("เน็ต") ||
-        lowerText.includes("บิล") ||
-        lowerText.includes("netflix") ||
-        lowerText.includes("youtube") ||
-        lowerText.includes("สมัคร")
-      ) {
-        category = "Bills";
-      }
-
-      // Parse relative date and clean title
-      const targetDate = parseRelativeDate(input);
-      let cleanTitle = input.replace(amountMatch[0], "").replace("บาท", "").trim();
-      cleanTitle = cleanTitle
-        .replace(/เมื่อวานซืน|เมื่อวาน|วานซืน/gi, "")
-        .replace(/เมื่อ\s*\d+\s*วันก่อน|เมื่อ\s*\d+\s*วันที่แล้ว/gi, "")
-        .replace(/yesterday|day before yesterday|\d+\s*days?\s*ago/gi, "")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      if (!cleanTitle) {
-        cleanTitle = isInc ? "รายรับเพิ่มเติม" : "รายจ่ายเพิ่มเติม";
-      }
-
-      const dateStr = targetDate.toLocaleDateString(isEnglish ? "en-US" : "th-TH", { month: "short", day: "numeric" });
-
-      return {
-        response: isEnglish
-          ? `Do you want to save "${cleanTitle}" for ${symbol}${amount.toFixed(2)} in ${category} on ${dateStr}?`
-          : `ต้องการบันทึกรายการ "${cleanTitle}" จำนวน ${symbol}${amount.toFixed(2)} ในหมวดหมู่ ${category} ของวันที่ ${dateStr} หรือไม่คะ?`,
-        transaction_to_add: {
-          title: cleanTitle,
-          amount: amount,
-          isIncome: isInc,
-          category: category,
-          date: targetDate,
-        },
-      };
-    }
   }
 
   // Greeting
@@ -528,7 +685,6 @@ ${advice}`,
       response: isEnglish
         ? `Hi! The Finny Assistant is ready to help you track spending, analyze cash flow, and plan your money.`
         : `สวัสดีค่ะ! Finny พร้อมช่วยจัดการและวิเคราะห์การเงินให้คุณแล้ววันนี้\nอยากให้บันทึกรายจ่าย วางแผนงบ 50/30/20 หรือวิเคราะห์เงินสำรอง บอกได้เลยค่ะ!`,
-      transaction_to_add: null,
     };
   }
 
@@ -541,13 +697,11 @@ ${advice}`,
 • "Lunch 150"
 • "Analyze my spending"`
       : `Finny ยังไม่เข้าใจคำถามนี้ค่ะ ลองบอกรายละเอียดให้ชัดเจนขึ้นดูนะคะ เช่น:
-• บันทึกรายรับ: "เมื่อวาน ได้รายได้เสริม 800 บาท"
-• บันทึกรายจ่าย: "จ่ายค่าอาหาร 120"
+• บันทึกรายจ่ายเดี่ยว/กลุ่ม: "กินข้าว 120 ค่ารถ 50"
 • แบ่งเงิน 50/30/20: "แบ่งเงิน 30000"
 • คำนวณเงินสำรอง: "เงินสำรองฉุกเฉิน"
 • วางแผนเงิน: "มีเงิน 5000 ใช้ 20 วัน"
 • วิเคราะห์ภาพรวม: "วิเคราะห์" หรือ "สรุป"`,
-    transaction_to_add: null,
   };
 }
 
@@ -599,17 +753,17 @@ function parseRelativeDate(input) {
 function parseMoneyPlan(input) {
   const normalized = input.toLowerCase().replace(/,/g, "");
   const numbers = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map((match) =>
-    parseFloat(match[1]),
+    parseFloat(match[1])
   );
   if (numbers.length < 2) return null;
 
   const hasTimeline =
     /(วัน|day|days|เดือน|month|months|ปี|year|years|week|weeks|สัปดาห์)/i.test(
-      normalized,
+      normalized
     );
   const hasPlanningIntent =
     /(ใช้|พอ|plan|budget|save|saving|เก็บ|เป้าหมาย|goal|need|ต้องการ|อยาก)/i.test(
-      normalized,
+      normalized
     );
   if (!hasTimeline && !hasPlanningIntent) return null;
 
@@ -697,7 +851,7 @@ function parseCompoundInterest(input) {
   if (!isInterestQuery) return null;
 
   const numbers = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map((match) =>
-    parseFloat(match[1]),
+    parseFloat(match[1])
   );
   if (numbers.length < 2) return null;
 
@@ -937,4 +1091,3 @@ function escapeHTML(str) {
       })[tag] || tag,
   );
 }
-
