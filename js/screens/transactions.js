@@ -161,19 +161,19 @@ function updateUI(container) {
   // Filter by search query
   if (searchQuery.trim()) {
     const q = searchQuery.toLowerCase().trim();
-    list = list.filter((t) => t.title.toLowerCase().includes(q));
+    list = list.filter((tx) => tx.title.toLowerCase().includes(q));
   }
 
   // Filter by type
   if (activeFilterType === "income") {
-    list = list.filter((t) => t.isIncome);
+    list = list.filter((tx) => tx.isIncome);
   } else if (activeFilterType === "expense") {
-    list = list.filter((t) => !t.isIncome);
+    list = list.filter((tx) => !tx.isIncome);
   }
 
   // Filter by category
   if (selectedCategoryFilter !== "all") {
-    list = list.filter((t) => t.category === selectedCategoryFilter);
+    list = list.filter((tx) => tx.category === selectedCategoryFilter);
   }
 
   // Update Count Meta
@@ -194,8 +194,8 @@ function updateUI(container) {
     // Group by Date
     const groups = {};
     const locale = store.settings.language === "en" ? "en-US" : "th-TH";
-    list.forEach((t) => {
-      const d = new Date(t.date);
+    list.forEach((tx) => {
+      const d = new Date(tx.date);
       const key = d.toDateString(); 
       if (!groups[key]) {
         groups[key] = { 
@@ -204,7 +204,7 @@ function updateUI(container) {
           txs: [] 
         };
       }
-      groups[key].txs.push(t);
+      groups[key].txs.push(tx);
     });
 
     const sortedGroups = Object.values(groups).sort((a, b) => b.dateObj - a.dateObj);
@@ -215,11 +215,11 @@ function updateUI(container) {
       groupHeader.innerHTML = `<span>${group.display}</span>`;
       listContainer.appendChild(groupHeader);
       
-      group.txs.forEach((t) => {
+      group.txs.forEach((tx) => {
         const tile = createTransactionTile(
-          t,
+          tx,
           symbol,
-          store.toDisplay(t.amount),
+          store.toDisplay(tx.amount),
           // onEdit
           (transaction) => {
             router.navigate("addTransaction", { transactionId: transaction.id });
