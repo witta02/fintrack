@@ -485,9 +485,6 @@ function setupFormListeners(container) {
         date: dateVal,
       });
 
-      if (typeof store.addXP === 'function') {
-        store.addXP(10);
-      }
 
       showCoinAnimation();
     }

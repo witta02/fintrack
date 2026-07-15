@@ -167,6 +167,7 @@ export const store = {
   },
 
   save() {
+    this.recalculateXP();
     localStorage.setItem(
       "fintrack_transactions",
       JSON.stringify(this.transactions),
@@ -180,28 +181,33 @@ export const store = {
     this.notify();
   },
 
-  addXP(amount) {
-    if (!this.settings.xp) this.settings.xp = 0;
-    if (!this.settings.level) this.settings.level = 1;
+  recalculateXP() {
+    let totalVolume = this.transactions.reduce((acc, tx) => acc + (tx.amount || 0), 0);
+    let totalXp = Math.floor((this.transactions.length * 10) + (totalVolume / 100));
     
-    this.settings.xp += amount;
+    let oldLevel = this.settings.level || 1;
+    let oldXp = this.settings.xp || 0;
     
-    // Simple level up logic: level * 100 XP per level
-    const xpNeeded = this.settings.level * 100;
+    let calculatedLevel = 1;
+    let requiredXp = 100;
     
-    if (this.settings.xp >= xpNeeded) {
-      this.settings.xp -= xpNeeded;
-      this.settings.level += 1;
-      this.save();
-      if (this.user) this.saveSettingsToCloud();
-      
-      // Dispatch global event for confetti/celebration
+    while (totalXp >= requiredXp) {
+      totalXp -= requiredXp;
+      calculatedLevel++;
+      requiredXp = calculatedLevel * 100;
+    }
+    
+    this.settings.xp = totalXp;
+    this.settings.level = calculatedLevel;
+
+    if (calculatedLevel > oldLevel) {
       window.dispatchEvent(new CustomEvent('levelup', { 
-        detail: { level: this.settings.level } 
+        detail: { level: calculatedLevel } 
       }));
-    } else {
-      this.save();
-      if (this.user) this.saveSettingsToCloud();
+    }
+    
+    if (this.user && (oldXp !== this.settings.xp || oldLevel !== this.settings.level)) {
+      this.saveSettingsToCloud();
     }
   },
 
@@ -361,28 +367,8 @@ export const store = {
         if (uploadRulesError) console.error("Error uploading recurring rules:", uploadRulesError);
       }
 
-      // --- RETROACTIVE XP CALCULATION ---
-      // If XP is 0 but we have past transactions, grant XP for the old money!
-      if ((!this.settings.xp || this.settings.xp === 0) && this.transactions.length > 0) {
-        let totalVolume = this.transactions.reduce((acc, tx) => acc + (tx.amount || 0), 0);
-        let retroXp = Math.floor((this.transactions.length * 10) + (totalVolume / 100));
-        
-        if (retroXp > 0) {
-          this.settings.xp = retroXp;
-          let calculatedLevel = 1;
-          let requiredXp = 100;
-          
-          while (this.settings.xp >= requiredXp) {
-            this.settings.xp -= requiredXp;
-            calculatedLevel++;
-            requiredXp = calculatedLevel * 100;
-          }
-          
-          this.settings.level = calculatedLevel;
-          await this.saveSettingsToCloud();
-          console.log(`Retroactively awarded XP. New level: ${calculatedLevel}`);
-        }
-      }
+      // --- DYNAMIC XP CALCULATION ---
+      this.recalculateXP();
 
       // Save merged data to LocalStorage
       localStorage.setItem("fintrack_transactions", JSON.stringify(this.transactions));
