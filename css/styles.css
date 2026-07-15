@@ -25,9 +25,9 @@
   --expense-dark: #ef4444;
   --expense-glow: rgba(248, 113, 113, 0.22);
 
-  /* Typography */
-  --font: 'Inter', system-ui, sans-serif;
-  --font-heading: 'Sora', system-ui, sans-serif;
+  /* Typography - Unified font stack for consistent look */
+  --font: 'Sora', 'Inter', system-ui, sans-serif;
+  --font-heading: 'Sora', 'Inter', system-ui, sans-serif;
 
   /* Motion */
   --transition: 280ms cubic-bezier(0.4, 0, 0.2, 1);

@@ -176,11 +176,15 @@ function renderMessages(container) {
       <div class="chat-bubble-text">${formatMessageText(msg.text)}</div>
       ${msg.customHTML || ""}
       ${msg.pendingTxs ? renderPendingTransactionsCard(msg, isDarkMode, lang) : ""}
-      ${!msg.isUser ? `
-        <button class="copy-bubble-btn" title="${lang === 'en' ? 'Copy Text' : 'คัดลอกข้อความ'}">
+      ${
+        !msg.isUser
+          ? `
+        <button class="copy-bubble-btn" title="${lang === "en" ? "Copy Text" : "คัดลอกข้อความ"}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
         </button>
-      ` : ""}
+      `
+          : ""
+      }
     `;
 
     msgContainer.appendChild(bubble);
@@ -224,7 +228,7 @@ function updateMessageState(container, msgId, newStatus) {
       <div class="chat-bubble-text">${formatMessageText(msg.text)}</div>
       ${msg.customHTML || ""}
       ${msg.pendingTxs ? renderPendingTransactionsCard(msg, isDarkMode, lang) : ""}
-      <button class="copy-bubble-btn" title="${lang === 'en' ? 'Copy Text' : 'คัดลอกข้อความ'}">
+      <button class="copy-bubble-btn" title="${lang === "en" ? "Copy Text" : "คัดลอกข้อความ"}">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
       </button>
     `;
@@ -262,7 +266,7 @@ function bindMessageListeners(container) {
           store.settings.language === "en" ? "Success" : "สำเร็จ",
           store.settings.language === "en"
             ? "Transactions recorded successfully!"
-            : "บันทึกข้อมูลธุรกรรมเรียบร้อยแล้ว!"
+            : "บันทึกข้อมูลธุรกรรมเรียบร้อยแล้ว!",
         );
       }
     });
@@ -299,13 +303,22 @@ function renderPendingTransactionsCard(msg, isDark, lang) {
   const symbol = store.getCurrencySymbol();
   const txs = msg.pendingTxs;
   const statusClass = msg.status;
-  
+
   let rowsHTML = "";
   txs.forEach((t) => {
     const cat = getCategoryInfo(t.category);
-    const typeLabel = t.isIncome ? (lang === "en" ? "Income" : "รายรับ") : (lang === "en" ? "Expense" : "รายจ่าย");
-    const dateStr = t.date.toLocaleDateString(lang === "en" ? "en-US" : "th-TH", { month: "short", day: "numeric" });
-    
+    const typeLabel = t.isIncome
+      ? lang === "en"
+        ? "Income"
+        : "รายรับ"
+      : lang === "en"
+        ? "Expense"
+        : "รายจ่าย";
+    const dateStr = t.date.toLocaleDateString(
+      lang === "en" ? "en-US" : "th-TH",
+      { month: "short", day: "numeric" },
+    );
+
     rowsHTML += `
       <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; border-bottom: 1px dashed ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}; padding-bottom: 8px; width: 100%;">
         <div style="width: 30px; height: 30px; background: ${cat.color}18; color: ${cat.color}; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;">
@@ -445,14 +458,19 @@ async function handleUserSendMessage(container, text) {
 
         if (results.length === 1) {
           const t = results[0];
-          const dateStr = t.date.toLocaleDateString(lang === "en" ? "en-US" : "th-TH", { month: "short", day: "numeric" });
-          responseText = lang === "en"
-            ? `Do you want to save "${t.title}" for ${symbol}${t.amount.toFixed(2)} in ${t.category} on ${dateStr}?`
-            : `ต้องการบันทึกรายการ "${t.title}" จำนวน ${symbol}${t.amount.toFixed(2)} ในหมวดหมู่ ${t.category} ของวันที่ ${dateStr} หรือไม่คะ?`;
+          const dateStr = t.date.toLocaleDateString(
+            lang === "en" ? "en-US" : "th-TH",
+            { month: "short", day: "numeric" },
+          );
+          responseText =
+            lang === "en"
+              ? `Do you want to save "${t.title}" for ${symbol}${t.amount.toFixed(2)} in ${t.category} on ${dateStr}?`
+              : `ต้องการบันทึกรายการ "${t.title}" จำนวน ${symbol}${t.amount.toFixed(2)} ในหมวดหมู่ ${t.category} ของวันที่ ${dateStr} หรือไม่คะ?`;
         } else {
-          responseText = lang === "en"
-            ? `I detected ${results.length} transactions totaling ${symbol}${totalAmount.toFixed(2)}. Would you like to record them?`
-            : `พบรายการทั้งหมด ${results.length} รายการ รวมเป็นเงิน ${symbol}${totalAmount.toFixed(2)} ค่ะ ต้องการบันทึกหรือไม่คะ?`;
+          responseText =
+            lang === "en"
+              ? `I detected ${results.length} transactions totaling ${symbol}${totalAmount.toFixed(2)}. Would you like to record them?`
+              : `พบรายการทั้งหมด ${results.length} รายการ รวมเป็นเงิน ${symbol}${totalAmount.toFixed(2)} ค่ะ ต้องการบันทึกหรือไม่คะ?`;
         }
 
         messages.push({
@@ -485,7 +503,7 @@ async function handleUserSendMessage(container, text) {
 
 function parseTransactionsFromInput(input, isEnglish) {
   const normalized = input.toLowerCase().replace(/,/g, "");
-  
+
   // Split on common connectors: "+", "และ", "and", ",", newline
   const parts = normalized.split(/(?:และ|and|\+|,|\n)/i);
   const results = [];
@@ -604,7 +622,12 @@ function getOfflinePlannerResponse(input) {
       response: isEnglish
         ? `Here is your emergency fund analysis:`
         : `วิเคราะห์เงินสำรองฉุกเฉินให้คุณเรียบร้อยแล้วค่ะ:`,
-      customHTML: formatEmergencyFundResponse(avgExpense, symbol, isEnglish, currentCash),
+      customHTML: formatEmergencyFundResponse(
+        avgExpense,
+        symbol,
+        isEnglish,
+        currentCash,
+      ),
     };
   }
 
@@ -752,7 +775,9 @@ function parseRelativeDate(input) {
     d.setDate(now.getDate() - 2);
     return d;
   }
-  const thaiAgoMatch = lower.match(/เมื่อ\s*(\d+)\s*วันก่อน/) || lower.match(/เมื่อ\s*(\d+)\s*วันที่แล้ว/);
+  const thaiAgoMatch =
+    lower.match(/เมื่อ\s*(\d+)\s*วันก่อน/) ||
+    lower.match(/เมื่อ\s*(\d+)\s*วันที่แล้ว/);
   if (thaiAgoMatch) {
     const days = parseInt(thaiAgoMatch[1], 10);
     const d = new Date(now);
@@ -766,17 +791,17 @@ function parseRelativeDate(input) {
 function parseMoneyPlan(input) {
   const normalized = input.toLowerCase().replace(/,/g, "");
   const numbers = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map((match) =>
-    parseFloat(match[1])
+    parseFloat(match[1]),
   );
   if (numbers.length < 2) return null;
 
   const hasTimeline =
     /(วัน|day|days|เดือน|month|months|ปี|year|years|week|weeks|สัปดาห์)/i.test(
-      normalized
+      normalized,
     );
   const hasPlanningIntent =
     /(ใช้|พอ|plan|budget|save|saving|เก็บ|เป้าหมาย|goal|need|ต้องการ|อยาก)/i.test(
-      normalized
+      normalized,
     );
   if (!hasTimeline && !hasPlanningIntent) return null;
 
@@ -864,7 +889,7 @@ function parseCompoundInterest(input) {
   if (!isInterestQuery) return null;
 
   const numbers = [...normalized.matchAll(/(\d+(?:\.\d+)?)/g)].map((match) =>
-    parseFloat(match[1])
+    parseFloat(match[1]),
   );
   if (numbers.length < 2) return null;
 
@@ -922,7 +947,10 @@ Advisory Note:
 
 function parseBudget503020(input) {
   const normalized = input.toLowerCase().replace(/,/g, "");
-  const has503020 = /(50[\/\-]30[\/\-]20|แบ่งเงิน|กฎ\s*50|แบ่งสัดส่วน|วางแผนเงิน)/i.test(normalized);
+  const has503020 =
+    /(50[\/\-]30[\/\-]20|แบ่งเงิน|กฎ\s*50|แบ่งสัดส่วน|วางแผนเงิน)/i.test(
+      normalized,
+    );
   if (!has503020) return null;
 
   const amountMatch = normalized.match(/(\d+(?:\.\d+)?)/);
@@ -940,13 +968,21 @@ function formatBudget503020Response(total, symbol, isEnglish) {
   const savings = total * 0.2;
 
   const needsTitle = isEnglish ? "Needs (50%)" : "ส่วนที่จำเป็น (50%)";
-  const needsDesc = isEnglish ? "Rent, bills, groceries, transport" : "ค่าหอ/บ้าน, ค่าน้ำไฟ, อาหารหลัก, การเดินทาง";
+  const needsDesc = isEnglish
+    ? "Rent, bills, groceries, transport"
+    : "ค่าหอ/บ้าน, ค่าน้ำไฟ, อาหารหลัก, การเดินทาง";
 
   const wantsTitle = isEnglish ? "Wants (30%)" : "ส่วนตามใจชอบ (30%)";
-  const wantsDesc = isEnglish ? "Dining out, shopping, hobbies" : "ช้อปปิ้ง, อาหารหรู, กาแฟคาเฟ่, ความบันเทิง";
+  const wantsDesc = isEnglish
+    ? "Dining out, shopping, hobbies"
+    : "ช้อปปิ้ง, อาหารหรู, กาแฟคาเฟ่, ความบันเทิง";
 
-  const savingsTitle = isEnglish ? "Savings & Debt (20%)" : "เงินออมและลงทุน (20%)";
-  const savingsDesc = isEnglish ? "Emergency fund, investments, debts" : "เงินออมเผื่อฉุกเฉิน, กองทุน/หุ้น, หรือโปะหนี้สิน";
+  const savingsTitle = isEnglish
+    ? "Savings & Debt (20%)"
+    : "เงินออมและลงทุน (20%)";
+  const savingsDesc = isEnglish
+    ? "Emergency fund, investments, debts"
+    : "เงินออมเผื่อฉุกเฉิน, กองทุน/หุ้น, หรือโปะหนี้สิน";
 
   return `
     <div style="margin-top: 10px; padding: 14px; background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); text-align: left;">
@@ -1006,7 +1042,9 @@ function formatBudget503020Response(total, symbol, isEnglish) {
 
 function isEmergencyFundQuery(input) {
   const normalized = input.toLowerCase();
-  return /(ฉุกเฉิน|เงินสำรอง|emergency\s*fund|reserve\s*fund|สำรองเผื่อ)/i.test(normalized);
+  return /(ฉุกเฉิน|เงินสำรอง|emergency\s*fund|reserve\s*fund|สำรองเผื่อ)/i.test(
+    normalized,
+  );
 }
 
 function getAverageMonthlyExpense() {
@@ -1025,12 +1063,19 @@ function getAverageMonthlyExpense() {
   return totalExpense / numMonths;
 }
 
-function formatEmergencyFundResponse(avgExpense, symbol, isEnglish, currentCash) {
+function formatEmergencyFundResponse(
+  avgExpense,
+  symbol,
+  isEnglish,
+  currentCash,
+) {
   const basicTarget = avgExpense * 3;
   const comfortableTarget = avgExpense * 6;
 
-  const basicPct = Math.min(100, Math.round((currentCash / basicTarget) * 100)) || 0;
-  const comfortablePct = Math.min(100, Math.round((currentCash / comfortableTarget) * 100)) || 0;
+  const basicPct =
+    Math.min(100, Math.round((currentCash / basicTarget) * 100)) || 0;
+  const comfortablePct =
+    Math.min(100, Math.round((currentCash / comfortableTarget) * 100)) || 0;
 
   return `
     <div style="margin-top: 10px; padding: 14px; background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); text-align: left;">
@@ -1039,9 +1084,10 @@ function formatEmergencyFundResponse(avgExpense, symbol, isEnglish, currentCash)
         ${isEnglish ? "Emergency Fund Planner" : "วิเคราะห์เงินสำรองฉุกเฉิน"}
       </div>
       <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;">
-        ${isEnglish 
-          ? `Based on your records, your average monthly expense is <strong>${symbol}${avgExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong>.`
-          : `คำนวณจากประวัติของคุณ คุณมีรายจ่ายเฉลี่ยเดือนละ <strong>${symbol}${avgExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong>.`
+        ${
+          isEnglish
+            ? `Based on your records, your average monthly expense is <strong>${symbol}${avgExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong>.`
+            : `คำนวณจากประวัติของคุณ คุณมีรายจ่ายเฉลี่ยเดือนละ <strong>${symbol}${avgExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong>.`
         }
       </p>
 
@@ -1056,9 +1102,10 @@ function formatEmergencyFundResponse(avgExpense, symbol, isEnglish, currentCash)
             <div style="height: 100%; width: ${basicPct}%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 3px;"></div>
           </div>
           <div style="font-size: 9.5px; color: var(--text-muted); margin-top: 3.5px;">
-            ${isEnglish 
-              ? `Current Cash Portfolio: ${symbol}${currentCash.toLocaleString()} (${basicPct}% saved)`
-              : `เงินสดสะสมปัจจุบัน: ${symbol}${currentCash.toLocaleString()} (ออมแล้ว ${basicPct}%)`
+            ${
+              isEnglish
+                ? `Current Cash Portfolio: ${symbol}${currentCash.toLocaleString()} (${basicPct}% saved)`
+                : `เงินสดสะสมปัจจุบัน: ${symbol}${currentCash.toLocaleString()} (ออมแล้ว ${basicPct}%)`
             }
           </div>
         </div>
@@ -1073,18 +1120,20 @@ function formatEmergencyFundResponse(avgExpense, symbol, isEnglish, currentCash)
             <div style="height: 100%; width: ${comfortablePct}%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 3px;"></div>
           </div>
           <div style="font-size: 9.5px; color: var(--text-muted); margin-top: 3.5px;">
-            ${isEnglish 
-              ? `Security progress: ${comfortablePct}% saved`
-              : `ความมั่นคงทางการเงิน: สะสมแล้ว ${comfortablePct}%`
+            ${
+              isEnglish
+                ? `Security progress: ${comfortablePct}% saved`
+                : `ความมั่นคงทางการเงิน: สะสมแล้ว ${comfortablePct}%`
             }
           </div>
         </div>
       </div>
 
       <div style="background: rgba(255, 184, 0, 0.04); border: 1px dashed rgba(255, 184, 0, 0.2); padding: 10px; border-radius: 10px; font-size: 10px; color: var(--gold); line-height: 1.5;">
-        💡 ${isEnglish 
-          ? "Keep your emergency fund in a separate, high-yield savings account so it remains highly liquid but still earns interest."
-          : "ข้อแนะนำ: ควรเก็บเงินสำรองฉุกเฉินแยกไว้ในบัญชีออมทรัพย์ดอกเบี้ยสูง (e-Savings) เพื่อให้มีสภาพคล่องสูงถอนง่ายแต่ยังได้ผลตอบแทนดีค่ะ"
+        💡 ${
+          isEnglish
+            ? "Keep your emergency fund in a separate, high-yield savings account so it remains highly liquid but still earns interest."
+            : "ข้อแนะนำ: ควรเก็บเงินสำรองฉุกเฉินแยกไว้ในบัญชีออมทรัพย์ดอกเบี้ยสูง (e-Savings) เพื่อให้มีสภาพคล่องสูงถอนง่ายแต่ยังได้ผลตอบแทนดีค่ะ"
         }
       </div>
     </div>

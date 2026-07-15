@@ -1,7 +1,7 @@
 import "../css/styles.css";
 import { store } from "./store.js";
 import { router } from "./router.js";
-import { t } from "./i18n.js";
+import { t, getLanguage } from "./i18n.js";
 import { supabase } from "./supabase.js";
 import { alerts } from "./utils/alertHelper.js";
 
@@ -102,12 +102,38 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 export function updateStaticLabels() {
+  const lang = getLanguage();
+  document.documentElement.lang = lang;
+  
+  if (lang === "en") {
+    document.title = "FinTrack — Money Planner";
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc) desc.content = "FinTrack — Plan and manage your money";
+    
+    const toggleBtn = document.getElementById("sidebar-toggle-btn");
+    if (toggleBtn) toggleBtn.title = "Show Sidebar";
+    
+    const closeBtn = document.getElementById("sidebar-close-btn");
+    if (closeBtn) closeBtn.title = "Hide Sidebar";
+  } else {
+    document.title = "FinTrack — วางแผนและจัดการเงิน";
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc) desc.content = "FinTrack — วางแผนและจัดการเงิน";
+    
+    const toggleBtn = document.getElementById("sidebar-toggle-btn");
+    if (toggleBtn) toggleBtn.title = "แสดงแถบข้าง";
+    
+    const closeBtn = document.getElementById("sidebar-close-btn");
+    if (closeBtn) closeBtn.title = "ซ่อนแถบข้าง";
+  }
+
   const labels = {
     dashboard: t("navDashboard"),
     transactions: t("navTransactions"),
     addTransaction: t("navAdd"),
     planner: "Planner",
     recurring: t("navRecurring"),
+    downPayments: t("downPaymentTitle"),
     settings: t("navSettings"),
   };
 
