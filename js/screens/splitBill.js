@@ -854,8 +854,8 @@ function setupScreenListeners(container) {
 
             alerts.success(
               store.settings.language === "en"
-                ? `Successfully scanned QR!`
-                : `สแกน QR Code สำเร็จ!`,
+                ? `QR scan done — nice!`
+                : `สแกน QR เสร็จแล้ว เรื่ด!`,
               parsed.title,
             );
 
@@ -906,8 +906,8 @@ function setupScreenListeners(container) {
 
           alerts.success(
             store.settings.language === "en"
-              ? `Successfully scanned bank slip!`
-              : `สแกนสลิปธนาคารสำเร็จ!`,
+              ? `Slip scanned — nice!`
+              : `สแกนสลิปเสร็จแล้ว เรื่ด!`,
             payee,
           );
         } else {
@@ -932,8 +932,8 @@ function setupScreenListeners(container) {
             items = parsed.items;
             alerts.success(
               store.settings.language === "en"
-                ? `Successfully scanned receipt!`
-                : `สแกนใบเสร็จสำเร็จ!`,
+                ? `Receipt scanned — nice!`
+                : `สแกนใบเสร็จเสร็จแล้ว เรื่ด!`,
               payee,
             );
           } else {
