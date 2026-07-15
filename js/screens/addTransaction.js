@@ -213,6 +213,22 @@ function renderCategoryPicker(container) {
 
     catContainer.appendChild(item);
   });
+
+  // Add "+" tile for custom categories
+  const addTile = document.createElement("div");
+  addTile.className = `category-picker-item`;
+  addTile.innerHTML = `
+    <div class="category-picker-icon" style="background: var(--surface); color: var(--text-secondary); border: 1.5px dashed var(--border);">
+      <span style="display: flex; align-items: center; justify-content: center; width: 22px; height: 22px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </span>
+    </div>
+    <div class="category-picker-label">${store.settings.language === 'en' ? 'Add' : 'เพิ่ม'}</div>
+  `;
+  addTile.addEventListener("click", () => {
+    router.navigate('settings');
+  });
+  catContainer.appendChild(addTile);
 }
 
 function setupFormListeners(container) {
