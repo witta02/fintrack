@@ -2,8 +2,8 @@ import { store } from "../store.js";
 import { router } from "../router.js";
 import { createTransactionTile } from "../components/transactionTile.js";
 import {
-  expenseCategories,
-  incomeCategories,
+  getExpenseCategories,
+  getIncomeCategories,
   getCategoryInfo,
 } from "../categories.js";
 import { t } from "../i18n.js";
@@ -15,7 +15,7 @@ let selectedCategoryFilter = "all";
 
 export function renderTransactions(container) {
   // Combine all categories for the dropdown filter
-  const allCategories = [...expenseCategories, ...incomeCategories];
+  const allCategories = [...getExpenseCategories(), ...getIncomeCategories()];
   // Remove duplicates by name
   const uniqueCategories = [];
   const map = new Map();
@@ -191,29 +191,54 @@ function updateUI(container) {
       </div>
     `;
   } else {
+    // Group by Date
+    const groups = {};
+    const locale = store.settings.language === "en" ? "en-US" : "th-TH";
     list.forEach((t) => {
-      const tile = createTransactionTile(
-        t,
-        symbol,
-        store.toDisplay(t.amount),
-        // onEdit
-        (transaction) => {
-          router.navigate("addTransaction", { transactionId: transaction.id });
-        },
-        // onDelete
-        async (id) => {
-          const isConfirmed = await alerts.confirmDelete(
-            store.settings.language === "en"
-              ? "Delete Transaction?"
-              : "ต้องการลบรายการใช่หรือไม่?",
-            t("deleteConfirm"),
-          );
-          if (isConfirmed) {
-            store.deleteTransaction(id);
-          }
-        },
-      );
-      listContainer.appendChild(tile);
+      const d = new Date(t.date);
+      const key = d.toDateString(); 
+      if (!groups[key]) {
+        groups[key] = { 
+          dateObj: d, 
+          display: d.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' }), 
+          txs: [] 
+        };
+      }
+      groups[key].txs.push(t);
+    });
+
+    const sortedGroups = Object.values(groups).sort((a, b) => b.dateObj - a.dateObj);
+
+    sortedGroups.forEach(group => {
+      const groupHeader = document.createElement("div");
+      groupHeader.className = "date-group-header";
+      groupHeader.innerHTML = `<span>${group.display}</span>`;
+      listContainer.appendChild(groupHeader);
+      
+      group.txs.forEach((t) => {
+        const tile = createTransactionTile(
+          t,
+          symbol,
+          store.toDisplay(t.amount),
+          // onEdit
+          (transaction) => {
+            router.navigate("addTransaction", { transactionId: transaction.id });
+          },
+          // onDelete
+          async (id) => {
+            const isConfirmed = await alerts.confirmDelete(
+              store.settings.language === "en"
+                ? "Delete Transaction?"
+                : "ต้องการลบรายการใช่หรือไม่?",
+              t("deleteConfirm"),
+            );
+            if (isConfirmed) {
+              store.deleteTransaction(id);
+            }
+          },
+        );
+        listContainer.appendChild(tile);
+      });
     });
   }
 }

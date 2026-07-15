@@ -2506,3 +2506,15 @@ body::before {
   from { opacity: 0; transform: translateY(50px) rotateX(15deg) scale(0.9); }
   to { opacity: 1; transform: translateY(0) rotateX(0deg) scale(1); }
 }
+
+/* Date Group Header */
+.date-group-header {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin: 20px 0 10px;
+  padding: 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+

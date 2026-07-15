@@ -29,6 +29,7 @@ export const store = {
     dataVersion: 4,
     xp: 0,
     level: 1,
+    customCategories: [],
   },
 
   subscribe(listener) {
@@ -183,7 +184,8 @@ export const store = {
 
   recalculateXP() {
     let totalVolume = this.transactions.reduce((acc, tx) => acc + (tx.amount || 0), 0);
-    let totalXp = Math.floor((this.transactions.length * 10) + (totalVolume / 100));
+    let uniqueDays = new Set(this.transactions.map(t => new Date(t.date).toDateString())).size;
+    let totalXp = Math.floor((uniqueDays * 100) + (totalVolume / 100));
     
     let oldLevel = this.settings.level || 1;
     let oldXp = this.settings.xp || 0;
@@ -255,7 +257,8 @@ export const store = {
           taxMutualFunds: parseFloat(dbSettings.tax_mutual_funds),
           taxOtherDeductions: parseFloat(dbSettings.tax_other_deductions),
           xp: dbSettings.xp !== undefined ? dbSettings.xp : (this.settings.xp || 0),
-          level: dbSettings.level !== undefined ? dbSettings.level : (this.settings.level || 1)
+          level: dbSettings.level !== undefined ? dbSettings.level : (this.settings.level || 1),
+          customCategories: dbSettings.custom_categories || [],
         };
       } else {
         // No cloud settings, upload local settings
@@ -270,7 +273,8 @@ export const store = {
           tax_mutual_funds: this.settings.taxMutualFunds || 0,
           tax_other_deductions: this.settings.taxOtherDeductions || 0,
           xp: this.settings.xp || 0,
-          level: this.settings.level || 1
+          level: this.settings.level || 1,
+          custom_categories: this.settings.customCategories || [],
         };
         await supabase.from('user').upsert(settingsPayload);
       }
@@ -392,7 +396,8 @@ export const store = {
         tax_mutual_funds: this.settings.taxMutualFunds,
         tax_other_deductions: this.settings.taxOtherDeductions,
         xp: this.settings.xp,
-        level: this.settings.level
+        level: this.settings.level,
+        custom_categories: this.settings.customCategories || [],
       };
       await supabase.from('user').upsert(payload);
     }
@@ -415,7 +420,8 @@ export const store = {
       taxProvidentFund: 0,
       taxMutualFunds: 0,
       taxOtherDeductions: 0,
-      dataVersion: 4
+      dataVersion: 4,
+      customCategories: [],
     };
     localStorage.removeItem("fintrack_transactions");
     localStorage.removeItem("fintrack_recurring_rules");

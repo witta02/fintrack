@@ -1,8 +1,8 @@
 import { store } from "../store.js";
 import { router } from "../router.js";
 import {
-  expenseCategories,
-  incomeCategories,
+  getExpenseCategories,
+  getIncomeCategories,
   getCategoryInfo,
 } from "../categories.js";
 import { t } from "../i18n.js";
@@ -178,7 +178,7 @@ function renderCategoryPicker(container) {
   const catContainer = container.querySelector("#category-selector-container");
   catContainer.innerHTML = "";
 
-  const list = isIncome ? incomeCategories : expenseCategories;
+  const list = isIncome ? getIncomeCategories() : getExpenseCategories();
 
   // Make sure the selectedCategory fits the list, if not reset to the first option
   if (!list.some((c) => c.name === selectedCategory)) {

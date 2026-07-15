@@ -1,8 +1,8 @@
 import { store } from "../store.js";
 import {
   getCategoryInfo,
-  expenseCategories,
-  incomeCategories,
+  getExpenseCategories,
+  getIncomeCategories,
 } from "../categories.js";
 import { alerts } from "../utils/alertHelper.js";
 import { t, locale } from "../i18n.js";
@@ -304,7 +304,7 @@ function showAddRecurringModal() {
       "#modal-category-picker-container",
     );
     listContainer.innerHTML = "";
-    const list = ruleIsIncome ? incomeCategories : expenseCategories;
+    const list = ruleIsIncome ? getIncomeCategories() : getExpenseCategories();
 
     if (!list.some((c) => c.name === ruleSelectedCategory)) {
       ruleSelectedCategory = list[0].name;
