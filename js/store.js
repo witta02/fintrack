@@ -193,6 +193,7 @@ export const store = {
       this.settings.xp -= xpNeeded;
       this.settings.level += 1;
       this.save();
+      if (this.user) this.saveSettingsToCloud();
       
       // Dispatch global event for confetti/celebration
       window.dispatchEvent(new CustomEvent('levelup', { 
@@ -200,6 +201,7 @@ export const store = {
       }));
     } else {
       this.save();
+      if (this.user) this.saveSettingsToCloud();
     }
   },
 
@@ -245,7 +247,9 @@ export const store = {
           taxSocialSecurity: parseFloat(dbSettings.tax_social_security),
           taxProvidentFund: parseFloat(dbSettings.tax_provident_fund),
           taxMutualFunds: parseFloat(dbSettings.tax_mutual_funds),
-          taxOtherDeductions: parseFloat(dbSettings.tax_other_deductions)
+          taxOtherDeductions: parseFloat(dbSettings.tax_other_deductions),
+          xp: dbSettings.xp !== undefined ? dbSettings.xp : (this.settings.xp || 0),
+          level: dbSettings.level !== undefined ? dbSettings.level : (this.settings.level || 1)
         };
       } else {
         // No cloud settings, upload local settings
@@ -258,7 +262,9 @@ export const store = {
           tax_social_security: this.settings.taxSocialSecurity !== undefined ? this.settings.taxSocialSecurity : 9000,
           tax_provident_fund: this.settings.taxProvidentFund || 0,
           tax_mutual_funds: this.settings.taxMutualFunds || 0,
-          tax_other_deductions: this.settings.taxOtherDeductions || 0
+          tax_other_deductions: this.settings.taxOtherDeductions || 0,
+          xp: this.settings.xp || 0,
+          level: this.settings.level || 1
         };
         await supabase.from('settings').upsert(settingsPayload);
       }
@@ -355,6 +361,29 @@ export const store = {
         if (uploadRulesError) console.error("Error uploading recurring rules:", uploadRulesError);
       }
 
+      // --- RETROACTIVE XP CALCULATION ---
+      // If XP is 0 but we have past transactions, grant XP for the old money!
+      if ((!this.settings.xp || this.settings.xp === 0) && this.transactions.length > 0) {
+        let totalVolume = this.transactions.reduce((acc, tx) => acc + (tx.amount || 0), 0);
+        let retroXp = Math.floor((this.transactions.length * 10) + (totalVolume / 100));
+        
+        if (retroXp > 0) {
+          this.settings.xp = retroXp;
+          let calculatedLevel = 1;
+          let requiredXp = 100;
+          
+          while (this.settings.xp >= requiredXp) {
+            this.settings.xp -= requiredXp;
+            calculatedLevel++;
+            requiredXp = calculatedLevel * 100;
+          }
+          
+          this.settings.level = calculatedLevel;
+          await this.saveSettingsToCloud();
+          console.log(`Retroactively awarded XP. New level: ${calculatedLevel}`);
+        }
+      }
+
       // Save merged data to LocalStorage
       localStorage.setItem("fintrack_transactions", JSON.stringify(this.transactions));
       localStorage.setItem("fintrack_recurring_rules", JSON.stringify(this.recurringRules));
@@ -375,7 +404,9 @@ export const store = {
         tax_social_security: this.settings.taxSocialSecurity,
         tax_provident_fund: this.settings.taxProvidentFund,
         tax_mutual_funds: this.settings.taxMutualFunds,
-        tax_other_deductions: this.settings.taxOtherDeductions
+        tax_other_deductions: this.settings.taxOtherDeductions,
+        xp: this.settings.xp,
+        level: this.settings.level
       };
       await supabase.from('settings').upsert(payload);
     }
