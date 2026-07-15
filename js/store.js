@@ -212,7 +212,7 @@ export const store = {
     try {
       // 1. Fetch settings from Supabase
       const { data: dbSettings, error: settingsError } = await supabase
-        .from('settings')
+        .from('user')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -266,7 +266,7 @@ export const store = {
           xp: this.settings.xp || 0,
           level: this.settings.level || 1
         };
-        await supabase.from('settings').upsert(settingsPayload);
+        await supabase.from('user').upsert(settingsPayload);
       }
 
       // --- TRANSACTIONS SYNC (Two-Way Merge) ---
@@ -408,7 +408,7 @@ export const store = {
         xp: this.settings.xp,
         level: this.settings.level
       };
-      await supabase.from('settings').upsert(payload);
+      await supabase.from('user').upsert(payload);
     }
   },
 
@@ -444,7 +444,7 @@ export const store = {
       const userId = this.user.id;
       await supabase.from('transactions').delete().eq('user_id', userId);
       await supabase.from('recurring_rules').delete().eq('user_id', userId);
-      await supabase.from('settings').delete().eq('user_id', userId);
+      await supabase.from('user').delete().eq('user_id', userId);
       
       // Clear local data as well
       this.transactions = [];
