@@ -134,8 +134,8 @@ export function renderDashboard(container) {
 
     <button id="down-payment-dashboard-card" class="down-payment-dashboard-card" type="button">
       <span class="down-payment-dashboard-icon">◔</span>
-      <span class="down-payment-dashboard-copy"><small>เงินดาวน์ / ยอดผ่อนคงเหลือ</small><strong id="dashboard-down-payment-title">${nextDownPayment ? escapeDashboard(nextDownPayment.title) : "ยังไม่มีรายการ"}</strong></span>
-      <span class="down-payment-dashboard-amount" id="dashboard-down-payment-amount">${nextDownPayment ? `${store.getCurrencySymbol()}${store.toDisplay(Math.max(0, nextDownPayment.totalAmount - nextDownPayment.paidAmount)).toLocaleString()}` : "+ เพิ่ม"}</span>
+      <span class="down-payment-dashboard-copy"><small>${t("downPaymentDashboard")}</small><strong id="dashboard-down-payment-title">${nextDownPayment ? escapeDashboard(nextDownPayment.title) : t("downPaymentNoItems")}</strong></span>
+      <span class="down-payment-dashboard-amount" id="dashboard-down-payment-amount">${nextDownPayment ? `${store.getCurrencySymbol()}${store.toDisplay(Math.max(0, nextDownPayment.totalAmount - nextDownPayment.paidAmount)).toLocaleString()}` : `+ ${t("downPaymentAdd")}`}</span>
     </button>
 
     <!-- Starter Guide -->
@@ -467,8 +467,8 @@ function updateUI(container) {
   const nextPlan = store.getDownPayments().find((plan) => plan.paidAmount < plan.totalAmount);
   const planTitle = container.querySelector("#dashboard-down-payment-title");
   const planAmount = container.querySelector("#dashboard-down-payment-amount");
-  if (planTitle) planTitle.textContent = nextPlan ? nextPlan.title : "ยังไม่มีรายการ";
-  if (planAmount) planAmount.textContent = nextPlan ? formatVal(Math.max(0, nextPlan.totalAmount - nextPlan.paidAmount)) : "+ เพิ่ม";
+  if (planTitle) planTitle.textContent = nextPlan ? nextPlan.title : t("downPaymentNoItems");
+  if (planAmount) planAmount.textContent = nextPlan ? formatVal(Math.max(0, nextPlan.totalAmount - nextPlan.paidAmount)) : `+ ${t("downPaymentAdd")}`;
 
   // Bar chart
   const canvas = container.querySelector("#spending-chart-canvas");
