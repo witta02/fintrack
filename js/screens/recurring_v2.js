@@ -5,8 +5,9 @@ import {
   getIncomeCategories,
 } from "../categories.js";
 import { alerts } from "../utils/alertHelper.js";
-import { t, locale } from "../i18n.js";
 import { router } from "../router.js";
+import { showCustomCategoryModal } from "../components/customCategoryModal.js";
+import { t, locale } from "../i18n.js";
 
 export function renderRecurring(container) {
   container.innerHTML = `
@@ -377,8 +378,9 @@ function showAddRecurringModal() {
       <div class="category-picker-label" style="font-size: 10.5px; font-weight: 500; color: var(--text-secondary); text-align: center; line-height: 1.1;">${store.settings.language === 'en' ? 'Add' : 'เพิ่ม'}</div>
     `;
     addTile.addEventListener("click", () => {
-      document.body.removeChild(overlay);
-      router.navigate('settings');
+      showCustomCategoryModal(() => {
+        renderModalCategoryPicker();
+      });
     });
     listContainer.appendChild(addTile);
   }

@@ -5,6 +5,7 @@ import {
   getIncomeCategories,
   getCategoryInfo,
 } from "../categories.js";
+import { showCustomCategoryModal } from "../components/customCategoryModal.js";
 import { t } from "../i18n.js";
 import jsQR from "jsqr";
 import {
@@ -226,7 +227,9 @@ function renderCategoryPicker(container) {
     <div class="category-picker-label">${store.settings.language === 'en' ? 'Add' : 'เพิ่ม'}</div>
   `;
   addTile.addEventListener("click", () => {
-    router.navigate('settings');
+    showCustomCategoryModal(() => {
+      renderCategoryPicker(container);
+    });
   });
   catContainer.appendChild(addTile);
 }
