@@ -4,6 +4,7 @@ import { router } from "./router.js";
 import { t, getLanguage } from "./i18n.js";
 import { supabase } from "./supabase.js";
 import { alerts } from "./utils/alertHelper.js";
+import confetti from "canvas-confetti";
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("FinTrack: Initializing...");
@@ -99,6 +100,54 @@ document.addEventListener("DOMContentLoaded", () => {
     if (splash) splash.style.display = "none";
     if (app) app.classList.remove("hidden");
   }, 3000);
+
+  // Gamification Level-Up Listener
+  window.addEventListener("levelup", (e) => {
+    const newLevel = e.detail.level;
+    
+    // Confetti effect
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    (function frame() {
+      confetti({
+        particleCount: 5,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ['#F5C842', '#FF9A00']
+      });
+      confetti({
+        particleCount: 5,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ['#F5C842', '#FF9A00']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    }());
+
+    // Show Modal
+    Swal.fire({
+      html: `
+        <div class="levelup-modal">
+          <div class="levelup-badge-large">${newLevel}</div>
+          <h2 style="margin: 0 0 10px; font-weight: 800; font-size: 24px;">Level Up!</h2>
+          <p style="color: var(--text-secondary); margin: 0;">You've reached level ${newLevel}. Keep tracking your finances!</p>
+        </div>
+      `,
+      background: 'var(--card)',
+      color: 'var(--text-primary)',
+      confirmButtonText: 'Awesome!',
+      confirmButtonColor: 'var(--gold)',
+      customClass: {
+        popup: 'custom-swal-popup'
+      }
+    });
+  });
 });
 
 export function updateStaticLabels() {

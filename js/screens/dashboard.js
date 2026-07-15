@@ -8,6 +8,7 @@ import { createTransactionTile } from "../components/transactionTile.js";
 import { t } from "../i18n.js";
 import { convertToTHB } from "../currency.js";
 import { alerts } from "../utils/alertHelper.js";
+import VanillaTilt from "vanilla-tilt";
 
 let activePeriod = "monthly";
 let analysisPeriod = "monthly";
@@ -81,13 +82,30 @@ export function renderDashboard(container) {
         </select>
       </div>
     </div>
+
+    <!-- XP Progress Bar -->
+    <div class="gamification-header" style="margin: 0 20px 20px;">
+      <div class="level-badge">${store.settings.level || 1}</div>
+      <div class="xp-progress-container">
+        <div class="xp-progress-meta">
+          <span>XP Progress</span>
+          <strong>${store.settings.xp || 0} / ${(store.settings.level || 1) * 100} XP</strong>
+        </div>
+        <div class="xp-progress-bar">
+          <div class="xp-progress-bar-fill" style="width: ${((store.settings.xp || 0) / ((store.settings.level || 1) * 100)) * 100}%"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Balance Cards Container -->
     <div class="balance-cards-container">
-      <div class="balance-card-main" id="balance-card-clickable">
-        <div class="period-label" id="period-label-text">
-          ${activePeriod === "daily" ? t("balanceToday") : activePeriod === "weekly" ? t("balanceWeek") : activePeriod === "monthly" ? t("balanceMonth") : activePeriod === "yearly" ? t("balanceYear") : t("balanceAll")}
+      <div class="balance-card-main tilt-card" id="balance-card-clickable" data-tilt data-tilt-max="10" data-tilt-speed="400" data-tilt-glare="true" data-tilt-max-glare="0.2">
+        <div class="tilt-card-inner">
+          <div class="period-label" id="period-label-text">
+            ${activePeriod === "daily" ? t("balanceToday") : activePeriod === "weekly" ? t("balanceWeek") : activePeriod === "monthly" ? t("balanceMonth") : activePeriod === "yearly" ? t("balanceYear") : t("balanceAll")}
+          </div>
+          <div class="balance-amount" id="card-balance">฿0.00</div>
         </div>
-        <div class="balance-amount" id="card-balance">฿0.00</div>
       </div>
       <div class="balance-row">
         <div class="balance-item income">
@@ -251,6 +269,14 @@ export function renderDashboard(container) {
 
   setupEventListeners(container);
   updateUI(container);
+
+  // Initialize VanillaTilt for 3D Cards
+  VanillaTilt.init(container.querySelectorAll(".tilt-card"), {
+    max: 15,
+    speed: 400,
+    glare: true,
+    "max-glare": 0.2,
+  });
 
   const unsubscribe = store.subscribe(() => {
     if (document.getElementById("card-balance")) {

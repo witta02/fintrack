@@ -27,6 +27,8 @@ export const store = {
     taxMutualFunds: 0,
     taxOtherDeductions: 0,
     dataVersion: 4,
+    xp: 0,
+    level: 1,
   },
 
   subscribe(listener) {
@@ -176,6 +178,29 @@ export const store = {
     localStorage.setItem("fintrack_down_payments", JSON.stringify(this.downPayments));
     localStorage.setItem("fintrack_settings", JSON.stringify(this.settings));
     this.notify();
+  },
+
+  addXP(amount) {
+    if (!this.settings.xp) this.settings.xp = 0;
+    if (!this.settings.level) this.settings.level = 1;
+    
+    this.settings.xp += amount;
+    
+    // Simple level up logic: level * 100 XP per level
+    const xpNeeded = this.settings.level * 100;
+    
+    if (this.settings.xp >= xpNeeded) {
+      this.settings.xp -= xpNeeded;
+      this.settings.level += 1;
+      this.save();
+      
+      // Dispatch global event for confetti/celebration
+      window.dispatchEvent(new CustomEvent('levelup', { 
+        detail: { level: this.settings.level } 
+      }));
+    } else {
+      this.save();
+    }
   },
 
   async handleLoginSync(user) {

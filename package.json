@@ -14,11 +14,13 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.1",
+    "canvas-confetti": "^1.9.4",
     "chart.js": "^4.4.0",
     "jimp": "^1.6.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "jsqr": "^1.4.0",
-    "sweetalert2": "^11.26.25"
+    "sweetalert2": "^11.26.25",
+    "vanilla-tilt": "^1.8.1"
   }
 }

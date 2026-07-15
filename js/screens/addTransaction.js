@@ -484,11 +484,32 @@ function setupFormListeners(container) {
         category: selectedCategory,
         date: dateVal,
       });
+
+      if (typeof store.addXP === 'function') {
+        store.addXP(10);
+      }
+
+      showCoinAnimation();
     }
 
-    // Navigate back
-    router.navigate("dashboard");
+    // Navigate back after a slight delay to allow animation to start
+    setTimeout(() => {
+      router.navigate("dashboard");
+    }, 150);
   });
+}
+
+function showCoinAnimation() {
+  const container = document.createElement('div');
+  container.className = 'coin-animation-container';
+  container.innerHTML = '<div class="coin-3d">฿</div>';
+  document.body.appendChild(container);
+  
+  setTimeout(() => {
+    if (document.body.contains(container)) {
+      document.body.removeChild(container);
+    }
+  }, 1500);
 }
 
 function escapeHTML(str) {

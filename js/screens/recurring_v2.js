@@ -107,8 +107,14 @@ function updateUI(container) {
       </div>
     `;
     const btn = listContainer.querySelector("#add-first-recurring-btn");
-    btn.onmouseenter = () => { btn.style.transform = 'translateY(-2px)'; btn.style.boxShadow = '0 6px 20px var(--gold-glow)'; };
-    btn.onmouseleave = () => { btn.style.transform = 'none'; btn.style.boxShadow = '0 4px 16px var(--gold-glow)'; };
+    btn.onmouseenter = () => {
+      btn.style.transform = "translateY(-2px)";
+      btn.style.boxShadow = "0 6px 20px var(--gold-glow)";
+    };
+    btn.onmouseleave = () => {
+      btn.style.transform = "none";
+      btn.style.boxShadow = "0 4px 16px var(--gold-glow)";
+    };
     btn.addEventListener("click", showAddRecurringModal);
     return;
   }
@@ -158,8 +164,8 @@ function updateUI(container) {
         </div>
         <label class="switch-toggle" style="cursor: pointer;">
           <input type="checkbox" class="toggle-status-chk" ${rule.isActive ? "checked" : ""} style="display: none;" />
-          <span class="switch-slider" style="width: 40px; height: 22px; border-radius: 11px; background: ${rule.isActive ? 'var(--gold)' : 'var(--border-strong)'}; display: inline-block; position: relative; transition: background 0.3s ease;">
-            <span style="position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; top: 2px; left: ${rule.isActive ? '20px' : '2px'}; transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></span>
+          <span class="switch-slider" style="width: 40px; height: 22px; border-radius: 11px; background: ${rule.isActive ? "var(--gold)" : "var(--border-strong)"}; display: inline-block; position: relative; transition: background 0.3s ease;">
+            <span style="position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; top: 2px; left: ${rule.isActive ? "20px" : "2px"}; transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></span>
           </span>
         </label>
       </div>
@@ -186,12 +192,12 @@ function updateUI(container) {
     const toggleChk = card.querySelector(".toggle-status-chk");
     const slider = card.querySelector(".switch-slider");
     const knob = slider.querySelector("span");
-    
+
     // Quick animation for switch manually to avoid relying on external CSS
     toggleChk.addEventListener("change", (e) => {
       const active = e.target.checked;
-      slider.style.background = active ? 'var(--gold)' : 'var(--border-strong)';
-      knob.style.left = active ? '20px' : '2px';
+      slider.style.background = active ? "var(--gold)" : "var(--border-strong)";
+      knob.style.left = active ? "20px" : "2px";
       store.toggleRecurringRule(rule.id);
     });
 
@@ -201,7 +207,7 @@ function updateUI(container) {
       .addEventListener("click", async () => {
         const isConfirmed = await alerts.confirmDelete(
           t("deleteRecurringPrompt"),
-          t("deleteRecurringDesc")
+          t("deleteRecurringDesc"),
         );
         if (isConfirmed) {
           store.deleteRecurringRule(rule.id);
@@ -320,19 +326,23 @@ function showAddRecurringModal() {
         cursor: pointer;
         border: 1px solid transparent;
         transition: all 0.2s;
-        background: ${isSelected ? info.color + '15' : 'transparent'};
-        border-color: ${isSelected ? info.color + '40' : 'transparent'};
+        background: ${isSelected ? info.color + "15" : "transparent"};
+        border-color: ${isSelected ? info.color + "40" : "transparent"};
       `;
 
       item.innerHTML = `
-        <div class="category-picker-icon" style="font-size: 20px; color: ${isSelected ? info.color : 'var(--text-secondary)'}; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: ${isSelected ? info.color + '20' : 'var(--bg-secondary)'}; border-radius: 10px; transition: all 0.2s;">
+        <div class="category-picker-icon" style="font-size: 20px; color: ${isSelected ? info.color : "var(--text-secondary)"}; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: ${isSelected ? info.color + "20" : "var(--bg-secondary)"}; border-radius: 10px; transition: all 0.2s;">
           <span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${info.svg}</span>
         </div>
-        <div class="category-picker-label" style="font-size: 10.5px; font-weight: ${isSelected ? '600' : '500'}; color: ${isSelected ? info.color : 'var(--text-secondary)'}; text-align: center; line-height: 1.1;">${info.label}</div>
+        <div class="category-picker-label" style="font-size: 10.5px; font-weight: ${isSelected ? "600" : "500"}; color: ${isSelected ? info.color : "var(--text-secondary)"}; text-align: center; line-height: 1.1;">${info.label}</div>
       `;
 
-      item.onmouseenter = () => { if(!isSelected) item.style.background = 'var(--surface-hover)'; };
-      item.onmouseleave = () => { if(!isSelected) item.style.background = 'transparent'; };
+      item.onmouseenter = () => {
+        if (!isSelected) item.style.background = "var(--surface-hover)";
+      };
+      item.onmouseleave = () => {
+        if (!isSelected) item.style.background = "transparent";
+      };
 
       item.addEventListener("click", () => {
         ruleSelectedCategory = cat.name;
@@ -350,7 +360,7 @@ function showAddRecurringModal() {
   // Trigger animation after slightly deferring
   setTimeout(() => {
     const dialog = overlay.querySelector(".modal-dialog");
-    if(dialog) {
+    if (dialog) {
       dialog.style.opacity = "1";
       dialog.style.transform = "scale(1)";
     }
@@ -359,7 +369,7 @@ function showAddRecurringModal() {
   // Handle Close buttons
   const closeModal = () => {
     const dialog = overlay.querySelector(".modal-dialog");
-    if(dialog) {
+    if (dialog) {
       dialog.style.opacity = "0";
       dialog.style.transform = "scale(0.95)";
     }
@@ -370,8 +380,14 @@ function showAddRecurringModal() {
   };
 
   const closeBtn = overlay.querySelector("#modal-close");
-  closeBtn.onmouseenter = () => { closeBtn.style.background = 'var(--border)'; closeBtn.style.color = 'var(--text-primary)'; };
-  closeBtn.onmouseleave = () => { closeBtn.style.background = 'var(--bg-secondary)'; closeBtn.style.color = 'var(--text-secondary)'; };
+  closeBtn.onmouseenter = () => {
+    closeBtn.style.background = "var(--border)";
+    closeBtn.style.color = "var(--text-primary)";
+  };
+  closeBtn.onmouseleave = () => {
+    closeBtn.style.background = "var(--bg-secondary)";
+    closeBtn.style.color = "var(--text-secondary)";
+  };
   closeBtn.addEventListener("click", closeModal);
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) closeModal();
@@ -413,8 +429,14 @@ function showAddRecurringModal() {
 
   // Hover styles for submit
   const submitBtn = overlay.querySelector("button[type='submit']");
-  submitBtn.onmouseenter = () => { submitBtn.style.transform = 'translateY(-2px)'; submitBtn.style.boxShadow = '0 6px 20px var(--gold-glow)'; };
-  submitBtn.onmouseleave = () => { submitBtn.style.transform = 'none'; submitBtn.style.boxShadow = '0 4px 16px var(--gold-glow)'; };
+  submitBtn.onmouseenter = () => {
+    submitBtn.style.transform = "translateY(-2px)";
+    submitBtn.style.boxShadow = "0 6px 20px var(--gold-glow)";
+  };
+  submitBtn.onmouseleave = () => {
+    submitBtn.style.transform = "none";
+    submitBtn.style.boxShadow = "0 4px 16px var(--gold-glow)";
+  };
 
   // Handle Form submit
   overlay
