@@ -1,7 +1,7 @@
 import { renderDashboard } from "./screens/dashboard.js";
 import { renderTransactions } from "./screens/transactions.js";
 import { renderAddTransaction } from "./screens/addTransaction.js";
-import { renderRecurring } from "./screens/recurring.js";
+import { renderRecurring } from "./screens/recurring_v2.js";
 import { renderSettings } from "./screens/settings.js";
 import { renderPlanner } from "./screens/planner.js";
 import { renderExport } from "./screens/export.js";
