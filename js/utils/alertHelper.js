@@ -72,6 +72,24 @@ export const alerts = {
     return result.isConfirmed;
   },
 
+  async prompt(title, inputLabel = "", input = "text", inputValue = "", options = {}) {
+    const isDark = store.settings.isDarkMode;
+    return Swal.fire({
+      title,
+      input,
+      inputLabel,
+      inputValue,
+      inputAttributes: options.inputAttributes || {},
+      showCancelButton: true,
+      background: isDark ? "#1C2128" : "#FFFFFF",
+      color: isDark ? "#FFFFFF" : "#1F2937",
+      confirmButtonColor: "#FFB800",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: store.settings.language === "en" ? "Save" : "บันทึก",
+      cancelButtonText: store.settings.language === "en" ? "Cancel" : "ยกเลิก",
+    });
+  },
+
   async confirmReset(title, text = "") {
     const isDark = store.settings.isDarkMode;
     const result = await Swal.fire({

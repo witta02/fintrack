@@ -2261,3 +2261,24 @@ input:focus, select:focus, textarea:focus {
   background: linear-gradient(135deg, rgba(245,200,66,0.06), var(--card));
   border-color: rgba(245,200,66,0.18);
 }
+
+/* Down payment tracker */
+.down-payment-screen { max-width: 920px; margin: 0 auto; }
+.down-payment-intro { color: var(--text-secondary); font-size: 13px; margin: 5px 0 0; }
+.down-payment-summary { margin: 6px 0 22px; padding: 18px 20px; border: 1px solid rgba(245,200,66,.25); border-radius: 16px; background: linear-gradient(135deg, rgba(245,200,66,.14), var(--card)); display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.down-payment-summary span, .down-payment-summary small { color: var(--text-secondary); font-size: 12px; }
+.down-payment-summary strong { color: var(--gold); font-size: 23px; }
+.down-payment-summary small { margin-left: auto; }
+.down-payment-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; }
+.down-payment-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+.down-payment-card.is-complete { opacity: .7; }
+.down-payment-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.down-payment-card h2 { margin: 0 0 5px; color: var(--text-primary); font-size: 16px; }
+.payment-status, .payment-meta { color: var(--text-secondary); font-size: 11px; }
+.payment-delete { color: var(--text-secondary); background: transparent; border: 0; font-size: 22px; line-height: 1; cursor: pointer; }
+.payment-ratio { margin-top: 20px; color: var(--text-secondary); font-size: 13px; }.payment-ratio strong { color: var(--text-primary); font-size: 21px; }.payment-ratio span { margin-left: 4px; }
+.payment-progress { height: 8px; overflow: hidden; border-radius: 999px; margin: 12px 0 8px; background: rgba(128,128,128,.18); }.payment-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--gold), #ffd863); }
+.payment-meta { display: flex; justify-content: space-between; gap: 8px; }.payment-add-btn { width: 100%; margin-top: 17px; padding: 9px; border: 1px solid rgba(245,200,66,.35); border-radius: 9px; background: rgba(245,200,66,.1); color: var(--gold); cursor: pointer; font-weight: 700; }
+.down-payment-modal form { display: grid; gap: 13px; }.down-payment-modal label { display: grid; gap: 6px; color: var(--text-secondary); font-size: 12px; }.down-payment-modal .btn-primary { margin-top: 8px; }
+.down-payment-dashboard-card { width: 100%; margin: -6px 0 20px; padding: 14px 16px; border: 1px solid rgba(245,200,66,.22); border-radius: 16px; background: linear-gradient(135deg, rgba(245,200,66,.1), var(--card)); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; text-align: left; gap: 12px; }.down-payment-dashboard-icon { width: 35px; height: 35px; display: grid; place-items: center; border-radius: 10px; background: rgba(245,200,66,.16); color: var(--gold); font-weight: 900; }.down-payment-dashboard-copy { display: grid; gap: 3px; }.down-payment-dashboard-copy small { color: var(--text-secondary); font-size: 10px; }.down-payment-dashboard-copy strong { font-size: 13px; }.down-payment-dashboard-amount { margin-left: auto; color: var(--gold); font-weight: 800; font-size: 14px; }
+@media (max-width: 560px) { .down-payment-summary small { width: 100%; margin-left: 0; }.down-payment-screen .screen-header { align-items: flex-start; }.down-payment-screen .screen-header .btn-primary { padding: 9px 11px; font-size: 12px; } }

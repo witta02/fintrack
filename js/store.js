@@ -13,6 +13,7 @@ export const store = {
   user: null,
   transactions: [],
   recurringRules: [],
+  downPayments: [],
   settings: {
     selectedCurrency: "THB",
     isDarkMode: true,
@@ -47,6 +48,7 @@ export const store = {
     // Load from LocalStorage (synchronous — no network calls here)
     const savedTransactions = localStorage.getItem("fintrack_transactions");
     const savedRules = localStorage.getItem("fintrack_recurring_rules");
+    const savedDownPayments = localStorage.getItem("fintrack_down_payments");
     const savedSettings = localStorage.getItem("fintrack_settings");
     const savedNetWorth = localStorage.getItem("fintrack_net_worth");
 
@@ -83,6 +85,15 @@ export const store = {
     } else {
       this.recurringRules = [];
     }
+
+    this.downPayments = savedDownPayments
+      ? JSON.parse(savedDownPayments).map((plan) => ({
+          ...plan,
+          totalAmount: parseFloat(plan.totalAmount) || 0,
+          paidAmount: parseFloat(plan.paidAmount) || 0,
+          dueDate: plan.dueDate ? new Date(plan.dueDate) : null,
+        }))
+      : [];
 
     this.removeLegacyDemoData();
 
@@ -162,6 +173,7 @@ export const store = {
       "fintrack_recurring_rules",
       JSON.stringify(this.recurringRules),
     );
+    localStorage.setItem("fintrack_down_payments", JSON.stringify(this.downPayments));
     localStorage.setItem("fintrack_settings", JSON.stringify(this.settings));
     this.notify();
   },
@@ -348,6 +360,7 @@ export const store = {
     this.user = null;
     this.transactions = [];
     this.recurringRules = [];
+    this.downPayments = [];
     this.settings = {
       selectedCurrency: "THB",
       isDarkMode: true,
@@ -366,6 +379,7 @@ export const store = {
     localStorage.removeItem("fintrack_recurring_rules");
     localStorage.removeItem("fintrack_settings");
     localStorage.removeItem("fintrack_net_worth");
+    localStorage.removeItem("fintrack_down_payments");
   },
 
   async deleteCloudData() {
@@ -681,6 +695,41 @@ export const store = {
         if (error) console.error('Supabase deleteTransaction error:', error);
       });
     }
+  },
+
+  // --- Down payment plans API ---
+  getDownPayments() {
+    return [...this.downPayments].sort((a, b) => {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return a.dueDate - b.dueDate;
+    });
+  },
+
+  addDownPayment(plan) {
+    const totalAmount = parseFloat(plan.totalAmount) || 0;
+    const paidAmount = Math.min(parseFloat(plan.paidAmount) || 0, totalAmount);
+    this.downPayments.push({
+      id: Math.random().toString(36).substring(2, 11),
+      title: plan.title?.trim() || "รายการดาวน์",
+      totalAmount,
+      paidAmount,
+      dueDate: plan.dueDate ? new Date(`${plan.dueDate}T12:00:00`) : null,
+      createdAt: new Date(),
+    });
+    this.save();
+  },
+
+  recordDownPayment(id, amount) {
+    const plan = this.downPayments.find((item) => item.id === id);
+    if (!plan) return;
+    plan.paidAmount = Math.min(plan.totalAmount, plan.paidAmount + (parseFloat(amount) || 0));
+    this.save();
+  },
+
+  deleteDownPayment(id) {
+    this.downPayments = this.downPayments.filter((plan) => plan.id !== id);
+    this.save();
   },
 
   // --- Recurring Rules API ---

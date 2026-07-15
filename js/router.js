@@ -7,12 +7,14 @@ import { renderPlanner } from "./screens/planner.js";
 import { renderExport } from "./screens/export.js";
 import { renderSplitBill } from "./screens/splitBill.js";
 import { renderAuth } from "./screens/auth.js";
+import { renderDownPayments } from "./screens/downPayments.js";
 
 let currentScreen = "dashboard";
 let currentParams = null;
 
 const screens = {
   auth: renderAuth,
+  downPayments: renderDownPayments,
   dashboard: renderDashboard,
   transactions: renderTransactions,
   addTransaction: renderAddTransaction,

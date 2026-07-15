@@ -14,6 +14,8 @@ let analysisPeriod = "monthly";
 let analysisMonth = new Date().getMonth();
 let analysisYear = new Date().getFullYear();
 export function renderDashboard(container) {
+  const openDownPayments = store.getDownPayments().filter((plan) => plan.paidAmount < plan.totalAmount);
+  const nextDownPayment = openDownPayments[0];
   const greetingData = (() => {
     const h = new Date().getHours();
     if (h < 12) {
@@ -129,6 +131,12 @@ export function renderDashboard(container) {
         <div style="font-size: 10px; color: var(--expense); font-weight: 600;" id="dashboard-net-liabilities">หนี้สิน: ฿0.00</div>
       </div>
     </div>
+
+    <button id="down-payment-dashboard-card" class="down-payment-dashboard-card" type="button">
+      <span class="down-payment-dashboard-icon">◔</span>
+      <span class="down-payment-dashboard-copy"><small>เงินดาวน์ / ยอดผ่อนคงเหลือ</small><strong id="dashboard-down-payment-title">${nextDownPayment ? escapeDashboard(nextDownPayment.title) : "ยังไม่มีรายการ"}</strong></span>
+      <span class="down-payment-dashboard-amount" id="dashboard-down-payment-amount">${nextDownPayment ? `${store.getCurrencySymbol()}${store.toDisplay(Math.max(0, nextDownPayment.totalAmount - nextDownPayment.paidAmount)).toLocaleString()}` : "+ เพิ่ม"}</span>
+    </button>
 
     <!-- Starter Guide -->
     <div id="starter-guide" class="starter-guide hidden">
@@ -372,6 +380,8 @@ function setupEventListeners(container) {
   if (netWorthCard) {
     netWorthCard.addEventListener("click", () => showNetWorthModal(container));
   }
+
+  container.querySelector("#down-payment-dashboard-card")?.addEventListener("click", () => router.navigate("downPayments"));
 }
 
 function updateUI(container) {
@@ -453,6 +463,12 @@ function updateUI(container) {
     assetsEl.textContent = `${store.settings.language === "en" ? "Assets" : "สินทรัพย์"}: ${formatVal(totalAssets)}`;
   if (liabilitiesEl)
     liabilitiesEl.textContent = `${store.settings.language === "en" ? "Liabilities" : "หนี้สิน"}: ${formatVal(totalLiabilities)}`;
+
+  const nextPlan = store.getDownPayments().find((plan) => plan.paidAmount < plan.totalAmount);
+  const planTitle = container.querySelector("#dashboard-down-payment-title");
+  const planAmount = container.querySelector("#dashboard-down-payment-amount");
+  if (planTitle) planTitle.textContent = nextPlan ? nextPlan.title : "ยังไม่มีรายการ";
+  if (planAmount) planAmount.textContent = nextPlan ? formatVal(Math.max(0, nextPlan.totalAmount - nextPlan.paidAmount)) : "+ เพิ่ม";
 
   // Bar chart
   const canvas = container.querySelector("#spending-chart-canvas");
@@ -552,6 +568,10 @@ function updateUI(container) {
       listContainer.appendChild(tile);
     });
   }
+}
+
+function escapeDashboard(value) {
+  return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 }
 
 function showNetWorthModal(container) {
