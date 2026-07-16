@@ -30,7 +30,7 @@ export function createTransactionTile(
 
   tile.innerHTML = `
     <div class="cat-icon" style="background: ${cat.color}18; color: ${cat.color}; border-color: ${cat.color}28;">
-      <span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${cat.svg}</span>
+      <span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${cat.svg || cat.emoji}</span>
     </div>
     <div class="tile-info">
       <div class="tile-title">${escapeHTML(transaction.title)}</div>

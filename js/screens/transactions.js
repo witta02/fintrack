@@ -1,5 +1,9 @@
 import { store } from "../store.js";
 import { router } from "../router.js";
+import flatpickr from "flatpickr";
+import { Thai } from "flatpickr/dist/l10n/th.js";
+import "flatpickr/dist/flatpickr.min.css";
+import "flatpickr/dist/themes/dark.css";
 import { createTransactionTile } from "../components/transactionTile.js";
 import {
   getExpenseCategories,
@@ -12,6 +16,7 @@ import { alerts } from "../utils/alertHelper.js";
 let searchQuery = "";
 let activeFilterType = "all"; // 'all', 'income', 'expense'
 let selectedCategoryFilter = "all";
+let selectedDateFilter = null;
 
 export function renderTransactions(container) {
   // Combine all categories for the dropdown filter
@@ -49,8 +54,8 @@ export function renderTransactions(container) {
     </div>
 
     <!-- Filter Row -->
-    <div class="filter-row" style="margin-bottom: 20px; display: flex; gap: 12px;">
-      <div class="select-wrapper" style="flex: 1;">
+    <div class="filter-row" style="margin-bottom: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+      <div class="select-wrapper" style="flex: 1; min-width: 140px;">
         <select id="category-filter-select" class="form-control" style="padding: 12px 16px; font-size: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); width: 100%;">
           <option value="all">${t("allCategories")}</option>
           ${uniqueCategories
@@ -63,6 +68,10 @@ export function renderTransactions(container) {
             )
             .join("")}
         </select>
+      </div>
+      <div class="date-picker-wrapper" style="flex: 1; min-width: 140px; position: relative;">
+        <input type="text" id="date-filter-input" class="form-control" placeholder="${t("selectDate") || "เลือกวันที่"}" style="padding: 12px 16px; font-size: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); width: 100%;" />
+        <button id="clear-date-btn" class="clear-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--border); color: var(--text-primary); border: none; border-radius: 50%; width: 24px; height: 24px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 2;">&times;</button>
       </div>
     </div>
 
@@ -128,6 +137,47 @@ function setupEventListeners(container) {
     updateUI(container);
   });
 
+  // Date picker handler
+  const dateInput = container.querySelector("#date-filter-input");
+  const clearDateBtn = container.querySelector("#clear-date-btn");
+
+  const fp = flatpickr(dateInput, {
+    dateFormat: "Y-m-d",
+    disableMobile: true,
+    locale: store.settings.language === "en" ? "en" : Thai,
+    onChange: (selectedDates, dateStr) => {
+      selectedDateFilter = dateStr || null;
+      if (selectedDateFilter) {
+        clearDateBtn.style.display = "flex";
+      } else {
+        clearDateBtn.style.display = "none";
+      }
+      updateUI(container);
+    },
+    onDayCreate: (dObj, dStr, fp, dayElem) => {
+      const list = store.getAllTransactions();
+      const dateString = dayElem.dateObj.getFullYear() + "-" + String(dayElem.dateObj.getMonth() + 1).padStart(2, '0') + "-" + String(dayElem.dateObj.getDate()).padStart(2, '0');
+      
+      const hasTransaction = list.some(tx => {
+        const txDate = new Date(tx.date);
+        const txDateString = txDate.getFullYear() + "-" + String(txDate.getMonth() + 1).padStart(2, '0') + "-" + String(txDate.getDate()).padStart(2, '0');
+        return txDateString === dateString;
+      });
+
+      if (hasTransaction) {
+        dayElem.innerHTML += '<span class="transaction-dot" style="position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background-color: var(--gold); border-radius: 50%;"></span>';
+        dayElem.style.position = 'relative';
+      }
+    }
+  });
+
+  clearDateBtn.addEventListener("click", () => {
+    fp.clear();
+    selectedDateFilter = null;
+    clearDateBtn.style.display = "none";
+    updateUI(container);
+  });
+
   // Type tabs clicks
   container.querySelectorAll(".period-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -174,6 +224,15 @@ function updateUI(container) {
   // Filter by category
   if (selectedCategoryFilter !== "all") {
     list = list.filter((tx) => tx.category === selectedCategoryFilter);
+  }
+
+  // Filter by date
+  if (selectedDateFilter) {
+    list = list.filter((tx) => {
+      const txDate = new Date(tx.date);
+      const txDateString = txDate.getFullYear() + "-" + String(txDate.getMonth() + 1).padStart(2, '0') + "-" + String(txDate.getDate()).padStart(2, '0');
+      return txDateString === selectedDateFilter;
+    });
   }
 
   // Update Count Meta

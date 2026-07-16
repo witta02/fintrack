@@ -30,6 +30,12 @@ export const store = {
     xp: 0,
     level: 1,
     customCategories: [],
+    coins: 0,
+    claimedAchievements: [],
+    unlockedThemes: ["light", "dark"],
+    forgivenTransactions: [],
+    collectibles: [],
+    questsState: { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
   },
 
   subscribe(listener) {
@@ -103,14 +109,19 @@ export const store = {
     // Process recurring rules immediately
     this.processRecurringPayments();
 
+    if (!this.settings.theme) {
+      this.settings.theme = this.settings.isDarkMode ? "dark" : "light";
+    }
+
     // Set initial theme
     document.documentElement.setAttribute(
       "data-theme",
-      this.settings.isDarkMode ? "dark" : "light",
+      this.settings.theme,
     );
     document.documentElement.lang =
       this.settings.language === "en" ? "en" : "th";
-    // Note: Supabase session check happens via onAuthStateChange (INITIAL_SESSION) in app.js
+    
+    this.checkQuests();
   },
 
   removeLegacyDemoData() {
@@ -182,24 +193,98 @@ export const store = {
     this.notify();
   },
 
-  recalculateXP() {
-    let totalVolume = this.transactions.reduce((acc, tx) => acc + (tx.amount || 0), 0);
-    let uniqueDays = new Set(this.transactions.map(t => new Date(t.date).toDateString())).size;
-    let totalXp = Math.floor((uniqueDays * 100) + (totalVolume / 100));
+  getActiveBoosts() {
+    let xpMulti = 1.0;
+    let coinMulti = 1.0;
+    const collectibles = this.settings.collectibles || [];
     
+    collectibles.forEach(id => {
+      if (id === 'skateboard' || id === 'cat' || id === 'dog') xpMulti += 0.02;
+      if (id === 'watch') coinMulti += 0.05;
+      if (id === 'car' || id === 'dragon') xpMulti += 0.05;
+      if (id === 'rocket') xpMulti += 0.10;
+      if (id === 'island') xpMulti += 0.15;
+      if (id === 'crown') coinMulti += 0.50;
+      if (id === 'diamond') xpMulti += 0.20;
+    });
+
+    return { xpMulti, coinMulti };
+  },
+
+  checkQuests() {
+    const today = new Date().toISOString().split('T')[0];
+    if (!this.settings.questsState || this.settings.questsState.date !== today) {
+      // Reset daily quests
+      this.settings.questsState = {
+        date: today,
+        checkIn: false,
+        firstIncome: false,
+        stayClean: true,
+        claimed: []
+      };
+    }
+
+    // 1. Daily Check-in
+    this.settings.questsState.checkIn = true;
+
+    // 2. First Income
+    const todayTxs = this.transactions.filter(t => new Date(t.date).toISOString().split('T')[0] === today);
+    if (todayTxs.some(t => t.isIncome)) {
+      this.settings.questsState.firstIncome = true;
+    }
+
+    // 3. Stay Clean
+    const badHabits = ["junk", "gambling", "alcohol", "อาหารขยะ", "พนัน", "แอลกอฮอล์", "หวย", "lottery", "เหล้า", "เบียร์", "beer", "liquor", "สลาก"];
+    const hasBadHabit = todayTxs.some(t => {
+      if (t.isIncome) return false;
+      const isForgiven = (this.settings.forgivenTransactions || []).includes(t.id);
+      if (isForgiven) return false;
+      const cat = (t.category || "").toLowerCase();
+      return badHabits.some(bad => cat.includes(bad));
+    });
+    this.settings.questsState.stayClean = !hasBadHabit;
+  },
+
+  recalculateXP() {
+    const badHabits = ["junk", "gambling", "alcohol", "อาหารขยะ", "พนัน", "แอลกอฮอล์", "หวย", "lottery", "เหล้า", "เบียร์", "beer", "liquor", "สลาก"];
+    const boosts = this.getActiveBoosts();
+    
+    let totalXpGained = 0;
+    
+    this.transactions.forEach(tx => {
+      const amtXp = (tx.amount || 0) / 100;
+      if (tx.isIncome) {
+        totalXpGained += (amtXp * boosts.xpMulti);
+      } else {
+        const isForgiven = (this.settings.forgivenTransactions || []).includes(tx.id);
+        const cat = (tx.category || "").toLowerCase();
+        const isBad = badHabits.some(bad => cat.includes(bad));
+        if (isBad && !isForgiven) {
+          totalXpGained -= amtXp; // Penalty!
+        } else {
+          totalXpGained += amtXp; // Good habit to track normal expenses
+        }
+      }
+    });
+
+    let uniqueDays = new Set(this.transactions.map(t => new Date(t.date).toDateString())).size;
+    let baseTotalXp = Math.floor((uniqueDays * 100) + totalXpGained);
+    
+    if (baseTotalXp < 0) baseTotalXp = 0; // Bankruptcy floor
+
     let oldLevel = this.settings.level || 1;
     let oldXp = this.settings.xp || 0;
     
     let calculatedLevel = 1;
     let requiredXp = 100;
     
-    while (totalXp >= requiredXp) {
-      totalXp -= requiredXp;
+    while (baseTotalXp >= requiredXp) {
+      baseTotalXp -= requiredXp;
       calculatedLevel++;
       requiredXp = calculatedLevel * 100;
     }
     
-    this.settings.xp = totalXp;
+    this.settings.xp = baseTotalXp;
     this.settings.level = calculatedLevel;
 
     if (calculatedLevel > oldLevel) {
@@ -259,6 +344,12 @@ export const store = {
           xp: dbSettings.xp !== undefined ? dbSettings.xp : (this.settings.xp || 0),
           level: dbSettings.level !== undefined ? dbSettings.level : (this.settings.level || 1),
           customCategories: dbSettings.custom_categories || [],
+          coins: dbSettings.coins || this.settings.coins || 0,
+          claimedAchievements: dbSettings.claimed_achievements || this.settings.claimedAchievements || [],
+          unlockedThemes: dbSettings.unlocked_themes || this.settings.unlockedThemes || ["light", "dark"],
+          forgivenTransactions: dbSettings.forgiven_transactions || this.settings.forgivenTransactions || [],
+          collectibles: dbSettings.collectibles || this.settings.collectibles || [],
+          questsState: dbSettings.quests_state || this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
         };
       } else {
         // No cloud settings, upload local settings
@@ -275,6 +366,12 @@ export const store = {
           xp: this.settings.xp || 0,
           level: this.settings.level || 1,
           custom_categories: this.settings.customCategories || [],
+          coins: this.settings.coins || 0,
+          claimed_achievements: this.settings.claimedAchievements || [],
+          unlocked_themes: this.settings.unlockedThemes || ["light", "dark"],
+          forgiven_transactions: this.settings.forgivenTransactions || [],
+          collectibles: this.settings.collectibles || [],
+          quests_state: this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
         };
         await supabase.from('user').upsert(settingsPayload);
       }
@@ -398,6 +495,12 @@ export const store = {
         xp: this.settings.xp,
         level: this.settings.level,
         custom_categories: this.settings.customCategories || [],
+        coins: this.settings.coins || 0,
+        claimed_achievements: this.settings.claimedAchievements || [],
+        unlocked_themes: this.settings.unlockedThemes || ["light", "dark"],
+        forgiven_transactions: this.settings.forgivenTransactions || [],
+        collectibles: this.settings.collectibles || [],
+        quests_state: this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
       };
       await supabase.from('user').upsert(payload);
     }
@@ -422,6 +525,12 @@ export const store = {
       taxOtherDeductions: 0,
       dataVersion: 4,
       customCategories: [],
+      coins: 0,
+      claimedAchievements: [],
+      unlockedThemes: ["light", "dark"],
+      forgivenTransactions: [],
+      collectibles: [],
+      questsState: { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
     };
     localStorage.removeItem("fintrack_transactions");
     localStorage.removeItem("fintrack_recurring_rules");
@@ -687,6 +796,7 @@ export const store = {
       recurringId: t.recurringId || null,
     };
     this.transactions.push(transaction);
+    this.checkQuests();
     this.save();
 
     if (this.user) {
@@ -950,11 +1060,20 @@ export const store = {
   },
 
   toggleTheme() {
-    this.settings.isDarkMode = !this.settings.isDarkMode;
-    document.documentElement.setAttribute(
-      "data-theme",
-      this.settings.isDarkMode ? "dark" : "light",
-    );
+    const level = this.settings.level || 1;
+    const availableThemes = ["light", "dark"];
+    if (level >= 5) availableThemes.push("midnight");
+    if (level >= 10) availableThemes.push("cyberpunk");
+    if (level >= 15) availableThemes.push("gold");
+
+    const currentTheme = this.settings.theme || (this.settings.isDarkMode ? "dark" : "light");
+    let nextIndex = availableThemes.indexOf(currentTheme) + 1;
+    if (nextIndex >= availableThemes.length) nextIndex = 0;
+
+    this.settings.theme = availableThemes[nextIndex];
+    this.settings.isDarkMode = this.settings.theme !== "light"; // for backward compatibility
+    
+    document.documentElement.setAttribute("data-theme", this.settings.theme);
     this.save();
     this.saveSettingsToCloud();
   },

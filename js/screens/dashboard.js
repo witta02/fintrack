@@ -9,6 +9,7 @@ import { t } from "../i18n.js";
 import { convertToTHB } from "../currency.js";
 import { alerts } from "../utils/alertHelper.js";
 import VanillaTilt from "vanilla-tilt";
+import Swal from "sweetalert2";
 
 let activePeriod = "monthly";
 let analysisPeriod = "monthly";
@@ -44,6 +45,37 @@ export function renderDashboard(container) {
   })();
   const userInitial = store.user ? store.user.email.charAt(0).toUpperCase() : null;
 
+  const allTxs = store.getAllTransactions();
+  const allIncome = allTxs.filter(t => t.isIncome).reduce((sum, t) => sum + (t.amount || 0), 0);
+  const allExpense = allTxs.filter(t => !t.isIncome).reduce((sum, t) => sum + (t.amount || 0), 0);
+  const isBroke = (allIncome - allExpense) < 0;
+
+  const level = store.settings.level || 1;
+  const boosts = store.getActiveBoosts();
+  let boostHTML = "";
+  if (boosts.xpMulti > 1.0) {
+    boostHTML += `<div style="font-size: 9px; font-weight: 800; color: #a855f7; background: rgba(168,85,247,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">+${Math.round((boosts.xpMulti - 1) * 100)}% XP</div>`;
+  }
+  if (boosts.coinMulti > 1.0) {
+    boostHTML += `<div style="font-size: 9px; font-weight: 800; color: var(--gold); background: rgba(245,200,66,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">+${Math.round((boosts.coinMulti - 1) * 100)}% 🪙</div>`;
+  }
+  
+  let userTitle = "";
+  let titleColor = "var(--text-primary)";
+
+  if (isBroke) {
+    userTitle = store.settings.language === 'en' ? "Broke" : "ถังแตก";
+    titleColor = "var(--expense)";
+  } else if (level >= 20) {
+    userTitle = store.settings.language === 'en' ? "Financial Guru" : "ตัวเทพการเงิน";
+  } else if (level >= 10) {
+    userTitle = store.settings.language === 'en' ? "Master Investor" : "ตัวตึงเรื่องลงทุน";
+  } else if (level >= 5) {
+    userTitle = store.settings.language === 'en' ? "Smart Spender" : "นักใช้จ่ายชาญฉลาด";
+  } else {
+    userTitle = store.settings.language === 'en' ? "Baby" : "เบบี๋ออมเงิน";
+  }
+
   container.innerHTML = `
     <!-- Dashboard Top Bar -->
     <div class="dashboard-top-bar">
@@ -59,13 +91,14 @@ export function renderDashboard(container) {
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
+          <button id="gamification-modal-btn" style="background: linear-gradient(135deg, rgba(255, 184, 0, 0.15), rgba(255, 184, 0, 0.05)); border: 1px solid rgba(255,184,0,0.3); border-radius: 20px; padding: 4px 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(255,184,0,0.1); transition: all 0.2s;" title="Player Profile">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--gold)" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span style="font-size: 12px; font-weight: 800; color: var(--gold); letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(255,184,0,0.3);">Lv.${level}</span>
+          </button>
           ${userInitial ? `<div class="user-pill"><div class="user-pill-avatar">${userInitial}</div>${store.user.email.split('@')[0]}</div>` : ''}
-          <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme">
+          <button id="daily-quests-btn" class="icon-btn" title="Daily Quests" style="color: var(--gold);">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/>
-              <path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/>
-              <path d="M2 12h2"/><path d="M20 12h2"/>
-              <path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/>
+              <path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/>
             </svg>
           </button>
         </div>
@@ -80,20 +113,6 @@ export function renderDashboard(container) {
           <option value="yearly" ${activePeriod === "yearly" ? "selected" : ""}>${t("balanceYear")}</option>
           <option value="all" ${activePeriod === "all" ? "selected" : ""}>${t("balanceAll")}</option>
         </select>
-      </div>
-    </div>
-
-    <!-- XP Progress Bar -->
-    <div class="gamification-header" style="margin: 0 20px 20px;">
-      <div class="level-badge">${store.settings.level || 1}</div>
-      <div class="xp-progress-container">
-        <div class="xp-progress-meta">
-          <span>XP Progress</span>
-          <strong>${store.settings.xp || 0} / ${(store.settings.level || 1) * 100} XP</strong>
-        </div>
-        <div class="xp-progress-bar">
-          <div class="xp-progress-bar-fill" style="width: ${((store.settings.xp || 0) / ((store.settings.level || 1) * 100)) * 100}%"></div>
-        </div>
       </div>
     </div>
 
@@ -348,8 +367,8 @@ function showBalancePopup(container) {
 }
 
 function setupEventListeners(container) {
-  container.querySelector("#theme-toggle-btn").addEventListener("click", () => {
-    store.toggleTheme();
+  container.querySelector("#daily-quests-btn").addEventListener("click", () => {
+    showQuestsModal();
   });
 
   const periodSelect = container.querySelector("#period-select");
@@ -397,6 +416,39 @@ function setupEventListeners(container) {
       if (guide) guide.classList.add("hidden");
     });
 
+  const gamificationBtn = container.querySelector("#gamification-modal-btn");
+  if (gamificationBtn) {
+    gamificationBtn.addEventListener("click", () => {
+      const allTxs = store.getAllTransactions();
+      const allIncome = allTxs.filter(t => t.isIncome).reduce((sum, t) => sum + (t.amount || 0), 0);
+      const allExpense = allTxs.filter(t => !t.isIncome).reduce((sum, t) => sum + (t.amount || 0), 0);
+      const isBroke = (allIncome - allExpense) < 0;
+
+      const level = store.settings.level || 1;
+      let userTitle = "";
+      let titleColor = "var(--text-primary)";
+
+      if (isBroke) {
+        userTitle = store.settings.language === 'en' ? "Broke" : "ถังแตก";
+        titleColor = "var(--expense)";
+      } else if (level >= 20) {
+        userTitle = store.settings.language === 'en' ? "Financial Guru" : "ตัวเทพการเงิน";
+      } else if (level >= 10) {
+        userTitle = store.settings.language === 'en' ? "Master Investor" : "ตัวตึงเรื่องลงทุน";
+      } else if (level >= 5) {
+        userTitle = store.settings.language === 'en' ? "Smart Spender" : "นักใช้จ่ายชาญฉลาด";
+      } else {
+        userTitle = store.settings.language === 'en' ? "Baby" : "เบบี๋ออมเงิน";
+      }
+
+      const boosts = store.getActiveBoosts();
+      let boostHTML = "";
+      if (boosts.xpMulti > 1.0) boostHTML += `XP Boost: x${boosts.xpMulti.toFixed(1)} `;
+      if (boosts.coinMulti > 1.0) boostHTML += `Coin Boost: x${boosts.coinMulti.toFixed(1)}`;
+      openGamificationModal(level, userTitle, boostHTML.trim() || 'Experience Points', titleColor);
+    });
+  }
+
   const balanceCard = container.querySelector("#balance-card-clickable");
   if (balanceCard) {
     balanceCard.addEventListener("click", () => showBalancePopup(container));
@@ -408,6 +460,207 @@ function setupEventListeners(container) {
   }
 
   container.querySelector("#down-payment-dashboard-card")?.addEventListener("click", () => router.navigate("downPayments"));
+  
+  container.querySelector("#trophy-room-btn")?.addEventListener("click", () => router.navigate("achievements"));
+  container.querySelector("#rewards-shop-btn")?.addEventListener("click", () => router.navigate("rewards"));
+  container.querySelector("#vault-btn")?.addEventListener("click", () => router.navigate("collectibles"));
+
+  updateUI(container);
+}
+
+function openGamificationModal(level, userTitle, boostHTML, titleColor) {
+  const xp = store.settings.xp || 0;
+  const xpNeeded = level * 100;
+  const xpPct = Math.min((xp / xpNeeded) * 100, 100).toFixed(1);
+  const coins = store.settings.coins || 0;
+  const lang = store.settings.language;
+
+  const gamificationHTML = `
+    <div style="padding: 4px 0 8px; font-family: 'Sora', sans-serif;">
+
+      <!-- Hero Section: Level + Title -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 24px;">
+        <div style="
+          position: relative;
+          width: 80px; height: 80px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #FFB800, #FF6B00);
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 0 0 6px rgba(255,184,0,0.15), 0 8px 24px rgba(255,184,0,0.35);
+          font-size: 36px; font-weight: 900; color: #000;
+        ">${level}</div>
+        <div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--text-primary); text-align: center;">${lang === 'en' ? 'Player Profile' : 'โปรไฟล์ผู้เล่น'}</div>
+          <div style="font-size: 13px; font-weight: 600; color: ${titleColor}; text-align: center; margin-top: 2px;">${userTitle}</div>
+        </div>
+      </div>
+
+      <!-- XP + Coin Row -->
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <div style="flex: 1; background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.2); border-radius: 14px; padding: 12px 14px;">
+          <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">⚡ Experience</div>
+          <div style="font-size: 16px; font-weight: 800; color: var(--gold);">${xp} <span style="font-size: 11px; font-weight: 500; color: var(--text-secondary);">/ ${xpNeeded} XP</span></div>
+          <div style="margin-top: 8px; background: rgba(255,255,255,0.08); border-radius: 99px; height: 6px; overflow: hidden;">
+            <div style="width: ${xpPct}%; height: 100%; background: linear-gradient(90deg, #FFB800, #FF6B00); border-radius: 99px; transition: width 0.6s ease;"></div>
+          </div>
+          <div style="font-size: 10px; color: var(--text-secondary); margin-top: 4px; text-align: right;">${xpPct}%</div>
+        </div>
+        <div style="background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.2); border-radius: 14px; padding: 12px 14px; min-width: 90px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;">
+          <div style="font-size: 24px;">🪙</div>
+          <div style="font-size: 16px; font-weight: 800; color: var(--gold);">${coins.toLocaleString()}</div>
+          <div style="font-size: 10px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px;">FinCoins</div>
+        </div>
+      </div>
+
+      ${boostHTML ? `<div style="margin-bottom: 16px; background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.25); border-radius: 10px; padding: 8px 12px; font-size: 12px; font-weight: 700; color: #c084fc; text-align: center;">⚡ ${boostHTML}</div>` : ''}
+
+      <!-- Navigation Buttons -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+        <button id="modal-trophy-room-btn" style="
+          background: linear-gradient(135deg, #FFB800, #FF6B00);
+          border: none; border-radius: 14px; padding: 14px 8px;
+          cursor: pointer; display: flex; flex-direction: column;
+          align-items: center; gap: 6px;
+          box-shadow: 0 4px 12px rgba(255,184,0,0.3);
+          transition: transform 0.15s, box-shadow 0.15s;
+        ">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+          <span style="font-size: 11px; font-weight: 700; color: #000;">${lang === 'en' ? 'Trophies' : 'ถ้วยรางวัล'}</span>
+        </button>
+        <button id="modal-rewards-shop-btn" style="
+          background: rgba(255,184,0,0.08);
+          border: 1.5px solid rgba(255,184,0,0.35); border-radius: 14px; padding: 14px 8px;
+          cursor: pointer; display: flex; flex-direction: column;
+          align-items: center; gap: 6px;
+          transition: transform 0.15s, background 0.15s;
+        ">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFB800" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <span style="font-size: 11px; font-weight: 700; color: var(--gold);">${lang === 'en' ? 'Shop' : 'ร้านค้า'}</span>
+        </button>
+        <button id="modal-vault-btn" style="
+          background: rgba(255,184,0,0.08);
+          border: 1.5px solid rgba(255,184,0,0.35); border-radius: 14px; padding: 14px 8px;
+          cursor: pointer; display: flex; flex-direction: column;
+          align-items: center; gap: 6px;
+          transition: transform 0.15s, background 0.15s;
+        ">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFB800" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          <span style="font-size: 11px; font-weight: 700; color: var(--gold);">${lang === 'en' ? 'Vault' : 'คลังสมบัติ'}</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  Swal.fire({
+    html: gamificationHTML,
+    background: 'var(--card)',
+    color: 'var(--text-primary)',
+    showConfirmButton: false,
+    showCloseButton: true,
+    width: 380,
+    padding: '24px',
+    customClass: {
+      popup: 'custom-swal-popup'
+    },
+    didOpen: () => {
+      const popup = Swal.getPopup();
+      const trophyBtn = popup.querySelector("#modal-trophy-room-btn");
+      const shopBtn = popup.querySelector("#modal-rewards-shop-btn");
+      const vaultBtn = popup.querySelector("#modal-vault-btn");
+
+      [trophyBtn, shopBtn, vaultBtn].forEach(btn => {
+        btn.addEventListener('mouseenter', () => { btn.style.transform = 'scale(1.05)'; });
+        btn.addEventListener('mouseleave', () => { btn.style.transform = 'scale(1)'; });
+      });
+
+      trophyBtn.addEventListener("click", () => { Swal.close(); router.navigate("achievements"); });
+      shopBtn.addEventListener("click", () => { Swal.close(); router.navigate("rewards"); });
+      vaultBtn.addEventListener("click", () => { Swal.close(); router.navigate("collectibles"); });
+    }
+  });
+}
+
+function showQuestsModal() {
+  const quests = store.settings.questsState || { checkIn: false, firstIncome: false, stayClean: true, claimed: [] };
+  const boosts = store.getActiveBoosts();
+  
+  const questList = [
+    { id: 'checkIn', label: store.settings.language === 'en' ? 'Daily Check-in' : 'เข้าใช้งานแอป', reward: 20, done: quests.checkIn },
+    { id: 'firstIncome', label: store.settings.language === 'en' ? 'First Income' : 'รายรับแรกของวัน', reward: 50, done: quests.firstIncome },
+    { id: 'stayClean', label: store.settings.language === 'en' ? 'Stay Clean' : 'หลีกเลี่ยงนิสัยเสีย', reward: 50, done: quests.stayClean },
+  ];
+
+  let questsListHTML = "";
+  questList.forEach(q => {
+    const finalReward = Math.floor(q.reward * boosts.coinMulti);
+    const isClaimed = (quests.claimed || []).includes(q.id);
+    let rightSide = '';
+    
+    if (isClaimed) {
+      rightSide = `<div style="font-size: 10px; font-weight: 800; color: var(--text-muted);">${store.settings.language === 'en' ? 'Claimed' : 'รับแล้ว'}</div>`;
+    } else if (q.done) {
+      rightSide = `<button class="claim-quest-btn" data-id="${q.id}" data-reward="${finalReward}" style="padding: 6px 12px; font-size: 11px; font-weight: 800; border-radius: 6px; background: var(--gold); color: #000; border: none; cursor: pointer;">Claim +${finalReward} 🪙</button>`;
+    } else {
+      rightSide = `<div style="font-size: 11px; font-weight: 800; color: var(--text-secondary);">+${finalReward} 🪙</div>`;
+    }
+
+    questsListHTML += `
+      <div style="display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 12px; border-radius: 12px; margin-bottom: 10px; opacity: ${isClaimed ? 0.6 : 1};">
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+          ${q.done ? '✅' : '⏳'} ${q.label}
+        </div>
+        ${rightSide}
+      </div>
+    `;
+  });
+
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-dialog" style="max-width: 400px; padding: 24px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg> 
+          ${store.settings.language === 'en' ? 'Daily Quests' : 'ภารกิจประจำวัน'}
+        </h3>
+        <button class="modal-close-btn">×</button>
+      </div>
+      <div style="margin-top: 16px;">
+        ${questsListHTML}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => {
+    modal.classList.add("fade-out");
+    setTimeout(() => modal.remove(), 250);
+  };
+
+  modal.querySelector(".modal-close-btn").addEventListener("click", close);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+
+  modal.querySelectorAll(".claim-quest-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const target = e.currentTarget;
+      const id = target.getAttribute("data-id");
+      const reward = parseInt(target.getAttribute("data-reward"));
+      
+      store.settings.coins = (store.settings.coins || 0) + reward;
+      store.settings.questsState.claimed = store.settings.questsState.claimed || [];
+      if (!store.settings.questsState.claimed.includes(id)) {
+        store.settings.questsState.claimed.push(id);
+      }
+      store.save();
+      
+      target.outerHTML = `<div style="font-size: 10px; font-weight: 800; color: var(--text-muted);">${store.settings.language === 'en' ? 'Claimed' : 'รับแล้ว'}</div>`;
+      
+      router.navigate("dashboard");
+    });
+  });
 }
 
 function updateUI(container) {

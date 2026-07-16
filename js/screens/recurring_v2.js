@@ -156,8 +156,8 @@ function updateUI(container) {
     card.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 14px;">
-          <div class="cat-icon" style="background: ${cat.color}15; color: ${cat.color}; box-shadow: inset 0 0 0 1px ${cat.color}25; width: 44px; height: 44px; border-radius: 14px; font-size: 20px; display: flex; align-items: center; justify-content: center;">
-            <span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${cat.svg}</span>
+          <div class="cat-icon" style="background: ${cat.color}18; color: ${cat.color}; border-color: ${cat.color}28; border-width: 1px; width: 44px; height: 44px; border-radius: 14px; font-size: 20px; display: flex; align-items: center; justify-content: center;">
+            <span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${cat.svg || cat.emoji}</span>
           </div>
           <div>
             <h4 style="margin: 0; font-size: 15px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.3px;">${escapeHTML(rule.title)}</h4>

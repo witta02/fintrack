@@ -321,8 +321,8 @@ function renderPendingTransactionsCard(msg, isDark, lang) {
 
     rowsHTML += `
       <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; border-bottom: 1px dashed ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}; padding-bottom: 8px; width: 100%;">
-        <div style="width: 30px; height: 30px; background: ${cat.color}18; color: ${cat.color}; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;">
-          <span style="display: flex; align-items: center; justify-content: center; width: 14px; height: 14px;">${cat.svg}</span>
+        <div class="cat-icon" style="width: 24px; height: 24px; background: ${cat.color}18; color: ${cat.color}; border-color: ${cat.color}28; border-width: 1px;">
+          <span style="display: flex; align-items: center; justify-content: center; width: 14px; height: 14px;">${cat.svg || cat.emoji}</span>
         </div>
         <div style="flex: 1; min-width: 0; text-align: left;">
           <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHTML(t.title)}</div>

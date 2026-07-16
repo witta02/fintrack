@@ -8,6 +8,9 @@ import { renderExport } from "./screens/export.js";
 import { renderSplitBill } from "./screens/splitBill.js";
 import { renderAuth } from "./screens/auth.js";
 import { renderDownPayments } from "./screens/downPayments.js";
+import { renderAchievements } from "./screens/achievements.js";
+import { renderRewards } from "./screens/rewards.js";
+import { renderCollectibles } from "./screens/collectibles.js";
 
 let currentScreen = "dashboard";
 let currentParams = null;
@@ -23,6 +26,9 @@ const screens = {
   planner: renderPlanner,
   export: renderExport,
   splitBill: renderSplitBill,
+  achievements: renderAchievements,
+  rewards: renderRewards,
+  collectibles: renderCollectibles,
 };
 
 export const router = {

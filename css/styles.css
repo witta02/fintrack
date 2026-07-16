@@ -92,6 +92,78 @@
   --orb-3:            rgba(52, 211, 153, 0.06);
 }
 
+/* ─── Midnight Theme (Level 5) ────────────────────────────────────────── */
+[data-theme="midnight"] {
+  --bg:               #010409;
+  --bg-secondary:     #0d1117;
+  --surface:          rgba(255, 255, 255, 0.02);
+  --surface-hover:    rgba(255, 255, 255, 0.05);
+  --card:             rgba(13, 17, 23, 0.85);
+  --card-solid:       #0d1117;
+  --card-elevated:    rgba(22, 27, 34, 0.95);
+  --border:           rgba(48, 54, 61, 0.6);
+  --border-strong:    rgba(48, 54, 61, 1);
+  --text-primary:     #c9d1d9;
+  --text-secondary:   #8b949e;
+  --text-muted:       #484f58;
+  --nav-bg:           rgba(1, 4, 9, 0.9);
+  --input-bg:         rgba(255, 255, 255, 0.03);
+  --modal-bg:         rgba(1, 4, 9, 0.8);
+  --balance-bg:       linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+  --balance-text:     #c9d1d9;
+  --orb-1:            rgba(88, 166, 255, 0.08);
+  --orb-2:            rgba(121, 192, 255, 0.06);
+  --orb-3:            rgba(47, 129, 247, 0.05);
+}
+
+/* ─── Cyberpunk Theme (Level 10) ──────────────────────────────────────── */
+[data-theme="cyberpunk"] {
+  --bg:               #090014;
+  --bg-secondary:     #120124;
+  --surface:          rgba(255, 0, 106, 0.05);
+  --surface-hover:    rgba(255, 0, 106, 0.1);
+  --card:             rgba(18, 1, 36, 0.85);
+  --card-solid:       #120124;
+  --card-elevated:    rgba(27, 2, 54, 0.95);
+  --border:           rgba(255, 0, 106, 0.2);
+  --border-strong:    rgba(0, 255, 242, 0.3);
+  --text-primary:     #f4f4f4;
+  --text-secondary:   #b37af0;
+  --text-muted:       #7a49a5;
+  --nav-bg:           rgba(9, 0, 20, 0.9);
+  --input-bg:         rgba(0, 255, 242, 0.03);
+  --modal-bg:         rgba(9, 0, 20, 0.8);
+  --balance-bg:       linear-gradient(135deg, #1c0235 0%, #35014a 100%);
+  --balance-text:     #00fff2;
+  --orb-1:            rgba(255, 0, 106, 0.1);
+  --orb-2:            rgba(0, 255, 242, 0.1);
+  --orb-3:            rgba(210, 168, 255, 0.08);
+}
+
+/* ─── Gold Theme (Level 15) ───────────────────────────────────────────── */
+[data-theme="gold"] {
+  --bg:               #0f0d06;
+  --bg-secondary:     #1c1809;
+  --surface:          rgba(255, 215, 0, 0.04);
+  --surface-hover:    rgba(255, 215, 0, 0.08);
+  --card:             rgba(28, 24, 9, 0.85);
+  --card-solid:       #1c1809;
+  --card-elevated:    rgba(40, 34, 12, 0.95);
+  --border:           rgba(255, 215, 0, 0.15);
+  --border-strong:    rgba(255, 215, 0, 0.3);
+  --text-primary:     #fff8d6;
+  --text-secondary:   #bda75e;
+  --text-muted:       #736330;
+  --nav-bg:           rgba(15, 13, 6, 0.9);
+  --input-bg:         rgba(255, 215, 0, 0.02);
+  --modal-bg:         rgba(15, 13, 6, 0.8);
+  --balance-bg:       linear-gradient(135deg, #2c2409 0%, #1c1809 100%);
+  --balance-text:     #ffd700;
+  --orb-1:            rgba(255, 215, 0, 0.08);
+  --orb-2:            rgba(255, 166, 87, 0.06);
+  --orb-3:            rgba(218, 165, 32, 0.05);
+}
+
 /* ─── Reset & Base ────────────────────────────────────────────────────── */
 *, *::before, *::after {
   margin: 0; padding: 0; box-sizing: border-box;
@@ -1167,7 +1239,7 @@ input:focus, select:focus, textarea:focus {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: 1000;
   display: flex;
   align-items: flex-end;
   justify-content: center;
