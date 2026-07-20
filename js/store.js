@@ -122,6 +122,7 @@ export const store = {
       this.settings.language === "en" ? "en" : "th";
     
     this.checkQuests();
+    this.isInitialized = true;
   },
 
   removeLegacyDemoData() {
@@ -287,7 +288,7 @@ export const store = {
     this.settings.xp = baseTotalXp;
     this.settings.level = calculatedLevel;
 
-    if (calculatedLevel > oldLevel) {
+    if (calculatedLevel > oldLevel && this.isInitialized) {
       window.dispatchEvent(new CustomEvent('levelup', { 
         detail: { level: calculatedLevel } 
       }));
@@ -341,9 +342,20 @@ export const store = {
           taxProvidentFund: parseFloat(dbSettings.tax_provident_fund),
           taxMutualFunds: parseFloat(dbSettings.tax_mutual_funds),
           taxOtherDeductions: parseFloat(dbSettings.tax_other_deductions),
-          xp: dbSettings.xp !== undefined ? dbSettings.xp : (this.settings.xp || 0),
-          level: dbSettings.level !== undefined ? dbSettings.level : (this.settings.level || 1),
-          customCategories: dbSettings.custom_categories || [],
+          xp: Math.max(dbSettings.xp || 0, this.settings.xp || 0),
+          level: Math.max(dbSettings.level || 1, this.settings.level || 1),
+          // Merge custom categories from both cloud and local (no duplicates)
+          customCategories: (() => {
+            const cloud = dbSettings.custom_categories || [];
+            const local = this.settings.customCategories || [];
+            const merged = [...cloud];
+            for (const cat of local) {
+              if (!merged.some(c => c === cat || (c && cat && c.name === cat.name))) {
+                merged.push(cat);
+              }
+            }
+            return merged;
+          })(),
           coins: dbSettings.coins || this.settings.coins || 0,
           claimedAchievements: dbSettings.claimed_achievements || this.settings.claimedAchievements || [],
           unlockedThemes: dbSettings.unlocked_themes || this.settings.unlockedThemes || ["light", "dark"],
@@ -468,6 +480,10 @@ export const store = {
         if (uploadRulesError) console.error("Error uploading recurring rules:", uploadRulesError);
       }
 
+      // --- PROCESS RECURRING PAYMENTS with cloud rules now merged ---
+      // Run again so any cloud-only recurring rules generate transactions if overdue
+      this.processRecurringPayments();
+
       // --- DYNAMIC XP CALCULATION ---
       this.recalculateXP();
 
@@ -475,6 +491,9 @@ export const store = {
       localStorage.setItem("fintrack_transactions", JSON.stringify(this.transactions));
       localStorage.setItem("fintrack_recurring_rules", JSON.stringify(this.recurringRules));
       localStorage.setItem("fintrack_settings", JSON.stringify(this.settings));
+
+      // --- NOTIFY UI to re-render with synced data ---
+      this.notify();
     } catch (err) {
       console.warn("Supabase sync failed (tables might not exist yet), falling back to LocalStorage:", err);
     }

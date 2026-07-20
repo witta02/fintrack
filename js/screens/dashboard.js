@@ -153,7 +153,7 @@ export function renderDashboard(container) {
     </div>
 
     <!-- Net Worth Card -->
-    <div class="card net-worth-card" id="net-worth-card-clickable" style="padding: 16px; margin-bottom: 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(255, 184, 0, 0.05), var(--card)); border: 1px solid var(--border); border-radius: 16px; transition: all var(--transition);">
+    <div class="card net-worth-card" id="net-worth-card-clickable" style="padding: 16px; margin-top: 16px; margin-bottom: 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(255, 184, 0, 0.05), var(--card)); border: 1px solid var(--border); border-radius: 16px; transition: all var(--transition);">
       <div style="display: flex; align-items: center; gap: 14px;">
         <div class="setting-icon-badge" style="background: rgba(255, 184, 0, 0.12); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--gold);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>

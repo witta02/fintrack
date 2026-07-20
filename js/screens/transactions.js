@@ -269,9 +269,59 @@ function updateUI(container) {
     const sortedGroups = Object.values(groups).sort((a, b) => b.dateObj - a.dateObj);
 
     sortedGroups.forEach(group => {
+      let dailyIncome = 0;
+      let dailyExpense = 0;
+      group.txs.forEach((tx) => {
+        if (tx.isIncome) {
+          dailyIncome += Number(tx.amount);
+        } else {
+          dailyExpense += Number(tx.amount);
+        }
+      });
+      
+      const dailyTotal = dailyIncome - dailyExpense;
+      const isPositive = dailyTotal >= 0;
+      
+      const formatAmount = (num) => Number(store.toDisplay(Math.abs(num))).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+      const incomeText = formatAmount(dailyIncome);
+      const expenseText = formatAmount(dailyExpense);
+      const totalText = formatAmount(dailyTotal);
+      
+      const totalColor = dailyTotal === 0 ? 'var(--text-secondary)' : (isPositive ? 'var(--income)' : 'var(--expense)');
+      const totalSign = dailyTotal < 0 ? '-' : (dailyTotal > 0 ? '+' : '');
+
       const groupHeader = document.createElement("div");
       groupHeader.className = "date-group-header";
-      groupHeader.innerHTML = `<span>${group.display}</span>`;
+      groupHeader.style.display = "flex";
+      groupHeader.style.justifyContent = "space-between";
+      groupHeader.style.alignItems = "center";
+      groupHeader.style.padding = "0 14px 0 16px";
+      
+      let breakdownHtml = '';
+      if (dailyIncome > 0 || dailyExpense > 0) {
+        let items = [];
+        if (dailyIncome > 0) items.push(`<span style="color: var(--income);">+${symbol}${incomeText}</span>`);
+        if (dailyExpense > 0) items.push(`<span style="color: var(--expense);">-${symbol}${expenseText}</span>`);
+        
+        breakdownHtml = `
+          <div style="display: flex; gap: 6px; font-size: 11px; font-weight: 600; opacity: 0.85;">
+              ${items.join('')}
+          </div>
+          <div style="width: 1px; height: 12px; background: var(--border);"></div>
+        `;
+      }
+
+      groupHeader.innerHTML = `
+        <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">${group.display}</span>
+        <div style="display: flex; gap: 8px; align-items: center; background: var(--surface); padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+            ${breakdownHtml}
+            <div style="font-size: 13px; font-weight: 700; color: ${totalColor}; display: flex; align-items: center; gap: 5px;">
+                <span style="font-size: 10px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">รวม</span>
+                <span>${totalSign}${symbol}${totalText}</span>
+            </div>
+        </div>
+      `;
       listContainer.appendChild(groupHeader);
       
       group.txs.forEach((tx) => {

@@ -12,46 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize the store (synchronous — loads from LocalStorage only)
   store.init();
 
-  // Listen for level up events
-  window.addEventListener('levelup', (e) => {
-    const newLevel = e.detail.level;
-    const lang = store.settings.language;
-    
-    // Confetti burst
-    const duration = 3000;
-    const end = Date.now() + duration;
 
-    (function frame() {
-      confetti({
-        particleCount: 5,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: ['#FFB800', '#F5C842', '#ffffff'],
-        zIndex: 10000
-      });
-      confetti({
-        particleCount: 5,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: ['#FFB800', '#F5C842', '#ffffff'],
-        zIndex: 10000
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    }());
-
-    // Show popup
-    setTimeout(() => {
-      alerts.success(
-        lang === 'en' ? 'Level Up! 🎉' : 'เลเวลอัป! 🎉',
-        lang === 'en' ? `Congratulations! You've reached Level ${newLevel}!` : `ยินดีด้วย! คุณมาถึงเลเวล ${newLevel} แล้ว!`
-      );
-    }, 500);
-  });
 
   // Initialize the router
   router.init();
