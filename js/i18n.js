@@ -189,6 +189,107 @@ const dictionary = {
     deleteRecurringPrompt: "จะเลิกจดรายการนี้แล้วใช่ม้า?",
     deleteRecurringDesc: "ถ้าลบออก เราจะไม่จดให้อัตโนมัติแล้วนะ",
     invalidAmount: "เดี๋ยวนะ ยอดเงินดูแปลกๆ ลองเช็กอีกทีสิ",
+
+    // Dashboard & Overview
+    overview: "ภาพรวม",
+    netWorth: "ความมั่งคั่งสุทธิ (Net Worth)",
+    assets: "สินทรัพย์",
+    liabilities: "หนี้สิน",
+    hide: "ซ่อน",
+    monthly: "รายเดือน",
+    yearly: "รายปี",
+    expenseBreakdown: "สัดส่วนรายจ่าย",
+    byCategory: "แยกตามหมวดหมู่",
+    balanceBreakdown: "รายละเอียดยอดคงเหลือ",
+    positiveBalance: "✅ ยอดคงเหลือเป็นบวก",
+    negativeBalance: "⚠️ ยอดคงเหลือติดลบ",
+    ok: "ตกลง",
+    estimatedTaxLabel: "ประมาณการภาษี: {amount}",
+    noDataThisMonth: "ยังไม่มีข้อมูลการเงินในเดือนนี้",
+    noSpendingData: "ยังไม่มีข้อมูลการใช้จ่าย",
+    dayLabel: "วันที่ {day}",
+
+    // Transactions List & Tile
+    deleteTransaction: "ลบรายการ",
+    total: "รวม",
+
+    // Add Transaction & OCR/QR
+    scanReceiptTitle: "สแกนใบเสร็จเพิ่มรายจ่าย",
+    scanningOcrTitle: "ระบบกำลังอ่านและวิเคราะห์บิล...",
+    scanningOcrSubtitle: "ระบบดึงราคาและชื่อร้านค้ากำลังทำงาน",
+    titlePlaceholder: "เช่น ค่าอาหารกลางวัน, เงินเดือน",
+    merchantFallback: "ร้านค้า",
+    bankFallback: "ธนาคาร",
+    transferViaBank: "โอนเงินผ่าน{bank}",
+    promptPayPayment: "สแกนจ่ายพร้อมเพย์",
+    receiptScannedSuccess: "สแกนใบเสร็จเสร็จแล้ว เรื่ด!",
+    noQrOrReceiptFound: "ไม่พบ QR Code หรือข้อมูลบิลที่ถูกต้องบนรูปภาพนี้",
+    deleteTransactionConfirm: "ต้องการลบรายการใช่หรือไม่?",
+    validAmountWarning: "กรุณากรอกจำนวนเงินให้ถูกต้อง",
+
+    // Planner
+    plannerInitMessage: `สวัสดีค่ะ! Finny ยินดีรับใช้ค่ะ 👋
+นี่คือตัวอย่างรายการที่ Finny ทำได้ค่ะ
+• บันทึกรายรายการเดี่ยว หรือหลายรายการพร้อมกัน เช่น:
+  - "กินข้าว 150 ค่าแท็กซี่ 80"
+  - "เมื่อวาน ช็อปปิ้ง 1200 และได้เงินคืน 200"
+• สรุปและวิเคราะห์เงิน เช่น "วิเคราะห์" หรือ "สรุป"
+• วางแผนแบ่งเงิน 50/30/20 เช่น "แบ่งเงิน 30000"
+• วางแผนเงินสำรอง เช่น "คำนวณเงินสำรองฉุกเฉิน"
+• วางแผนใช้เงิน เช่น "มี 5000 ใช้ 20 วัน"
+• วางแผนลงทุนทบต้น เช่น "ลงทุน 50000 ดอกเบี้ย 7% นาน 15 ปี"
+
+ลองพิมพ์เป้าหมาย รายการ หรือหัวข้อที่ต้องการได้เลยค่ะ`,
+    suggestionBudget503020: "แบ่งเงิน 50/30/20",
+    suggestionEmergency: "คำนวณเงินสำรอง",
+    suggestionLunchBts: "กินข้าว 150 ค่าบีทีเอส 60",
+    suggestionSpendPlan: "มีเงิน 5000 ใช้ 20 วัน",
+    queryBudget503020: "แบ่งเงิน 30000",
+    queryEmergency: "คำนวณเงินสำรองฉุกเฉิน",
+    queryLunchBts: "กินข้าว 150 ค่าบีทีเอส 60",
+    querySpendPlan: "มีเงิน 5000 ใช้ 20 วัน",
+
+    // Split Bill
+    splitBillTitle: "เครื่องมือหารค่าใช้จ่าย (Split Bill)",
+    scanReceiptBtn: "สแกนใบเสร็จ",
+    editBillBtn: "แต่งบิล",
+    sampleBtn: "ตัวอย่าง",
+    scanningBillTitle: "ระบบกำลังอ่านและวิเคราะห์บิล...",
+    scanningBillSubtitle: "ระบบดึงรายการอาหารและราคากำลังทำงาน",
+    noBillItems: "ยังไม่มีรายการอาหาร<br/>กรุณากดสแกนใบเสร็จหรือเพิ่มข้อมูล",
+    addManualItem: "เพิ่มรายการอาหารด้วยตนเอง",
+    noSelectableItems: "ไม่มีรายการสำหรับเลือก",
+
+    // Categories
+    categoryFood: "อาหาร",
+    categoryTransport: "เดินทาง",
+    categoryShopping: "ช้อปปิ้ง",
+    categoryBills: "ค่าใช้จ่าย",
+    categoryEntertainment: "บันเทิง",
+    categoryHealth: "สุขภาพ",
+    categoryEducation: "การศึกษา",
+    categoryTravel: "ท่องเที่ยว",
+    categorySalary: "เงินเดือน",
+    categoryInvestment: "ลงทุน",
+    categoryGift: "ของขวัญ",
+    categoryOther: "อื่นๆ",
+
+    // Settings
+    taxPersonalDeductionHint: "* ค่าลดหย่อนพื้นฐานสำหรับผู้เสียภาษีทุกคน (ปกติ 60,000 บาท)",
+    months: [
+      "มกราคม",
+      "กุมภาพันธ์",
+      "มีนาคม",
+      "เมษายน",
+      "พฤษภาคม",
+      "มิถุนายน",
+      "กรกฎาคม",
+      "สิงหาคม",
+      "กันยายน",
+      "ตุลาคม",
+      "พฤศจิกายน",
+      "ธันวาคม",
+    ],
   },
   en: {
     emptyrecur: "Still totally empty!",
@@ -255,6 +356,10 @@ const dictionary = {
     foundItems: "Found {count} records!",
     noSearchResults: "Couldn't find anything matching that, sorry!",
     deleteConfirm: "Want to completely remove this one?",
+    recurringTitle: "Auto-Pilot Rules",
+    selectDate: "Pick a date",
+    exportTitle: "Export Report (PDF)",
+    exportMonth: "By Month",
     exportYear: "By Year",
     exportRange: "Pick dates manually",
     startDate: "From",
@@ -371,6 +476,107 @@ const dictionary = {
     deleteRecurringPrompt: "Want to stop repeating this?",
     deleteRecurringDesc: "If you delete this, we won't log it for you anymore.",
     invalidAmount: "Hold up, that amount looks a bit off.",
+
+    // Dashboard & Overview
+    overview: "Overview",
+    netWorth: "Net Worth",
+    assets: "Assets",
+    liabilities: "Liabilities",
+    hide: "Hide",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    expenseBreakdown: "Expense Breakdown",
+    byCategory: "By Category",
+    balanceBreakdown: "Balance Breakdown",
+    positiveBalance: "✅ Positive Balance",
+    negativeBalance: "⚠️ Negative Balance",
+    ok: "OK",
+    estimatedTaxLabel: "Estimated Tax: {amount}",
+    noDataThisMonth: "No financial data for this month",
+    noSpendingData: "No spending data",
+    dayLabel: "Day {day}",
+
+    // Transactions List & Tile
+    deleteTransaction: "Delete transaction",
+    total: "Total",
+
+    // Add Transaction & OCR/QR
+    scanReceiptTitle: "Scan receipt to add expense",
+    scanningOcrTitle: "Scanning and analyzing receipt...",
+    scanningOcrSubtitle: "Extracting prices and merchant name...",
+    titlePlaceholder: "e.g. Lunch, Salary",
+    merchantFallback: "Merchant",
+    bankFallback: "Bank",
+    transferViaBank: "Transfer via {bank}",
+    promptPayPayment: "PromptPay Payment",
+    receiptScannedSuccess: "Receipt scanned — nice!",
+    noQrOrReceiptFound: "No valid QR code or receipt text could be recognized.",
+    deleteTransactionConfirm: "Delete Transaction?",
+    validAmountWarning: "Please enter a valid amount",
+
+    // Planner
+    plannerInitMessage: `Hello! Finny is at your service 👋
+Here are examples of what Finny can do:
+• Log single or multiple transactions at once:
+  - "Lunch 150 Taxi 80"
+  - "Yesterday shopping 1200 and got refund 200"
+• Summary & analysis: "analyze" or "summary"
+• 50/30/20 budget breakdown: "split 30000"
+• Emergency fund planning: "calculate emergency fund"
+• Spending plan: "have 5000 use 20 days"
+• Compound investment: "invest 50000 7% interest 15 years"
+
+Feel free to type your target, items, or topic!`,
+    suggestionBudget503020: "50/30/20 Budget",
+    suggestionEmergency: "Emergency Fund",
+    suggestionLunchBts: "Lunch 150 BTS 60",
+    suggestionSpendPlan: "Have 5000 use 20 days",
+    queryBudget503020: "split 30000",
+    queryEmergency: "emergency fund",
+    queryLunchBts: "lunch 150 bts 60",
+    querySpendPlan: "have 5000 use 20 days",
+
+    // Split Bill
+    splitBillTitle: "Split Bill",
+    scanReceiptBtn: "Scan Receipt",
+    editBillBtn: "Edit Bill",
+    sampleBtn: "Sample",
+    scanningBillTitle: "Scanning & analyzing receipt...",
+    scanningBillSubtitle: "Extracting items and prices...",
+    noBillItems: "No items yet<br/>Please scan a receipt or add items",
+    addManualItem: "Add Item Manually",
+    noSelectableItems: "No items to select",
+
+    // Categories
+    categoryFood: "Food",
+    categoryTransport: "Transport",
+    categoryShopping: "Shopping",
+    categoryBills: "Bills",
+    categoryEntertainment: "Entertainment",
+    categoryHealth: "Health",
+    categoryEducation: "Education",
+    categoryTravel: "Travel",
+    categorySalary: "Salary",
+    categoryInvestment: "Investment",
+    categoryGift: "Gift",
+    categoryOther: "Other",
+
+    // Settings
+    taxPersonalDeductionHint: "* Standard deduction for all taxpayers (normally 60,000 THB)",
+    months: [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ],
   },
 };
 
@@ -396,4 +602,14 @@ export function t(key, vars = {}) {
 
 export function locale() {
   return getLanguage() === "en" ? "en-US" : "th-TH";
+}
+
+export function getMonthNames() {
+  const lang = getLanguage();
+  return dictionary[lang].months || dictionary.th.months;
+}
+
+export function getMonthName(index) {
+  const list = getMonthNames();
+  return list[index] || "";
 }

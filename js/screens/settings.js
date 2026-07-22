@@ -1,5 +1,5 @@
 import { store } from "../store.js";
-import { currencies } from "../currency.js";
+import { currencies, getCurrencyDisplayName } from "../currency.js";
 import { t } from "../i18n.js";
 import { alerts } from "../utils/alertHelper.js";
 import { supabase } from "../supabase.js";
@@ -31,7 +31,7 @@ export function renderSettings(container) {
     .map(
       (curr) => `
     <option value="${curr.code}" ${selectedCurrency === curr.code ? "selected" : ""}>
-      ${curr.symbol} — ${curr.name}
+      ${curr.symbol} — ${getCurrencyDisplayName(curr.code, language)}
     </option>
   `,
     )
@@ -434,7 +434,7 @@ function showTaxSettings(container) {
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Personal Deduction (Standard)" : "ค่าลดหย่อนส่วนบุคคล (ทั่วไป)"}</label>
             <input type="number" id="tax-personal" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${personal}" placeholder="60000" />
-            <small style="color: var(--text-secondary); font-size: 9.5px; display: block; margin-top: 3px;">* ค่าลดหย่อนพื้นฐานสำหรับผู้เสียภาษีทุกคน (ปกติ 60,000 บาท)</small>
+            <small style="color: var(--text-secondary); font-size: 9.5px; display: block; margin-top: 3px;">${t("taxPersonalDeductionHint")}</small>
           </div>
           
           <div class="form-group" style="margin-bottom: 0;">

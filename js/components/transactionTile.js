@@ -1,4 +1,5 @@
 import { getCategoryInfo } from "../categories.js";
+import { t, locale } from "../i18n.js";
 
 export function createTransactionTile(
   transaction,
@@ -9,9 +10,9 @@ export function createTransactionTile(
 ) {
   const cat = getCategoryInfo(transaction.category);
 
-  // Format Date: "21 พ.ค. 2026, 22:30"
+  // Format Date dynamically using locale() from i18n.js
   const dateObj = new Date(transaction.date);
-  const dateStr = dateObj.toLocaleDateString("th-TH", {
+  const dateStr = dateObj.toLocaleDateString(locale(), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -43,7 +44,7 @@ export function createTransactionTile(
     <div class="tile-amount ${transaction.isIncome ? "income" : "expense"}">
       ${amountSign}${symbol}${displayAmount}
     </div>
-    <button class="tile-delete" title="ลบรายการ" aria-label="ลบ">
+    <button class="tile-delete" title="${t("deleteTransaction")}" aria-label="${t("deleteTransaction")}">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
         <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>

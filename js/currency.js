@@ -163,3 +163,58 @@ export function getCurrencyInfo(code) {
 }
 
 export const allCodes = Object.keys(currencies);
+
+export function getCurrencyDisplayName(code, lang = 'th') {
+  const curr = currencies[code];
+  if (!curr) return code;
+  if (lang === 'en') {
+    const enNames = {
+      THB: "Thai Baht (THB)",
+      USD: "US Dollar (USD)",
+      EUR: "Euro (EUR)",
+      GBP: "British Pound (GBP)",
+      JPY: "Japanese Yen (JPY)",
+      CNY: "Chinese Yuan (CNY)",
+      KRW: "Korean Won (KRW)",
+      SGD: "Singapore Dollar (SGD)",
+      MYR: "Malaysian Ringgit (MYR)",
+      IDR: "Indonesian Rupiah (IDR)",
+      VND: "Vietnamese Dong (VND)",
+      PHP: "Philippine Peso (PHP)",
+      INR: "Indian Rupee (INR)",
+      AUD: "Australian Dollar (AUD)",
+      CAD: "Canadian Dollar (CAD)",
+      CHF: "Swiss Franc (CHF)",
+      HKD: "Hong Kong Dollar (HKD)",
+      TWD: "Taiwan Dollar (TWD)",
+      AED: "UAE Dirham (AED)",
+      SAR: "Saudi Riyal (SAR)",
+      RUB: "Russian Ruble (RUB)",
+      BRL: "Brazilian Real (BRL)",
+      MXN: "Mexican Peso (MXN)",
+      ZAR: "South African Rand (ZAR)",
+      SEK: "Swedish Krona (SEK)",
+      NOK: "Norwegian Krone (NOK)",
+      DKK: "Danish Krone (DKK)",
+      NZD: "New Zealand Dollar (NZD)",
+      TRY: "Turkish Lira (TRY)",
+      PLN: "Polish Zloty (PLN)",
+      CZK: "Czech Koruna (CZK)",
+      HUF: "Hungarian Forint (HUF)",
+      ILS: "Israeli Shekel (ILS)",
+      EGP: "Egyptian Pound (EGP)",
+      NGN: "Nigerian Naira (NGN)",
+      KES: "Kenyan Shilling (KES)",
+      BDT: "Bangladeshi Taka (BDT)",
+      PKR: "Pakistani Rupee (PKR)",
+      LKR: "Sri Lankan Rupee (LKR)",
+      MMK: "Myanmar Kyat (MMK)",
+      LAK: "Lao Kip (LAK)",
+      KHR: "Cambodian Riel (KHR)",
+      BTC: "Bitcoin (BTC)",
+      ETH: "Ethereum (ETH)",
+    };
+    return enNames[code] || curr.name;
+  }
+  return curr.name;
+}

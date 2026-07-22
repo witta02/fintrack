@@ -67,7 +67,7 @@ export function renderAddTransaction(container, params) {
         ${
           !editingTransactionId
             ? `
-          <button id="scan-receipt-btn" type="button" class="icon-btn" title="สแกนใบเสร็จเพิ่มรายจ่าย" style="color: var(--gold); border: 1px solid var(--border); border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--surface);">
+          <button id="scan-receipt-btn" type="button" class="icon-btn" title="${t("scanReceiptTitle")}" style="color: var(--gold); border: 1px solid var(--border); border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--surface);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
           </button>
         `
@@ -86,8 +86,8 @@ export function renderAddTransaction(container, params) {
     <div id="ocr-spinner-overlay" class="scanning-overlay hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 200;">
       <div class="scanning-dialog" style="background: #1C2128; border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; max-width: 280px; color: white; font-family: sans-serif;">
         <div class="scan-spinner" style="width: 48px; height: 48px; border: 3px solid rgba(255, 184, 0, 0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 16px auto;"></div>
-        <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: white;">ระบบกำลังอ่านและวิเคราะห์บิล...</h4>
-        <p style="margin: 0; font-size: 11px; opacity: 0.6; color: #9CA3AF;">ระบบดึงราคาและชื่อร้านค้ากำลังทำงาน</p>
+        <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: white;">${t("scanningOcrTitle")}</h4>
+        <p style="margin: 0; font-size: 11px; opacity: 0.6; color: #9CA3AF;">${t("scanningOcrSubtitle")}</p>
       </div>
     </div>
 
@@ -121,7 +121,7 @@ export function renderAddTransaction(container, params) {
         <input 
           type="text" 
           id="title" 
-          placeholder="เช่น ค่าอาหารกลางวัน, เงินเดือน" 
+          placeholder="${t("titlePlaceholder")}" 
           required 
           class="form-control" 
           value="${escapeHTML(displayTitle)}"
@@ -401,7 +401,7 @@ function setupFormListeners(container) {
             const parsed = parseReceiptText(rawText);
 
             // Pre-fill form fields
-            container.querySelector("#title").value = parsed.payee || "ร้านค้า";
+            container.querySelector("#title").value = parsed.payee || t("merchantFallback");
             if (parsed.total > 0) {
               container.querySelector("#amount").value =
                 parsed.total.toFixed(2);
@@ -420,18 +420,14 @@ function setupFormListeners(container) {
             renderCategoryPicker(container);
 
             alerts.success(
-              store.settings.language === "en"
-              ? `Receipt scanned — nice!`
-              : `สแกนใบเสร็จเสร็จแล้ว เรื่ด!`,
+              t("receiptScannedSuccess"),
               parsed.payee,
             );
           }
         } catch (ocrErr) {
           console.error("Local OCR failed:", ocrErr);
           alerts.error(
-            store.settings.language === "en"
-              ? "No valid QR code or receipt text could be recognized."
-              : "ไม่พบ QR Code หรือข้อมูลบิลที่ถูกต้องบนรูปภาพนี้",
+            t("noQrOrReceiptFound"),
           );
         } finally {
           spinner.classList.add("hidden");
@@ -445,9 +441,7 @@ function setupFormListeners(container) {
   if (delBtn) {
     delBtn.addEventListener("click", async () => {
       const isConfirmed = await alerts.confirmDelete(
-        store.settings.language === "en"
-          ? "Delete Transaction?"
-          : "ต้องการลบรายการใช่หรือไม่?",
+        t("deleteTransactionConfirm"),
         t("deleteConfirm"),
       );
       if (isConfirmed) {
@@ -467,9 +461,7 @@ function setupFormListeners(container) {
 
     if (isNaN(amountVal) || amountVal <= 0) {
       alerts.warning(
-        store.settings.language === "en"
-          ? "Please enter a valid amount"
-          : "กรุณากรอกจำนวนเงินให้ถูกต้อง",
+        t("validAmountWarning"),
       );
       return;
     }
@@ -609,7 +601,7 @@ function parseSlipQR(qrData) {
       "065": "ธนาคารอาคารสงเคราะห์",
       "073": "ธนาคารแลนด์ แอนด์ เฮ้าส์",
     };
-    const bankName = bankMap[sendingBankCode] || "ธนาคาร";
+    const bankName = bankMap[sendingBankCode] || t("bankFallback");
 
     // Parse date from ref (YYYYMMDDHHmm)
     let parsedDate = "";
@@ -622,7 +614,7 @@ function parseSlipQR(qrData) {
 
     return {
       type: "slip",
-      title: `โอนเงินผ่าน${bankName}`,
+      title: t("transferViaBank", { bank: bankName }),
       amount: amountVal,
       date: parsedDate,
       bankCode: sendingBankCode,
@@ -635,7 +627,7 @@ function parseSlipQR(qrData) {
     const amountVal = outerTags["54"] ? parseFloat(outerTags["54"]) : null;
     return {
       type: "payment",
-      title: "สแกนจ่ายพร้อมเพย์",
+      title: t("promptPayPayment"),
       amount: amountVal,
       date: "",
       ref: "",

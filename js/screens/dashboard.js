@@ -5,7 +5,7 @@ import {
   renderCategoryPieChart,
 } from "../components/spendingChart.js";
 import { createTransactionTile } from "../components/transactionTile.js";
-import { t } from "../i18n.js";
+import { t, locale, getMonthNames } from "../i18n.js";
 import { convertToTHB } from "../currency.js";
 import { alerts } from "../utils/alertHelper.js";
 import VanillaTilt from "vanilla-tilt";
@@ -83,7 +83,7 @@ export function renderDashboard(container) {
         <div style="display: flex; align-items: center; gap: 10px;">
           <div>
             <h1 class="brand-title shimmer-text desktop-hide" style="font-size: 26px; font-weight: 900; letter-spacing: -1px; margin-bottom: 0;">FinTrack</h1>
-            <h1 class="screen-title-desktop desktop-only" style="font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin-bottom: 0;">ภาพรวม</h1>
+            <h1 class="screen-title-desktop desktop-only" style="font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin-bottom: 0;">${t("overview")}</h1>
             <div class="greeting-text desktop-hide" style="font-size: 12px; color: var(--text-secondary); margin-top: 3px; display: inline-flex; align-items: center; gap: 6px;">
               ${greetingData.svg}
               <span>${greetingData.text}</span>
@@ -137,7 +137,7 @@ export function renderDashboard(container) {
               <span style="font-size: 9px; color: var(--gold); font-weight: 800; background: rgba(245,200,66,0.12); padding: 1px 4px; border-radius: 4px;">${t("tax")}</span>
             </div>
             <div class="balance-item-value" id="card-income">฿0.00</div>
-            <div class="balance-item-tax" id="card-income-tax">ภาษี ฿0.00</div>
+            <div class="balance-item-tax" id="card-income-tax">${t("tax")} ฿0.00</div>
           </div>
         </div>
         <div class="balance-item expense">
@@ -159,13 +159,13 @@ export function renderDashboard(container) {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
         <div style="text-align: left;">
-          <div style="font-size: 11.5px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">ความมั่งคั่งสุทธิ (Net Worth)</div>
+          <div style="font-size: 11.5px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">${t("netWorth")}</div>
           <div style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin-top: 2px;" id="dashboard-net-worth">฿0.00</div>
         </div>
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-        <div style="font-size: 10px; color: var(--income); font-weight: 600;" id="dashboard-net-assets">สินทรัพย์: ฿0.00</div>
-        <div style="font-size: 10px; color: var(--expense); font-weight: 600;" id="dashboard-net-liabilities">หนี้สิน: ฿0.00</div>
+        <div style="font-size: 10px; color: var(--income); font-weight: 600;" id="dashboard-net-assets">${t("assets")}: ฿0.00</div>
+        <div style="font-size: 10px; color: var(--expense); font-weight: 600;" id="dashboard-net-liabilities">${t("liabilities")}: ฿0.00</div>
       </div>
     </div>
 
@@ -182,7 +182,7 @@ export function renderDashboard(container) {
           <div class="eyebrow">${t("starterEyebrow")}</div>
           <h2>${t("starterTitle")}</h2>
         </div>
-        <button id="dismiss-starter-btn" class="icon-btn" title="ซ่อน">
+        <button id="dismiss-starter-btn" class="icon-btn" title="${t("hide")}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
       </div>
@@ -229,16 +229,13 @@ export function renderDashboard(container) {
 
           <div class="analysis-controls">
             <select id="analysis-period-select" class="analysis-select">
-              <option value="monthly" ${analysisPeriod === "monthly" ? "selected" : ""}>รายเดือน</option>
-              <option value="yearly" ${analysisPeriod === "yearly" ? "selected" : ""}>รายปี</option>
+              <option value="monthly" ${analysisPeriod === "monthly" ? "selected" : ""}>${t("monthly")}</option>
+              <option value="yearly" ${analysisPeriod === "yearly" ? "selected" : ""}>${t("yearly")}</option>
             </select>
             <select id="analysis-month-select" class="analysis-select ${analysisPeriod !== "monthly" ? "hidden" : ""}">
-              ${Array.from(
-                { length: 12 },
-                (_, i) => `
-                <option value="${i}" ${analysisMonth === i ? "selected" : ""}>${new Date(2000, i).toLocaleString("th-TH", { month: "long" })}</option>
-              `,
-              ).join("")}
+              ${getMonthNames().map((mName, i) => `
+                <option value="${i}" ${analysisMonth === i ? "selected" : ""}>${mName}</option>
+              `).join("")}
             </select>
           </div>
 
@@ -249,8 +246,8 @@ export function renderDashboard(container) {
 
         <!-- Category Pie Card -->
         <div class="card pie-chart-card">
-          <div class="section-eyebrow" style="margin-bottom: 4px;">สัดส่วนรายจ่าย</div>
-          <h3 class="card-title" style="font-size: 15px; margin-bottom: 14px;">แยกตามหมวดหมู่</h3>
+          <div class="section-eyebrow" style="margin-bottom: 4px;">${t("expenseBreakdown")}</div>
+          <h3 class="card-title" style="font-size: 15px; margin-bottom: 14px;">${t("byCategory")}</h3>
           <div style="height: 200px; width: 100%;">
             <canvas id="category-pie-chart-canvas"></canvas>
           </div>
@@ -341,7 +338,7 @@ function showBalancePopup(container) {
   modal.innerHTML = `
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3 class="modal-title">รายละเอียดยอดคงเหลือ</h3>
+        <h3 class="modal-title">${t("balanceBreakdown")}</h3>
         <button class="modal-close-btn">×</button>
       </div>
       <div class="amount-popup-content">
@@ -350,10 +347,10 @@ function showBalancePopup(container) {
           ${symbol}${Math.abs(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
         <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
-          ${isPositive ? "✅ ยอดคงเหลือเป็นบวก" : "⚠️ ยอดคงเหลือติดลบ"}
+          ${isPositive ? t("positiveBalance") : t("negativeBalance")}
         </div>
       </div>
-      <button class="btn-primary modal-ok-btn" style="margin-top: 24px;">ตกลง</button>
+      <button class="btn-primary modal-ok-btn" style="margin-top: 24px;">${t("ok")}</button>
     </div>
   `;
 
@@ -726,7 +723,7 @@ function updateUI(container) {
   const taxAmountTHB = store.calculateThaiTax(yearlyIncomeInTHB);
   const taxAmountDisplay = store.toDisplay(taxAmountTHB);
   container.querySelector("#card-income-tax").textContent =
-    `ประมาณการภาษี: ${formatVal(taxAmountDisplay)}`;
+    t("estimatedTaxLabel", { amount: formatVal(taxAmountDisplay) });
 
   // Update Net Worth elements
   const netWorth = store.getNetWorth();

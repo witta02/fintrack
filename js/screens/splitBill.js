@@ -410,22 +410,22 @@ export function renderSplitBill(container) {
           <button id="split-back-btn" class="icon-btn" style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           </button>
-          <h1>เครื่องมือหารค่าใช้จ่าย (Split Bill)</h1>
+          <h1>${t("splitBillTitle")}</h1>
         </div>
 
         <!-- Action Panel -->
         <div class="scanning-control-panel">
           <button id="btn-snap-receipt" class="panel-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-            สแกนใบเสร็จ
+            ${t("scanReceiptBtn")}
           </button>
           <button id="btn-edit-bill-meta" class="panel-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            แต่งบิล
+            ${t("editBillBtn")}
           </button>
           <button id="btn-reset-sample" class="panel-btn" style="color: var(--gold); border-color: rgba(255,184,0,0.2);">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-            ตัวอย่าง
+            ${t("sampleBtn")}
           </button>
         </div>
 
@@ -442,8 +442,8 @@ export function renderSplitBill(container) {
       <div id="ocr-spinner-overlay" class="scanning-overlay hidden">
         <div class="scanning-dialog">
           <div class="scan-spinner"></div>
-          <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700;">ระบบกำลังอ่านและวิเคราะห์บิล...</h4>
-          <p style="margin: 0; font-size: 11px; opacity: 0.6;">ระบบดึงรายการอาหารและราคากำลังทำงาน</p>
+          <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700;">${t("scanningBillTitle")}</h4>
+          <p style="margin: 0; font-size: 11px; opacity: 0.6;">${t("scanningBillSubtitle")}</p>
         </div>
       </div>
 
@@ -536,7 +536,7 @@ function renderReceiptPaper(container) {
   if (items.length === 0) {
     itemsHTML = `
       <div style="text-align: center; color: #9CA3AF; padding: 30px 0;">
-        ยังไม่มีรายการอาหาร<br/>กรุณากดสแกนใบเสร็จหรือเพิ่มข้อมูล
+        ${t("noBillItems")}
       </div>
     `;
   } else {
@@ -579,7 +579,7 @@ function renderReceiptPaper(container) {
   }
 
   paper.innerHTML = `
-    <div class="receipt-title">${escapeHTML(payee || "ร้านค้า")}</div>
+    <div class="receipt-title">${escapeHTML(payee || t("merchantFallback"))}</div>
     ${addressHTML}
     ${metaHTML}
     
@@ -622,7 +622,7 @@ function renderReceiptPaper(container) {
 
     <button id="receipt-add-item-btn" class="add-manual-btn">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      เพิ่มรายการอาหารด้วยตนเอง
+      ${t("addManualItem")}
     </button>
   `;
 
@@ -661,7 +661,7 @@ function renderShareSheetChecklist(container) {
   if (items.length === 0) {
     checklist.innerHTML = `
       <div style="text-align: center; color: rgba(255,255,255,0.2); padding: 40px 0; font-size: 13px;">
-        ไม่มีรายการสำหรับเลือก
+        ${t("noSelectableItems")}
       </div>
     `;
     updatePayButton(container);

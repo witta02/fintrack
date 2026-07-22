@@ -1,4 +1,5 @@
 import Chart from "chart.js/auto";
+import { t } from "../i18n.js";
 
 let chartInstance = null;
 
@@ -40,7 +41,7 @@ export function renderSpendingChart(
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(
-      "ยังไม่มีข้อมูลการเงินในเดือนนี้",
+      t("noDataThisMonth"),
       canvasElement.width / 2,
       canvasElement.height / 2,
     );
@@ -65,7 +66,7 @@ export function renderSpendingChart(
       labels: labels,
       datasets: [
         {
-          label: "รายจ่าย",
+          label: t("expense"),
           data: expenseData,
           backgroundColor: expenseColor,
           borderRadius: 6,
@@ -74,7 +75,7 @@ export function renderSpendingChart(
           categoryPercentage: 0.8,
         },
         {
-          label: "รายรับ",
+          label: t("income"),
           data: incomeData,
           backgroundColor: incomeColor,
           borderRadius: 6,
@@ -110,7 +111,7 @@ export function renderSpendingChart(
           boxPadding: 4,
           callbacks: {
             title: (items) => {
-              return `วันที่ ${items[0].label}`;
+              return t("dayLabel", { day: items[0].label });
             },
             label: (item) => {
               return ` ${item.dataset.label}: ${symbol}${item.raw.toLocaleString()}`;
@@ -185,7 +186,7 @@ export function renderCategoryPieChart(canvasElement, categoryData, symbol) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(
-      "ยังไม่มีข้อมูลการใช้จ่าย",
+      t("noSpendingData"),
       canvasElement.width / 2,
       canvasElement.height / 2,
     );

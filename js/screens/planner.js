@@ -7,18 +7,7 @@ let messages = [
   {
     id: "init-msg",
     isUser: false,
-    text: `สวัสดีค่ะ! Finny ยินดีรับใช้ค่ะ 👋
-    นี่คือตัวอย่างรายการที่ Finny ทำได้ค่ะ
-• บันทึกรายรายการเดี่ยว หรือหลายรายการพร้อมกัน เช่น:
-  - "กินข้าว 150 ค่าแท็กซี่ 80"
-  - "เมื่อวาน ช็อปปิ้ง 1200 และได้เงินคืน 200"
-• สรุปและวิเคราะห์เงิน เช่น "วิเคราะห์" หรือ "สรุป"
-• วางแผนแบ่งเงิน 50/30/20 เช่น "แบ่งเงิน 30000"
-• วางแผนเงินสำรอง เช่น "คำนวณเงินสำรองฉุกเฉิน"
-• วางแผนใช้เงิน เช่น "มี 5000 ใช้ 20 วัน"
-• วางแผนลงทุนทบต้น เช่น "ลงทุน 50000 ดอกเบี้ย 7% นาน 15 ปี"
-
-ลองพิมพ์เป้าหมาย รายการ หรือหัวข้อที่ต้องการได้เลยค่ะ`,
+    text: t("plannerInitMessage"),
   },
 ];
 
@@ -26,6 +15,25 @@ let renderedCount = 0;
 
 export function renderPlanner(container) {
   renderedCount = 0; // Reset counter to redraw chat history upon screen load
+  messages = [
+    {
+      id: "init-msg",
+      isUser: false,
+      text: t("plannerInitMessage"),
+    },
+  ];
+
+  const suggestions = [
+    { val: t("queryBudget503020"), label: t("suggestionBudget503020") },
+    { val: t("queryEmergency"), label: t("suggestionEmergency") },
+    { val: t("queryLunchBts"), label: t("suggestionLunchBts") },
+    { val: t("querySpendPlan"), label: t("suggestionSpendPlan") },
+  ];
+  const suggestionHTML = suggestions
+    .map(
+      (s) => `<button class="chat-suggestion" data-val="${s.val}">${s.label}</button>`,
+    )
+    .join("");
 
   container.innerHTML = `
     <style>
@@ -95,10 +103,7 @@ export function renderPlanner(container) {
       <!-- Input area with suggestions inside -->
       <div class="chat-input-area">
         <div id="suggestion-chips-container" class="chat-suggestions">
-          <button class="chat-suggestion" data-val="แบ่งเงิน 30000">แบ่งเงิน 50/30/20</button>
-          <button class="chat-suggestion" data-val="คำนวณเงินสำรองฉุกเฉิน">คำนวณเงินสำรอง</button>
-          <button class="chat-suggestion" data-val="กินข้าว 150 ค่าบีทีเอส 60">กินข้าว 150 ค่าบีทีเอส 60</button>
-          <button class="chat-suggestion" data-val="มีเงิน 5000 ใช้ 20 วัน">มีเงิน 5000 ใช้ 20 วัน</button>
+          ${suggestionHTML}
         </div>
         
         <form id="chat-form" class="chat-input-form">

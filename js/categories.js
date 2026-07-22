@@ -1,4 +1,4 @@
-import { getLanguage } from "./i18n.js";
+import { t } from "./i18n.js";
 import { store } from "./store.js";
 
 export const categoryColors = {
@@ -17,32 +17,40 @@ export const categoryColors = {
 };
 
 const baseExpenseCategories = [
-  { name: "Food", icon: "lucide-utensils", emoji: "🍔", label: "อาหาร" },
-  { name: "Transport", icon: "lucide-car", emoji: "🚗", label: "เดินทาง" },
-  { name: "Shopping", icon: "lucide-shopping-bag", emoji: "🛍️", label: "ช้อปปิ้ง" },
-  { name: "Bills", icon: "lucide-receipt", emoji: "🧾", label: "ค่าใช้จ่าย" },
-  { name: "Entertainment", icon: "lucide-film", emoji: "🎬", label: "บันเทิง" },
-  { name: "Health", icon: "lucide-heart", emoji: "🏥", label: "สุขภาพ" },
-  { name: "Education", icon: "lucide-graduation-cap", emoji: "🎓", label: "การศึกษา" },
-  { name: "Travel", icon: "lucide-plane", emoji: "✈️", label: "ท่องเที่ยว" },
-  { name: "Other", icon: "lucide-grid", emoji: "📦", label: "อื่นๆ" },
+  { name: "Food", icon: "lucide-utensils", emoji: "🍔", i18nKey: "categoryFood" },
+  { name: "Transport", icon: "lucide-car", emoji: "🚗", i18nKey: "categoryTransport" },
+  { name: "Shopping", icon: "lucide-shopping-bag", emoji: "🛍️", i18nKey: "categoryShopping" },
+  { name: "Bills", icon: "lucide-receipt", emoji: "🧾", i18nKey: "categoryBills" },
+  { name: "Entertainment", icon: "lucide-film", emoji: "🎬", i18nKey: "categoryEntertainment" },
+  { name: "Health", icon: "lucide-heart", emoji: "🏥", i18nKey: "categoryHealth" },
+  { name: "Education", icon: "lucide-graduation-cap", emoji: "🎓", i18nKey: "categoryEducation" },
+  { name: "Travel", icon: "lucide-plane", emoji: "✈️", i18nKey: "categoryTravel" },
+  { name: "Other", icon: "lucide-grid", emoji: "📦", i18nKey: "categoryOther" },
 ];
 
 const baseIncomeCategories = [
-  { name: "Salary", icon: "lucide-wallet", emoji: "💰", label: "เงินเดือน" },
-  { name: "Investment", icon: "lucide-trending-up", emoji: "📈", label: "ลงทุน" },
-  { name: "Gift", icon: "lucide-gift", emoji: "🎁", label: "ของขวัญ" },
-  { name: "Other", icon: "lucide-grid", emoji: "➕", label: "อื่นๆ" },
+  { name: "Salary", icon: "lucide-wallet", emoji: "💰", i18nKey: "categorySalary" },
+  { name: "Investment", icon: "lucide-trending-up", emoji: "📈", i18nKey: "categoryInvestment" },
+  { name: "Gift", icon: "lucide-gift", emoji: "🎁", i18nKey: "categoryGift" },
+  { name: "Other", icon: "lucide-grid", emoji: "➕", i18nKey: "categoryOther" },
 ];
 
 export function getExpenseCategories() {
   const custom = (store.settings.customCategories || []).filter(c => !c.isIncome);
-  return [...baseExpenseCategories, ...custom];
+  const localizedBase = baseExpenseCategories.map(c => ({
+    ...c,
+    label: t(c.i18nKey)
+  }));
+  return [...localizedBase, ...custom];
 }
 
 export function getIncomeCategories() {
   const custom = (store.settings.customCategories || []).filter(c => c.isIncome);
-  return [...baseIncomeCategories, ...custom];
+  const localizedBase = baseIncomeCategories.map(c => ({
+    ...c,
+    label: t(c.i18nKey)
+  }));
+  return [...localizedBase, ...custom];
 }
 
 export function getCategoryInfo(name) {
@@ -60,29 +68,30 @@ export function getCategoryInfo(name) {
     };
   }
 
-  const englishLabels = {
-    Food: "Food",
-    Transport: "Transport",
-    Shopping: "Shopping",
-    Salary: "Salary",
-    Bills: "Bills",
-    Entertainment: "Entertainment",
-    Health: "Health",
-    Education: "Education",
-    Investment: "Investment",
-    Gift: "Gift",
-    Travel: "Travel",
-    Other: "Other",
+  const i18nKeyMap = {
+    Food: "categoryFood",
+    Transport: "categoryTransport",
+    Shopping: "categoryShopping",
+    Salary: "categorySalary",
+    Bills: "categoryBills",
+    Entertainment: "categoryEntertainment",
+    Health: "categoryHealth",
+    Education: "categoryEducation",
+    Investment: "categoryInvestment",
+    Gift: "categoryGift",
+    Travel: "categoryTravel",
+    Other: "categoryOther",
   };
-  const isEnglish = getLanguage() === "en";
+
   return {
     name: name,
-    label: isEnglish
-      ? englishLabels[name] || "Other"
-      : cat
-        ? cat.label
-        : "อื่นๆ",
+    label: t(i18nKeyMap[name] || "categoryOther"),
     icon: cat ? cat.icon : "lucide-grid",
+    emoji: cat ? cat.emoji : "📦",
+    svg: getCategorySvg(name),
+    color: categoryColors[name] || "#FFB800",
+  };
+}
     emoji: cat ? cat.emoji : "📦",
     svg: getCategorySvg(name),
     color: categoryColors[name] || "#FFB800",

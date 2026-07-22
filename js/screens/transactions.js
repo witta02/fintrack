@@ -70,7 +70,7 @@ export function renderTransactions(container) {
         </select>
       </div>
       <div class="date-picker-wrapper" style="flex: 1; min-width: 140px; position: relative;">
-        <input type="text" id="date-filter-input" class="form-control" placeholder="${t("selectDate") || "เลือกวันที่"}" style="padding: 12px 16px; font-size: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); width: 100%;" />
+        <input type="text" id="date-filter-input" class="form-control" placeholder="${t("selectDate")}" style="padding: 12px 16px; font-size: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); width: 100%;" />
         <button id="clear-date-btn" class="clear-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--border); color: var(--text-primary); border: none; border-radius: 50%; width: 24px; height: 24px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 2;">&times;</button>
       </div>
     </div>
@@ -317,7 +317,7 @@ function updateUI(container) {
         <div style="display: flex; gap: 8px; align-items: center; background: var(--surface); padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
             ${breakdownHtml}
             <div style="font-size: 13px; font-weight: 700; color: ${totalColor}; display: flex; align-items: center; gap: 5px;">
-                <span style="font-size: 10px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">รวม</span>
+                <span style="font-size: 10px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${t("total")}</span>
                 <span>${totalSign}${symbol}${totalText}</span>
             </div>
         </div>
