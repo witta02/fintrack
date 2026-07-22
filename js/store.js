@@ -5,6 +5,7 @@ import {
   getCurrencyInfo,
 } from "./currency.js";
 import { supabase } from "./supabase.js";
+import { t as i18n } from "./i18n.js";
 
 // Simple pub/sub system for store updates
 const listeners = new Set();
@@ -807,7 +808,7 @@ export const store = {
   addTransaction(t) {
     const transaction = {
       id: t.id || Math.random().toString(36).substring(2, 11),
-      title: t.title || "ไม่มีชื่อรายการ",
+      title: t.title || i18n("untitledTransaction"),
       amount: parseFloat(t.amount) || 0,
       isIncome: !!t.isIncome,
       category: t.category || "Other",
@@ -833,7 +834,7 @@ export const store = {
 
     // Trigger browser notifications if enabled/allowed
     this.triggerNotification(
-      transaction.isIncome ? "บันทึกรายรับแล้ว" : "บันทึกรายจ่ายแล้ว",
+      transaction.isIncome ? i18n("notiSavedIncome") : i18n("notiSavedExpense"),
       `${transaction.title}: ${this.getCurrencySymbol()}${this.toDisplay(transaction.amount).toFixed(2)}`,
     );
   },
@@ -888,7 +889,7 @@ export const store = {
     const paidAmount = Math.min(parseFloat(plan.paidAmount) || 0, totalAmount);
     this.downPayments.push({
       id: Math.random().toString(36).substring(2, 11),
-      title: plan.title?.trim() || "รายการดาวน์",
+      title: plan.title?.trim() || i18n("untitledDownPayment"),
       totalAmount,
       paidAmount,
       dueDate: plan.dueDate ? new Date(`${plan.dueDate}T12:00:00`) : null,
@@ -919,7 +920,7 @@ export const store = {
   addRecurringRule(rule) {
     const newRule = {
       id: Math.random().toString(36).substring(2, 11),
-      title: rule.title || "ไม่มีชื่อรายการประจำ",
+      title: rule.title || i18n("untitledRecurring"),
       amount: parseFloat(rule.amount) || 0,
       isIncome: !!rule.isIncome,
       category: rule.category || "Other",
@@ -949,8 +950,8 @@ export const store = {
     }
 
     this.triggerNotification(
-      "ตั้งค่ารายการประจำแล้ว",
-      `เราจะช่วยบันทึกเมื่อถึงกำหนด: ${newRule.title}`,
+      i18n("notiRecurringSetTitle"),
+      i18n("notiRecurringSetBody", { title: newRule.title }),
     );
   },
 
@@ -1057,8 +1058,8 @@ export const store = {
     if (addedCount > 0) {
       this.save();
       this.triggerNotification(
-        "มีการชำระเงินอัตโนมัติ",
-        `บันทึกรายการประจำเสร็จสิ้นจำนวน ${addedCount} รายการ`,
+        i18n("notiAutoPayTitle"),
+        i18n("notiAutoPayBody", { count: addedCount }),
       );
     }
   },

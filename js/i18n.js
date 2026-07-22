@@ -276,6 +276,18 @@ const dictionary = {
 
     // Settings
     taxPersonalDeductionHint: "* ค่าลดหย่อนพื้นฐานสำหรับผู้เสียภาษีทุกคน (ปกติ 60,000 บาท)",
+
+    // Store fallbacks & notifications
+    untitledTransaction: "ไม่มีชื่อรายการ",
+    untitledDownPayment: "รายการดาวน์",
+    untitledRecurring: "ไม่มีชื่อรายการประจำ",
+    notiSavedIncome: "บันทึกรายรับแล้ว",
+    notiSavedExpense: "บันทึกรายจ่ายแล้ว",
+    notiRecurringSetTitle: "ตั้งค่ารายการประจำแล้ว",
+    notiRecurringSetBody: "เราจะช่วยบันทึกเมื่อถึงกำหนด: {title}",
+    notiAutoPayTitle: "มีการชำระเงินอัตโนมัติ",
+    notiAutoPayBody: "บันทึกรายการประจำเสร็จสิ้นจำนวน {count} รายการ",
+
     months: [
       "มกราคม",
       "กุมภาพันธ์",
@@ -563,6 +575,18 @@ Feel free to type your target, items, or topic!`,
 
     // Settings
     taxPersonalDeductionHint: "* Standard deduction for all taxpayers (normally 60,000 THB)",
+
+    // Store fallbacks & notifications
+    untitledTransaction: "Untitled Transaction",
+    untitledDownPayment: "Down Payment Item",
+    untitledRecurring: "Untitled Recurring Item",
+    notiSavedIncome: "Income Saved",
+    notiSavedExpense: "Expense Saved",
+    notiRecurringSetTitle: "Recurring Rule Set Up",
+    notiRecurringSetBody: "We'll auto-log this when it's due: {title}",
+    notiAutoPayTitle: "Auto-Payment Processed",
+    notiAutoPayBody: "Logged {count} recurring item(s) automatically",
+
     months: [
       "January",
       "February",
