@@ -36,7 +36,7 @@ export function renderAuth(container) {
 
             <div style="text-align: right; margin-top: -8px; margin-bottom: 16px;">
               <button type="button" id="auth-forgot-btn" style="background: none; border: none; color: var(--gold); font-size: 12px; font-weight: 700; cursor: pointer; transition: color var(--transition);">
-                ${store.settings.language === "en" ? "Forgot Password?" : "ลืมรหัสผ่านใช่หรือไม่?"}
+                ${t("forgotPassword")}
               </button>
             </div>
 
@@ -48,7 +48,7 @@ export function renderAuth(container) {
 
           <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; padding: 10px; background: rgba(52, 211, 153, 0.06); border: 1px solid rgba(52, 211, 153, 0.18); border-radius: 12px; color: var(--income); font-size: 11.5px; font-weight: 600; text-align: center; line-height: 1.3;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>${store.settings.language === "en" ? "Secured Cloud: Only you can access your data" : "ระบบคลาวด์ปลอดภัย: มีเพียงคุณเท่านั้นที่เข้าถึงข้อมูลได้"}</span>
+            <span>${t("cloudSecure")}</span>
           </div>
         </div>
 
@@ -56,7 +56,7 @@ export function renderAuth(container) {
         <div style="text-align: center; margin-top: 20px;">
           <button id="auth-back-btn" style="background: none; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: color var(--transition); display: inline-flex; align-items: center; gap: 6px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            ${store.settings.language === "en" ? "Back to Home" : "กลับไปหน้าแรก"}
+            ${t("backToHome")}
           </button>
         </div>
       </div>
@@ -167,15 +167,13 @@ function setupEventListeners(container) {
         });
         if (error) {
           alerts.error(
-            lang === "en" ? "Reset Failed" : "ล้มเหลว",
+            t("resetFailed"),
             translateAuthError(error.message, lang),
           );
         } else {
           alerts.success(
-            lang === "en" ? "Link Sent" : "ส่งลิงก์สำเร็จ",
-            lang === "en"
-              ? "A reset password link has been sent to your email address."
-              : "เราได้ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว กรุณาตรวจสอบและดำเนินการต่อ",
+            t("linkSent"),
+            t("resetLinkSentBody"),
           );
         }
       }
@@ -188,7 +186,7 @@ function setupEventListeners(container) {
     const password = container.querySelector("#auth-password").value;
 
     submitBtn.disabled = true;
-    btnText.textContent = lang === "en" ? "Processing..." : "กำลังดำเนินการ...";
+    btnText.textContent = t("processing");
     spinner.classList.remove("hidden");
 
     try {
@@ -256,7 +254,7 @@ function setupEventListeners(container) {
       }
     } catch (err) {
       console.error(err);
-      alerts.error(lang === "en" ? "Failure" : "ล้มเหลว", err.message);
+      alerts.error(t("failure"), err.message);
       submitBtn.disabled = false;
       btnText.textContent = t("authTitleCombined");
       spinner.classList.add("hidden");

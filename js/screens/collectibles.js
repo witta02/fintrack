@@ -1,5 +1,5 @@
 import { store } from "../store.js";
-import { getLanguage } from "../i18n.js";
+import { t, getLanguage } from "../i18n.js";
 import { router } from "../router.js";
 
 // Master list of all possible collectibles
@@ -50,19 +50,19 @@ export function renderCollectibles(container) {
         <button class="back-btn" style="background: transparent; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface);">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <h1 class="brand-title" style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0;">${lang === 'en' ? 'The Vault' : 'ห้องนิรภัย'}</h1>
+        <h1 class="brand-title" style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0;">${t('theVault')}</h1>
       </div>
     </div>
 
     <!-- Collection Progress -->
     <div style="background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 24px; text-align: center;">
-      <div style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">${lang === 'en' ? 'Collection Progress' : 'ความคืบหน้าของสะสม'}</div>
+      <div style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">${t('collectionProgress')}</div>
       <div style="font-size: 24px; font-weight: 800; color: var(--gold); margin-bottom: 12px;">${progressPercent}%</div>
       <div style="height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; width: 100%;">
         <div style="height: 100%; width: ${progressPercent}%; background: linear-gradient(90deg, var(--gold), var(--amber)); border-radius: 4px;"></div>
       </div>
       <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
-        ${ownedCount} / ${totalItems} ${lang === 'en' ? 'Found' : 'ค้นพบแล้ว'}
+        ${ownedCount} / ${totalItems} ${t('foundLabel')}
       </div>
     </div>
 

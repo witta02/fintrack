@@ -164,12 +164,8 @@ function printReport(container) {
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
     alerts.warning(
-      store.settings.language === "en"
-        ? "Popups Blocked"
-        : "การแสดงป๊อปอัปถูกบล็อก",
-      store.settings.language === "en"
-        ? "Please allow popups to print the report."
-        : "กรุณาอนุญาตให้แสดงหน้าต่างป๊อปอัปเพื่อพิมพ์รายงาน",
+      t("popupBlockedTitle"),
+      t("popupBlockedBody"),
     );
     return;
   }

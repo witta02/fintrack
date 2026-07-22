@@ -40,7 +40,7 @@ export function renderSettings(container) {
   const currentTheme = store.settings.theme || (store.settings.isDarkMode ? "dark" : "light");
   const unlockedThemes = store.settings.unlockedThemes || ["light", "dark"];
   
-  const renderThemeOption = (themeId, enName, thName) => {
+  const renderThemeOption = (themeId, label) => {
     const isLocked = !unlockedThemes.includes(themeId);
     const isSelected = currentTheme === themeId;
     const lockedStyle = isLocked ? "opacity: 0.5; filter: grayscale(100%); cursor: pointer;" : "cursor: pointer;";
@@ -48,9 +48,9 @@ export function renderSettings(container) {
     
     return `
       <div class="theme-option" data-theme-id="${themeId}" data-locked="${isLocked}" style="padding: 10px; border-radius: 12px; background: var(--surface); text-align: center; transition: all var(--transition); ${lockedStyle} ${borderStyle}">
-        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">${store.settings.language === 'en' ? enName : thName}</div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">${label}</div>
         <div style="font-size: 10px; color: var(--text-secondary);">
-          ${isLocked ? `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-bottom:-1px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 🔒` : (isSelected ? (store.settings.language === 'en' ? 'Active' : 'ใช้งานอยู่') : (store.settings.language === 'en' ? 'Select' : 'เลือก'))}
+          ${isLocked ? `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-bottom:-1px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 🔒` : (isSelected ? t('themeActive') : t('themeSelect'))}
         </div>
       </div>
     `;
@@ -91,7 +91,7 @@ export function renderSettings(container) {
     </div>
 
     <!-- 1. Account & Security Group -->
-    <div class="settings-group-title">${store.settings.language === 'en' ? 'Your Account & Security' : 'บัญชีและความปลอดภัยของคุณ'}</div>
+    <div class="settings-group-title">${t('accountAndSecurity')}</div>
     <div class="settings-list-card">
       ${store.user ? `
       <!-- Logged In State -->
@@ -102,7 +102,7 @@ export function renderSettings(container) {
         </div>
         <div style="display: flex; gap: 8px; width: 100%;">
           <button id="auth-changepwd-btn" style="flex: 1; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;">
-            ${store.settings.language === 'en' ? 'Change Password' : 'เปลี่ยนรหัสผ่านใหม่'}
+            ${t('changePassword')}
           </button>
           <button id="auth-signout-btn" style="flex: 1; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); color: var(--expense); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;">
             ${t('signOut')}
@@ -114,7 +114,7 @@ export function renderSettings(container) {
       <div class="settings-list-row" style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
         <div>
           <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${t('signIn')} / ${t('signUp')}</div>
-          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${store.settings.language === 'en' ? 'Log in to enable Cloud Sync' : 'ล็อกอินเพื่อใช้ Cloud Sync เลย!'}</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${t('loginForCloudSync')}</div>
         </div>
         <button id="auth-login-btn" class="btn-primary" style="padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer;">
           ${t('signIn')}
@@ -131,7 +131,7 @@ export function renderSettings(container) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--expense)" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
             </div>
             <div>
-              <div style="font-size: 13px; font-weight: 600; color: var(--expense);">${store.settings.language === 'en' ? 'Delete Cloud Backup' : 'ลบข้อมูลบนคลาวด์'}</div>
+              <div style="font-size: 13px; font-weight: 600; color: var(--expense);">${t('deleteCloudBackup')}</div>
             </div>
           </div>
           <button id="delete-cloud-data-btn" style="border: 1px solid var(--expense); background: transparent; color: var(--expense); padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">Delete</button>
@@ -141,7 +141,7 @@ export function renderSettings(container) {
     </div>
 
     <!-- 2. App Preferences Group -->
-    <div class="settings-group-title">${store.settings.language === 'en' ? 'Make it Yours' : 'ปรับแต่งแอปตามใจชอบ'}</div>
+    <div class="settings-group-title">${t('personalize')}</div>
     <div class="settings-list-card">
       
       <!-- Themes (Horizontal scroll) -->
@@ -150,14 +150,14 @@ export function renderSettings(container) {
           <div class="setting-icon-badge" style="background: rgba(245,200,66,0.1); width: 28px; height: 28px; border-radius: 8px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
           </div>
-          ${store.settings.language === 'en' ? 'App Theme' : 'ธีมแอปพลิเคชัน'}
+          ${t('appTheme')}
         </div>
         <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;">
-          ${renderThemeOption("light", "Light", "สว่าง")}
-          ${renderThemeOption("dark", "Dark", "มืด")}
-          ${renderThemeOption("midnight", "Midnight", "เที่ยงคืน")}
-          ${renderThemeOption("cyberpunk", "Cyberpunk", "ไซเบอร์พังค์")}
-          ${renderThemeOption("gold", "Gold", "ทองคำ")}
+          ${renderThemeOption("light", t('themeLight'))}
+          ${renderThemeOption("dark", t('themeDark'))}
+          ${renderThemeOption("midnight", t('themeMidnight'))}
+          ${renderThemeOption("cyberpunk", t('themeCyberpunk'))}
+          ${renderThemeOption("gold", t('themeGold'))}
         </div>
       </div>
 
@@ -201,7 +201,7 @@ export function renderSettings(container) {
     </div>
 
     <!-- 3. System Actions Group -->
-    <div class="settings-group-title">${store.settings.language === 'en' ? 'System Stuff' : 'เรื่องของระบบแอป'}</div>
+    <div class="settings-group-title">${t('systemStuff')}</div>
     <div class="settings-list-card">
       
       <!-- Install -->
@@ -327,9 +327,7 @@ function setupEventListeners(container) {
     .querySelector("#clear-notify-btn")
     .addEventListener("click", async () => {
       const isConfirmed = await alerts.confirmReset(
-        store.settings.language === "en"
-          ? "Reset App Data?"
-          : "ยืนยันการรีเซ็ตข้อมูล?",
+        t('resetAppDataTitle'),
         t("resetAppConfirm"),
       );
       if (isConfirmed) {
@@ -357,13 +355,13 @@ function setupEventListeners(container) {
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         if (error) {
           alerts.error(
-            store.settings.language === 'en' ? 'Update Failed' : 'อัปเดตล้มเหลว',
+            t('updateFailed'),
             error.message
           );
         } else {
           alerts.success(
-            store.settings.language === 'en' ? 'Success' : 'สำเร็จ',
-            store.settings.language === 'en' ? 'Password updated successfully!' : 'เปลี่ยนรหัสผ่านเสร็จเรียบร้อยแล้ว!'
+            t('successTitle'),
+            t('passwordUpdated')
           );
         }
       }
@@ -374,23 +372,19 @@ function setupEventListeners(container) {
   if (deleteCloudBtn) {
     deleteCloudBtn.addEventListener("click", async () => {
       const isConfirmed = await alerts.confirmReset(
-        store.settings.language === "en" ? "Delete Cloud Backup?" : "ลบข้อมูลสำรองบนคลาวด์?",
-        store.settings.language === "en" 
-          ? "This will permanently delete all your financial records from Supabase database. Your local offline data will remain." 
-          : "การดำเนินการนี้จะลบข้อมูลธุรกรรมทั้งหมดของคุณออกจากเซิร์ฟเวอร์คลาวด์ถาวร โดยข้อมูลธุรกรรมในเครื่องนี้จะไม่ถูกลบ"
+        t('deleteCloudTitle'),
+        t('deleteCloudBody')
       );
       if (isConfirmed) {
         try {
           await store.deleteCloudData();
           alerts.success(
-            store.settings.language === "en" ? "Deleted Successfully" : "ลบข้อมูลสำเร็จ",
-            store.settings.language === "en" 
-              ? "All cloud data has been deleted." 
-              : "ข้อมูลของคุณบนคลาวด์ได้รับการลบออกเสร็จสิ้น"
+            t('deleteCloudSuccess'),
+            t('deleteCloudSuccessBody')
           );
         } catch (err) {
           alerts.error(
-            store.settings.language === "en" ? "Deletion Failed" : "ลบข้อมูลล้มเหลว",
+            t('deleteCloudFailed'),
             err.message
           );
         }
@@ -432,34 +426,34 @@ function showTaxSettings(container) {
         
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Personal Deduction (Standard)" : "ค่าลดหย่อนส่วนบุคคล (ทั่วไป)"}</label>
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${t('taxPersonalLabel')}</label>
             <input type="number" id="tax-personal" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${personal}" placeholder="60000" />
             <small style="color: var(--text-secondary); font-size: 9.5px; display: block; margin-top: 3px;">${t("taxPersonalDeductionHint")}</small>
           </div>
           
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Social Security (Max 9,000)" : "ประกันสังคม (สูงสุด 9,000)"}</label>
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${t('taxSocialSecurityLabel')}</label>
             <input type="number" id="tax-ssf" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${ssf}" placeholder="9000" />
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Provident Fund / Pension" : "กองทุนสำรองเลี้ยงชีพ / กบข. / บำนาญ"}</label>
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${t('taxProvidentFundLabel')}</label>
             <input type="number" id="tax-pvd" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${pvd}" placeholder="0" />
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Mutual Funds (SSF / RMF / ThaiESG)" : "กองทุนลดหย่อนภาษี (SSF / RMF / ThaiESG)"}</label>
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${t('taxMutualFundsLabel')}</label>
             <input type="number" id="tax-mf" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${mf}" placeholder="0" />
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${lang === "en" ? "Other Deductions (e.g. Life Insurance, Parents)" : "ค่าลดหย่อนอื่น ๆ (เช่น เบี้ยประกันชีวิต, บิดามารดา)"}</label>
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">${t('taxOtherDeductionsLabel')}</label>
             <input type="number" id="tax-other" class="form-control tax-calc-input" style="font-size:12px; padding:8px 12px;" value="${other}" placeholder="0" />
           </div>
         </div>
 
         <div style="background: rgba(255, 184, 0, 0.05); padding: 12px 14px; border-radius: 12px; border: 1.5px dashed rgba(255, 184, 0, 0.25); margin-top: 16px; display: flex; align-items: center; justify-content: space-between;">
-          <strong style="font-size: 12px; color: var(--gold);">${lang === "en" ? "Total Deductions:" : "รวมลดหย่อนภาษีทั้งหมด:"}</strong>
+          <strong style="font-size: 12px; color: var(--gold);">${t('taxTotalDeductions')}</strong>
           <strong style="font-size: 15px; color: var(--gold);" id="tax-total-deduction-display">฿0.00</strong>
         </div>
       </div>

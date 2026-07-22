@@ -1,5 +1,5 @@
 import { store } from "../store.js";
-import { getLanguage } from "../i18n.js";
+import { t, getLanguage } from "../i18n.js";
 import { router } from "../router.js";
 
 export function renderAchievements(container) {
@@ -22,8 +22,8 @@ export function renderAchievements(container) {
     {
       id: "first_step",
       icon: "🌟",
-      title: lang === 'en' ? "First Step" : "ก้าวแรก",
-      desc: lang === 'en' ? "Log your first transaction" : "บันทึกรายการแรกของคุณ",
+      title: t("achieveFirstStepTitle"),
+      desc: t("achieveFirstStepDesc"),
       unlocked: txCount >= 1,
       progress: Math.min(1, txCount),
       target: 1
@@ -31,8 +31,8 @@ export function renderAchievements(container) {
     {
       id: "streak_7",
       icon: "🔥",
-      title: lang === 'en' ? "7-Day Streak" : "ต่อเนื่อง 7 วัน",
-      desc: lang === 'en' ? "Log transactions on 7 unique days" : "บันทึกรายการใน 7 วันที่แตกต่างกัน",
+      title: t("achieveStreak7Title"),
+      desc: t("achieveStreak7Desc"),
       unlocked: uniqueDays >= 7,
       progress: Math.min(7, uniqueDays),
       target: 7
@@ -40,8 +40,8 @@ export function renderAchievements(container) {
     {
       id: "level_10",
       icon: "🎖️",
-      title: lang === 'en' ? "Rising Star" : "ดาวรุ่ง",
-      desc: lang === 'en' ? "Reach Level 10" : "ไปถึงเลเวล 10",
+      title: t("achieveLevel10Title"),
+      desc: t("achieveLevel10Desc"),
       unlocked: level >= 10,
       progress: Math.min(10, level),
       target: 10
@@ -54,7 +54,7 @@ export function renderAchievements(container) {
   for (let i = 2000000; i <= 10000000; i += 1000000) milestones.push(i);
 
   const getMilestoneName = (val) => {
-    if (lang === 'en') return `Reach ${val.toLocaleString()}`;
+    if (lang === 'en') return t('achieveMilestoneReach', { amount: val.toLocaleString() });
     // Thai naming convention
     if (val >= 1000000) return `${val / 1000000} ล้าน`;
     if (val >= 100000) {
@@ -82,7 +82,7 @@ export function renderAchievements(container) {
     id: `income_${m}`,
     icon: getMilestoneIcon(m),
     title: getMilestoneName(m),
-    desc: lang === 'en' ? `Total income reaches ${m.toLocaleString()}` : `รายรับรวมถึง ${m.toLocaleString()}`,
+    desc: t('achieveIncomeMilestoneDesc', { amount: m.toLocaleString() }),
     unlocked: totalIncome >= m,
     progress: Math.min(m, totalIncome),
     target: m,
@@ -92,8 +92,8 @@ export function renderAchievements(container) {
   achievements.push({
     id: "tx_100",
     icon: "📊",
-    title: lang === 'en' ? "Transaction Master" : "ปรมาจารย์รายการ",
-    desc: lang === 'en' ? "Log 100 transactions" : "บันทึกครบ 100 รายการ",
+    title: t("achieveTx100Title"),
+    desc: t("achieveTx100Desc"),
     unlocked: txCount >= 100,
     progress: Math.min(100, txCount),
     target: 100
@@ -107,7 +107,7 @@ export function renderAchievements(container) {
         <button class="back-btn" style="background: transparent; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface);">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <h1 class="brand-title" style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0;">${lang === 'en' ? 'Trophy Room' : 'ห้องเกียรติยศ'}</h1>
+        <h1 class="brand-title" style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0;">${t('trophyRoom')}</h1>
       </div>
       <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; background: rgba(245,200,66,0.15); padding: 6px 12px; border-radius: 20px;">
         <span style="font-size: 16px;">🪙</span>
@@ -125,11 +125,11 @@ export function renderAchievements(container) {
     
     const claimBtnHTML = (isUnlocked && !isClaimed) ? `
       <button class="claim-btn" data-id="${a.id}" data-reward="${rewardAmt}" style="margin-top: 8px; width: 100%; padding: 6px; background: var(--gold); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 4px;">
-        ${lang === 'en' ? 'Claim' : 'รับรางวัล'} +${rewardAmt} 🪙
+        ${t('claimReward')} +${rewardAmt} 🪙
       </button>
     ` : (isClaimed ? `
       <div style="margin-top: 8px; width: 100%; text-align: center; font-size: 11px; color: var(--gold); font-weight: 700;">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg> ${lang === 'en' ? 'Claimed' : 'รับแล้ว'}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg> ${t('rewardClaimed')}
       </div>
     ` : '');
 

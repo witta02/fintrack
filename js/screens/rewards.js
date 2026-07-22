@@ -1,5 +1,5 @@
 import { store } from "../store.js";
-import { getLanguage } from "../i18n.js";
+import { t, getLanguage } from "../i18n.js";
 import { router } from "../router.js";
 import { alerts } from "../utils/alertHelper.js";
 import { gachaItems } from "./collectibles.js";
@@ -155,11 +155,11 @@ export function renderRewards(container) {
         if (badTx) {
           store.settings.forgivenTransactions = store.settings.forgivenTransactions || [];
           store.settings.forgivenTransactions.push(badTx.id);
-          alerts.success(lang === 'en' ? "Bad habit forgiven! XP Restored." : "ไถ่บาปสำเร็จ! คืน XP ให้แล้ว");
+          alerts.success(t('badHabitForgiven'));
         } else {
           // Refund if they don't have any unforgiven bad habits
           store.settings.coins += price;
-          alerts.info(lang === 'en' ? "You have no bad habits to forgive!" : "คุณไม่มีนิสัยเสียให้ไถ่บาป!");
+          alerts.info(t('noBadHabits'));
           return;
         }
       }
@@ -188,7 +188,7 @@ export function renderRewards(container) {
     store.settings.collectibles.push(item.id);
     store.save();
 
-    alerts.success(`${lang === 'en' ? 'You got: ' : 'คุณได้รับ: '}${item.name[lang]} ${item.icon}`);
+    alerts.success(`${t('youGot')} ${item.name[lang]} ${item.icon}`);
     renderRewards(container); // Refresh
   });
 }

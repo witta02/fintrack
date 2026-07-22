@@ -276,6 +276,40 @@ const dictionary = {
 
     // Settings
     taxPersonalDeductionHint: "* ค่าลดหย่อนพื้นฐานสำหรับผู้เสียภาษีทุกคน (ปกติ 60,000 บาท)",
+    changePassword: "เปลี่ยนรหัสผ่านใหม่",
+    loginForCloudSync: "ล็อกอินเพื่อใช้ Cloud Sync เลย!",
+    deleteCloudBackup: "ลบข้อมูลบนคลาวด์",
+    personalize: "ปรับแต่งแอปตามใจชอบ",
+    appTheme: "ธีมแอปพลิเคชัน",
+    themeLight: "สว่าง",
+    themeDark: "มืด",
+    themeMidnight: "เที่ยงคืน",
+    themeCyberpunk: "ไซเบอร์พังค์",
+    themeGold: "ทองคำ",
+    systemStuff: "เรื่องของระบบแอป",
+    resetAppDataTitle: "ยืนยันการรีเซ็ตข้อมูล?",
+    updateFailed: "อัปเดตล้มเหลว",
+    successTitle: "สำเร็จ",
+    passwordUpdated: "เปลี่ยนรหัสผ่านเสร็จเรียบร้อยแล้ว!",
+    deleteCloudTitle: "ลบข้อมูลสำรองบนคลาวด์?",
+    deleteCloudBody: "การดำเนินการนี้จะลบข้อมูลธุรกรรมทั้งหมดของคุณออกจากเซิร์ฟเวอร์คลาวด์ถาวร โดยข้อมูลธุรกรรมในเครื่องนี้จะไม่ถูกลบ",
+    deleteCloudSuccess: "ลบข้อมูลสำเร็จ",
+    deleteCloudSuccessBody: "ข้อมูลของคุณบนคลาวด์ได้รับการลบออกเสร็จสิ้น",
+    deleteCloudFailed: "ลบข้อมูลล้มเหลว",
+    taxPersonalLabel: "ค่าลดหย่อนส่วนบุคคล (ทั่วไป)",
+    taxSocialSecurityLabel: "ประกันสังคม (สูงสุด 9,000)",
+    taxProvidentFundLabel: "กองทุนสำรองเลี้ยงชีพ / กบข. / บำนาญ",
+    taxMutualFundsLabel: "กองทุนลดหย่อนภาษี (SSF / RMF / ThaiESG)",
+    taxOtherDeductionsLabel: "ค่าลดหย่อนอื่น ๆ (เช่น เบี้ยประกันชีวิต, บิดามารดา)",
+    taxTotalDeductions: "รวมลดหย่อนภาษีทั้งหมด:",
+    themeActive: "ใช้งานอยู่",
+    themeSelect: "เลือก",
+    accountAndSecurity: "บัญชีและความปลอดภัยของคุณ",
+    appTitle: "FinTrack — วางแผนและจัดการเงิน",
+    showSidebar: "แสดงแถบข้าง",
+    hideSidebar: "ซ่อนแถบข้าง",
+    popupBlockedTitle: "การแสดงป๊อปอัปถูกบล็อก",
+    popupBlockedBody: "กรุณาอนุญาตให้แสดงหน้าต่างป๊อปอัปเพื่อพิมพ์รายงาน",
 
     // Store fallbacks & notifications
     untitledTransaction: "ไม่มีชื่อรายการ",
@@ -287,6 +321,44 @@ const dictionary = {
     notiRecurringSetBody: "เราจะช่วยบันทึกเมื่อถึงกำหนด: {title}",
     notiAutoPayTitle: "มีการชำระเงินอัตโนมัติ",
     notiAutoPayBody: "บันทึกรายการประจำเสร็จสิ้นจำนวน {count} รายการ",
+
+    // Auth
+    forgotPassword: "ลืมรหัสผ่านใช่หรือไม่?",
+    cloudSecure: "ระบบคลาวด์ปลอดภัย: มีเพียงคุณเท่านั้นที่เข้าถึงข้อมูลได้",
+    backToHome: "กลับไปหน้าแรก",
+    resetFailed: "ล้มเหลว",
+    linkSent: "ส่งลิงก์สำเร็จ",
+    resetLinkSentBody: "เราได้ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว กรุณาตรวจสอบและดำเนินการต่อ",
+    processing: "กำลังดำเนินการ...",
+    failure: "ล้มเหลว",
+
+    // Achievements
+    achieveFirstStepTitle: "ก้าวแรก",
+    achieveFirstStepDesc: "บันทึกรายการแรกของคุณ",
+    achieveStreak7Title: "ต่อเนื่อง 7 วัน",
+    achieveStreak7Desc: "บันทึกรายการใน 7 วันที่แตกต่างกัน",
+    achieveLevel10Title: "ดาวรุ่ง",
+    achieveLevel10Desc: "ไปถึงเลเวล 10",
+    achieveIncomeMilestoneDesc: "รายรับรวมถึง {amount}",
+    achieveMilestoneReach: "ถึงเป้าหมาย {amount}",
+    achieveTx100Title: "ปรมาจารย์รายการ",
+    achieveTx100Desc: "บันทึกครบ 100 รายการ",
+    trophyRoom: "ห้องเกียรติยศ",
+    claimReward: "รับรางวัล",
+    rewardClaimed: "รับแล้ว",
+
+    // Collectibles
+    theVault: "ห้องนิรภัย",
+    collectionProgress: "ความคืบหน้าของสะสม",
+    foundLabel: "ค้นพบแล้ว",
+
+    // Rewards Shop
+    badHabitForgiven: "ไถ่บาปสำเร็จ! คืน XP ให้แล้ว",
+    noBadHabits: "คุณไม่มีนิสัยเสียให้ไถ่บาป!",
+    youGot: "คุณได้รับ:",
+
+    // Misc
+    add: "เพิ่ม",
 
     months: [
       "มกราคม",
@@ -575,6 +647,40 @@ Feel free to type your target, items, or topic!`,
 
     // Settings
     taxPersonalDeductionHint: "* Standard deduction for all taxpayers (normally 60,000 THB)",
+    changePassword: "Change Password",
+    loginForCloudSync: "Log in to enable Cloud Sync",
+    deleteCloudBackup: "Delete Cloud Backup",
+    personalize: "Make it Yours",
+    appTheme: "App Theme",
+    themeLight: "Light",
+    themeDark: "Dark",
+    themeMidnight: "Midnight",
+    themeCyberpunk: "Cyberpunk",
+    themeGold: "Gold",
+    systemStuff: "System Stuff",
+    resetAppDataTitle: "Reset App Data?",
+    updateFailed: "Update Failed",
+    successTitle: "Success",
+    passwordUpdated: "Password updated successfully!",
+    deleteCloudTitle: "Delete Cloud Backup?",
+    deleteCloudBody: "This will permanently delete all your financial records from Supabase database. Your local offline data will remain.",
+    deleteCloudSuccess: "Deleted Successfully",
+    deleteCloudSuccessBody: "All cloud data has been deleted.",
+    deleteCloudFailed: "Deletion Failed",
+    taxPersonalLabel: "Personal Deduction (Standard)",
+    taxSocialSecurityLabel: "Social Security (Max 9,000)",
+    taxProvidentFundLabel: "Provident Fund / Pension",
+    taxMutualFundsLabel: "Mutual Funds (SSF / RMF / ThaiESG)",
+    taxOtherDeductionsLabel: "Other Deductions (e.g. Life Insurance, Parents)",
+    taxTotalDeductions: "Total Deductions:",
+    themeActive: "Active",
+    themeSelect: "Select",
+    accountAndSecurity: "Your Account & Security",
+    appTitle: "FinTrack — Track & Manage Your Money",
+    showSidebar: "Show Sidebar",
+    hideSidebar: "Hide Sidebar",
+    popupBlockedTitle: "Popup Blocked",
+    popupBlockedBody: "Please allow popups to print the report",
 
     // Store fallbacks & notifications
     untitledTransaction: "Untitled Transaction",
@@ -586,6 +692,44 @@ Feel free to type your target, items, or topic!`,
     notiRecurringSetBody: "We'll auto-log this when it's due: {title}",
     notiAutoPayTitle: "Auto-Payment Processed",
     notiAutoPayBody: "Logged {count} recurring item(s) automatically",
+
+    // Auth
+    forgotPassword: "Forgot Password?",
+    cloudSecure: "Secured Cloud: Only you can access your data",
+    backToHome: "Back to Home",
+    resetFailed: "Reset Failed",
+    linkSent: "Link Sent",
+    resetLinkSentBody: "A reset password link has been sent to your email address.",
+    processing: "Processing...",
+    failure: "Failure",
+
+    // Achievements
+    achieveFirstStepTitle: "First Step",
+    achieveFirstStepDesc: "Log your first transaction",
+    achieveStreak7Title: "7-Day Streak",
+    achieveStreak7Desc: "Log transactions on 7 unique days",
+    achieveLevel10Title: "Rising Star",
+    achieveLevel10Desc: "Reach Level 10",
+    achieveIncomeMilestoneDesc: "Total income reaches {amount}",
+    achieveMilestoneReach: "Reach {amount}",
+    achieveTx100Title: "Transaction Master",
+    achieveTx100Desc: "Log 100 transactions",
+    trophyRoom: "Trophy Room",
+    claimReward: "Claim",
+    rewardClaimed: "Claimed",
+
+    // Collectibles
+    theVault: "The Vault",
+    collectionProgress: "Collection Progress",
+    foundLabel: "Found",
+
+    // Rewards Shop
+    badHabitForgiven: "Bad habit forgiven! XP Restored.",
+    noBadHabits: "You have no bad habits to forgive!",
+    youGot: "You got:",
+
+    // Misc
+    add: "Add",
 
     months: [
       "January",

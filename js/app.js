@@ -41,13 +41,13 @@ document.addEventListener("DOMContentLoaded", () => {
           const { error } = await supabase.auth.updateUser({ password: newPassword });
           if (error) {
             alerts.error(
-              store.settings.language === 'en' ? 'Update Failed' : 'อัปเดตล้มเหลว',
+              t('updateFailed'),
               error.message
             );
           } else {
             alerts.success(
-              store.settings.language === 'en' ? 'Success' : 'สำเร็จ',
-              store.settings.language === 'en' ? 'Password updated successfully!' : 'เปลี่ยนรหัสผ่านเสร็จเรียบร้อยแล้ว!'
+              t('successTitle'),
+              t('passwordUpdated')
             );
             router.navigate('dashboard');
           }
@@ -155,28 +155,16 @@ document.addEventListener("DOMContentLoaded", () => {
 export function updateStaticLabels() {
   const lang = getLanguage();
   document.documentElement.lang = lang;
-  
-  if (lang === "en") {
-    document.title = "FinTrack — Money Planner";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.content = "FinTrack — Plan and manage your money";
-    
-    const toggleBtn = document.getElementById("sidebar-toggle-btn");
-    if (toggleBtn) toggleBtn.title = "Show Sidebar";
-    
-    const closeBtn = document.getElementById("sidebar-close-btn");
-    if (closeBtn) closeBtn.title = "Hide Sidebar";
-  } else {
-    document.title = "FinTrack — วางแผนและจัดการเงิน";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.content = "FinTrack — วางแผนและจัดการเงิน";
-    
-    const toggleBtn = document.getElementById("sidebar-toggle-btn");
-    if (toggleBtn) toggleBtn.title = "แสดงแถบข้าง";
-    
-    const closeBtn = document.getElementById("sidebar-close-btn");
-    if (closeBtn) closeBtn.title = "ซ่อนแถบข้าง";
-  }
+
+  document.title = t("appTitle");
+  const desc = document.querySelector('meta[name="description"]');
+  if (desc) desc.content = t("appTitle");
+
+  const toggleBtn = document.getElementById("sidebar-toggle-btn");
+  if (toggleBtn) toggleBtn.title = t("showSidebar");
+
+  const closeBtn2 = document.getElementById("sidebar-close-btn");
+  if (closeBtn2) closeBtn2.title = t("hideSidebar");
 
   const labels = {
     dashboard: t("navDashboard"),
