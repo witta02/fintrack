@@ -126,6 +126,9 @@ export const alerts = {
       color: isDark ? "#FFFFFF" : "#1F2937",
       confirmButtonColor: "#FFB800",
       cancelButtonColor: "#6B7280",
+      customClass: {
+        backdrop: 'swal2-backdrop-blur'
+      },
       confirmButtonText: lang === 'en' ? 'Update' : 'อัปเดต',
       cancelButtonText: lang === 'en' ? 'Cancel' : 'ยกเลิก',
       inputValidator: (value) => {

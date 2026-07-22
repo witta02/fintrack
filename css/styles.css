@@ -2590,3 +2590,11 @@ body::before {
   letter-spacing: 0.5px;
 }
 
+/* ─── SweetAlert Blur Backdrop ──────────────────────────────────────────── */
+.swal2-backdrop-blur {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+
