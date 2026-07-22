@@ -92,11 +92,6 @@ export function getCategoryInfo(name) {
     color: categoryColors[name] || "#FFB800",
   };
 }
-    emoji: cat ? cat.emoji : "📦",
-    svg: getCategorySvg(name),
-    color: categoryColors[name] || "#FFB800",
-  };
-}
 
 export function getCategorySvg(name) {
   const svgs = {
