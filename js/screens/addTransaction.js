@@ -122,7 +122,6 @@ export function renderAddTransaction(container, params) {
           type="text" 
           id="title" 
           placeholder="${t("titlePlaceholder")}" 
-          required 
           class="form-control" 
           value="${escapeHTML(displayTitle)}"
         />
@@ -455,7 +454,12 @@ function setupFormListeners(container) {
   form.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    const titleVal = container.querySelector("#title").value;
+    let rawTitle = container.querySelector("#title").value.trim();
+    if (!rawTitle) {
+      const catInfo = getCategoryInfo(selectedCategory);
+      rawTitle = catInfo ? catInfo.label : selectedCategory;
+    }
+    const titleVal = rawTitle;
     const amountVal = parseFloat(container.querySelector("#amount").value);
     const dateVal = new Date(container.querySelector("#date").value);
 

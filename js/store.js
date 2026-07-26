@@ -6,6 +6,7 @@ import {
 } from "./currency.js";
 import { supabase } from "./supabase.js";
 import { t as i18n } from "./i18n.js";
+import { getCategoryInfo } from "./categories.js";
 
 // Simple pub/sub system for store updates
 const listeners = new Set();
@@ -300,7 +301,8 @@ export const store = {
     }
   },
 
-  async handleLoginSync(user) {
+  async handleLoginSync(user, options = {}) {
+    const { ignoreLocalStorage = false } = options;
     if (!user) return;
     this.user = user;
 
@@ -332,7 +334,7 @@ export const store = {
 
       // --- SETTINGS SYNC ---
       if (dbSettings) {
-        // Use cloud settings, merging into local
+        // Use cloud settings
         this.settings = {
           ...this.settings,
           selectedCurrency: dbSettings.selected_currency,
@@ -343,11 +345,11 @@ export const store = {
           taxProvidentFund: parseFloat(dbSettings.tax_provident_fund),
           taxMutualFunds: parseFloat(dbSettings.tax_mutual_funds),
           taxOtherDeductions: parseFloat(dbSettings.tax_other_deductions),
-          xp: Math.max(dbSettings.xp || 0, this.settings.xp || 0),
-          level: Math.max(dbSettings.level || 1, this.settings.level || 1),
-          // Merge custom categories from both cloud and local (no duplicates)
+          xp: ignoreLocalStorage ? (dbSettings.xp || 0) : Math.max(dbSettings.xp || 0, this.settings.xp || 0),
+          level: ignoreLocalStorage ? (dbSettings.level || 1) : Math.max(dbSettings.level || 1, this.settings.level || 1),
           customCategories: (() => {
             const cloud = dbSettings.custom_categories || [];
+            if (ignoreLocalStorage) return cloud;
             const local = this.settings.customCategories || [];
             const merged = [...cloud];
             for (const cat of local) {
@@ -357,12 +359,12 @@ export const store = {
             }
             return merged;
           })(),
-          coins: dbSettings.coins || this.settings.coins || 0,
-          claimedAchievements: dbSettings.claimed_achievements || this.settings.claimedAchievements || [],
-          unlockedThemes: dbSettings.unlocked_themes || this.settings.unlockedThemes || ["light", "dark"],
-          forgivenTransactions: dbSettings.forgiven_transactions || this.settings.forgivenTransactions || [],
-          collectibles: dbSettings.collectibles || this.settings.collectibles || [],
-          questsState: dbSettings.quests_state || this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
+          coins: ignoreLocalStorage ? (dbSettings.coins || 0) : (dbSettings.coins || this.settings.coins || 0),
+          claimedAchievements: ignoreLocalStorage ? (dbSettings.claimed_achievements || []) : (dbSettings.claimed_achievements || this.settings.claimedAchievements || []),
+          unlockedThemes: dbSettings.unlocked_themes || ["light", "dark"],
+          forgivenTransactions: ignoreLocalStorage ? (dbSettings.forgiven_transactions || []) : (dbSettings.forgiven_transactions || this.settings.forgivenTransactions || []),
+          collectibles: ignoreLocalStorage ? (dbSettings.collectibles || []) : (dbSettings.collectibles || this.settings.collectibles || []),
+          questsState: dbSettings.quests_state || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
         };
       } else {
         // No cloud settings, upload local settings
@@ -389,96 +391,134 @@ export const store = {
         await supabase.from('user').upsert(settingsPayload);
       }
 
-      // --- TRANSACTIONS SYNC (Two-Way Merge) ---
-      const localTxsMap = new Map(this.transactions.map(t => [t.id, t]));
-      const cloudTxsMap = new Map((dbTransactions || []).map(t => [t.id, t]));
+      if (ignoreLocalStorage) {
+        // LOGIN MODE: Discard local transactions & rules, replace with cloud data
+        this.transactions = (dbTransactions || []).map((cloudTx) => ({
+          id: cloudTx.id,
+          title: cloudTx.title,
+          amount: parseFloat(cloudTx.amount),
+          isIncome: cloudTx.is_income,
+          category: cloudTx.category,
+          date: new Date(cloudTx.date),
+          recurringId: cloudTx.recurring_id,
+        }));
 
-      const txsToUpload = [];
-      
-      // Check which local transactions need to be uploaded
-      for (const [id, localTx] of localTxsMap) {
-        if (!cloudTxsMap.has(id)) {
-          txsToUpload.push({
-            id: localTx.id,
-            user_id: user.id,
-            title: localTx.title,
-            amount: localTx.amount,
-            is_income: localTx.isIncome,
-            category: localTx.category,
-            date: localTx.date instanceof Date ? localTx.date.toISOString() : new Date(localTx.date).toISOString(),
-            recurring_id: localTx.recurringId || null
-          });
+        this.recurringRules = (dbRules || []).map((cloudRule) => ({
+          id: cloudRule.id,
+          title: cloudRule.title,
+          amount: parseFloat(cloudRule.amount),
+          isIncome: cloudRule.is_income,
+          category: cloudRule.category,
+          type: cloudRule.type,
+          customDays: cloudRule.custom_days,
+          nextDueDate: new Date(cloudRule.next_due_date),
+          isActive: cloudRule.is_active,
+          createdAt: new Date(cloudRule.created_at),
+        }));
+      } else {
+        // REGISTER MODE: Include/Merge local storage data with cloud
+        const localTxsMap = new Map(this.transactions.map((t) => [t.id, t]));
+        const cloudTxsMap = new Map((dbTransactions || []).map((t) => [t.id, t]));
+
+        const txsToUpload = [];
+
+        // Check which local transactions need to be uploaded
+        for (const [id, localTx] of localTxsMap) {
+          if (!cloudTxsMap.has(id)) {
+            txsToUpload.push({
+              id: localTx.id,
+              user_id: user.id,
+              title: localTx.title,
+              amount: localTx.amount,
+              is_income: localTx.isIncome,
+              category: localTx.category,
+              date:
+                localTx.date instanceof Date
+                  ? localTx.date.toISOString()
+                  : new Date(localTx.date).toISOString(),
+              recurring_id: localTx.recurringId || null,
+            });
+          }
         }
-      }
 
-      // Add cloud transactions that do not exist locally
-      for (const [id, cloudTx] of cloudTxsMap) {
-        if (!localTxsMap.has(id)) {
-          this.transactions.push({
-            id: cloudTx.id,
-            title: cloudTx.title,
-            amount: parseFloat(cloudTx.amount),
-            isIncome: cloudTx.is_income,
-            category: cloudTx.category,
-            date: new Date(cloudTx.date),
-            recurringId: cloudTx.recurring_id
-          });
+        // Add cloud transactions that do not exist locally
+        for (const [id, cloudTx] of cloudTxsMap) {
+          if (!localTxsMap.has(id)) {
+            this.transactions.push({
+              id: cloudTx.id,
+              title: cloudTx.title,
+              amount: parseFloat(cloudTx.amount),
+              isIncome: cloudTx.is_income,
+              category: cloudTx.category,
+              date: new Date(cloudTx.date),
+              recurringId: cloudTx.recurring_id,
+            });
+          }
         }
-      }
 
-      // Upload new local transactions to Supabase
-      if (txsToUpload.length > 0) {
-        const { error: uploadError } = await supabase.from('transactions').insert(txsToUpload);
-        if (uploadError) console.error("Error uploading transactions:", uploadError);
-      }
-
-      // --- RECURRING RULES SYNC (Two-Way Merge) ---
-      const localRulesMap = new Map(this.recurringRules.map(r => [r.id, r]));
-      const cloudRulesMap = new Map((dbRules || []).map(r => [r.id, r]));
-
-      const rulesToUpload = [];
-
-      // Check which local rules need to be uploaded
-      for (const [id, localRule] of localRulesMap) {
-        if (!cloudRulesMap.has(id)) {
-          rulesToUpload.push({
-            id: localRule.id,
-            user_id: user.id,
-            title: localRule.title,
-            amount: localRule.amount,
-            is_income: localRule.isIncome,
-            category: localRule.category,
-            type: localRule.type,
-            custom_days: localRule.customDays,
-            next_due_date: localRule.nextDueDate instanceof Date ? localRule.nextDueDate.toISOString() : new Date(localRule.nextDueDate).toISOString(),
-            is_active: localRule.isActive,
-            created_at: localRule.createdAt instanceof Date ? localRule.createdAt.toISOString() : new Date(localRule.createdAt).toISOString()
-          });
+        // Upload new local transactions to Supabase
+        if (txsToUpload.length > 0) {
+          const { error: uploadError } = await supabase
+            .from("transactions")
+            .insert(txsToUpload);
+          if (uploadError)
+            console.error("Error uploading transactions:", uploadError);
         }
-      }
 
-      // Add cloud rules that do not exist locally
-      for (const [id, cloudRule] of cloudRulesMap) {
-        if (!localRulesMap.has(id)) {
-          this.recurringRules.push({
-            id: cloudRule.id,
-            title: cloudRule.title,
-            amount: parseFloat(cloudRule.amount),
-            isIncome: cloudRule.is_income,
-            category: cloudRule.category,
-            type: cloudRule.type,
-            customDays: cloudRule.custom_days,
-            nextDueDate: new Date(cloudRule.next_due_date),
-            isActive: cloudRule.is_active,
-            createdAt: new Date(cloudRule.created_at)
-          });
+        // --- RECURRING RULES SYNC ---
+        const localRulesMap = new Map(this.recurringRules.map((r) => [r.id, r]));
+        const cloudRulesMap = new Map((dbRules || []).map((r) => [r.id, r]));
+
+        const rulesToUpload = [];
+
+        for (const [id, localRule] of localRulesMap) {
+          if (!cloudRulesMap.has(id)) {
+            rulesToUpload.push({
+              id: localRule.id,
+              user_id: user.id,
+              title: localRule.title,
+              amount: localRule.amount,
+              is_income: localRule.isIncome,
+              category: localRule.category,
+              type: localRule.type,
+              custom_days: localRule.customDays,
+              next_due_date:
+                localRule.nextDueDate instanceof Date
+                  ? localRule.nextDueDate.toISOString()
+                  : new Date(localRule.nextDueDate).toISOString(),
+              is_active: localRule.isActive,
+              created_at:
+                localRule.createdAt instanceof Date
+                  ? localRule.createdAt.toISOString()
+                  : new Date(localRule.createdAt).toISOString(),
+            });
+          }
         }
-      }
 
-      // Upload new local rules to Supabase
-      if (rulesToUpload.length > 0) {
-        const { error: uploadRulesError } = await supabase.from('recurring_rules').insert(rulesToUpload);
-        if (uploadRulesError) console.error("Error uploading recurring rules:", uploadRulesError);
+        for (const [id, cloudRule] of cloudRulesMap) {
+          if (!localRulesMap.has(id)) {
+            this.recurringRules.push({
+              id: cloudRule.id,
+              title: cloudRule.title,
+              amount: parseFloat(cloudRule.amount),
+              isIncome: cloudRule.is_income,
+              category: cloudRule.category,
+              type: cloudRule.type,
+              customDays: cloudRule.custom_days,
+              nextDueDate: new Date(cloudRule.next_due_date),
+              isActive: cloudRule.is_active,
+              createdAt: new Date(cloudRule.created_at),
+            });
+          }
+        }
+
+        if (rulesToUpload.length > 0) {
+          const { error: uploadRulesError } = await supabase
+            .from("recurring_rules")
+            .insert(rulesToUpload);
+          if (uploadRulesError)
+            console.error("Error uploading recurring rules:", uploadRulesError);
+        }
       }
 
       // --- PROCESS RECURRING PAYMENTS with cloud rules now merged ---
@@ -806,12 +846,19 @@ export const store = {
   },
 
   addTransaction(t) {
+    const category = t.category || "Other";
+    let finalTitle = (t.title && t.title.trim()) ? t.title.trim() : null;
+    if (!finalTitle) {
+      const catInfo = getCategoryInfo(category);
+      finalTitle = catInfo ? catInfo.label : (category || i18n("categoryOther"));
+    }
+
     const transaction = {
       id: t.id || Math.random().toString(36).substring(2, 11),
-      title: t.title || i18n("untitledTransaction"),
+      title: finalTitle,
       amount: parseFloat(t.amount) || 0,
       isIncome: !!t.isIncome,
-      category: t.category || "Other",
+      category: category,
       date: t.date ? new Date(t.date) : new Date(),
       recurringId: t.recurringId || null,
     };
@@ -842,8 +889,17 @@ export const store = {
   updateTransaction(updated) {
     const idx = this.transactions.findIndex((t) => t.id === updated.id);
     if (idx !== -1) {
+      const category = updated.category || this.transactions[idx].category || "Other";
+      let finalTitle = (updated.title && updated.title.trim()) ? updated.title.trim() : null;
+      if (!finalTitle) {
+        const catInfo = getCategoryInfo(category);
+        finalTitle = catInfo ? catInfo.label : (category || i18n("categoryOther"));
+      }
+
       this.transactions[idx] = {
         ...updated,
+        title: finalTitle,
+        category: category,
         amount: parseFloat(updated.amount),
         date: new Date(updated.date),
       };
@@ -853,10 +909,10 @@ export const store = {
         supabase.from('transactions').upsert({
           id: updated.id,
           user_id: this.user.id,
-          title: updated.title,
+          title: finalTitle,
           amount: parseFloat(updated.amount),
           is_income: !!updated.isIncome,
-          category: updated.category,
+          category: category,
           date: new Date(updated.date).toISOString(),
           recurring_id: updated.recurringId || null
         }).then(({ error }) => { if (error) console.error('Supabase updateTransaction error:', error); });

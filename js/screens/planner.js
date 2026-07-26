@@ -433,19 +433,27 @@ async function handleUserSendMessage(container, text) {
   msgContainer.appendChild(typingEl);
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
+  const lang = store.settings.language;
+  const isEnglish = lang === "en";
+  const symbol = store.getCurrencySymbol();
+
+  // Helper to complete the message cycle
+  const finishMessageProcessing = () => {
+    statusEl.innerHTML = `<span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span> ${t("plannerReady")}`;
+    statusEl.style.color = "var(--text-secondary)";
+    renderMessages(container);
+  };
+
   // Use offline mock response directly
   setTimeout(() => {
     // Remove typing bubble
     typingEl.remove();
 
-    const lang = store.settings.language;
-    const symbol = store.getCurrencySymbol();
+    const offlineResult = getOfflinePlannerResponse(text);
+    const results = parseTransactionsFromInput(text, isEnglish);
 
     // 1. Try to parse planning or budgeting queries first
-    const offlineResult = getOfflinePlannerResponse(text);
-
     if (offlineResult && !offlineResult.isFallback) {
-      // It's a matched planning query! Use it.
       messages.push({
         id: "msg-planner-" + Date.now(),
         isUser: false,
@@ -454,26 +462,19 @@ async function handleUserSendMessage(container, text) {
         time: new Date(),
       });
     } else {
-      // 2. If it wasn't a planning query, try basic transaction parsing (single or multiple)
-      const results = parseTransactionsFromInput(text, lang === "en");
-
+      // 2. If it wasn't a planning query, try basic transaction parsing
       if (results.length > 0) {
         const totalAmount = results.reduce((acc, t) => acc + t.amount, 0);
         let responseText = "";
 
         if (results.length === 1) {
           const t = results[0];
-          const dateStr = t.date.toLocaleDateString(
-            lang === "en" ? "en-US" : "th-TH",
-            { month: "short", day: "numeric" },
-          );
-          responseText =
-            lang === "en"
+          const dateStr = t.date.toLocaleDateString(isEnglish ? "en-US" : "th-TH", { month: "short", day: "numeric" });
+          responseText = isEnglish
               ? `Do you want to save "${t.title}" for ${symbol}${t.amount.toFixed(2)} in ${t.category} on ${dateStr}?`
               : `ต้องการบันทึกรายการ "${t.title}" จำนวน ${symbol}${t.amount.toFixed(2)} ในหมวดหมู่ ${t.category} ของวันที่ ${dateStr} หรือไม่คะ?`;
         } else {
-          responseText =
-            lang === "en"
+          responseText = isEnglish
               ? `I detected ${results.length} transactions totaling ${symbol}${totalAmount.toFixed(2)}. Would you like to record them?`
               : `พบรายการทั้งหมด ${results.length} รายการ รวมเป็นเงิน ${symbol}${totalAmount.toFixed(2)} ค่ะ ต้องการบันทึกหรือไม่คะ?`;
         }
@@ -498,12 +499,8 @@ async function handleUserSendMessage(container, text) {
       }
     }
 
-    // Restore status text
-    statusEl.innerHTML = `<span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></span> ${t("plannerReady")}`;
-    statusEl.style.color = "var(--text-secondary)";
-
-    renderMessages(container);
-  }, 450); // Natural visual delay
+    finishMessageProcessing();
+  }, 450);
 }
 
 function parseTransactionsFromInput(input, isEnglish) {

@@ -198,9 +198,18 @@ function setupEventListeners(container) {
         });
 
       if (!signInError) {
-        // Login successful
+        // Login successful — warn user about ignoring localstorage first
+        const confirmed = await alerts.confirmLoginIgnoreLocalStorage();
+        if (!confirmed) {
+          await supabase.auth.signOut();
+          submitBtn.disabled = false;
+          btnText.textContent = t("authTitleCombined");
+          spinner.classList.add("hidden");
+          return;
+        }
+
         btnText.textContent = t("syncingData");
-        await store.handleLoginSync(signInData.user);
+        await store.handleLoginSync(signInData.user, { ignoreLocalStorage: true });
         alerts.success(t("authSuccess"));
         router.navigate("dashboard");
         return;
@@ -214,7 +223,7 @@ function setupEventListeners(container) {
           .includes("invalid login credentials") || signInError.status === 400;
 
       if (isInvalidCredentials) {
-        // Attempt sign up
+        // Attempt sign up (REGISTER MODE)
         const { data: signUpData, error: signUpError } =
           await supabase.auth.signUp({
             email,
@@ -237,10 +246,10 @@ function setupEventListeners(container) {
           throw new Error(translateAuthError("User already registered", lang));
         }
 
-        // SignUp successful
+        // SignUp successful (REGISTER) -> Include localstorage data!
         if (signUpData.session) {
           btnText.textContent = t("syncingData");
-          await store.handleLoginSync(signUpData.user);
+          await store.handleLoginSync(signUpData.user, { ignoreLocalStorage: false });
           alerts.success(t("signUpSuccess"));
           router.navigate("dashboard");
         } else {

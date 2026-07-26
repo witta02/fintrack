@@ -11,7 +11,6 @@ import { renderDownPayments } from "./screens/downPayments.js";
 import { renderAchievements } from "./screens/achievements.js";
 import { renderRewards } from "./screens/rewards.js";
 import { renderCollectibles } from "./screens/collectibles.js";
-
 let currentScreen = "dashboard";
 let currentParams = null;
 
@@ -33,25 +32,29 @@ const screens = {
 
 export const router = {
   init() {
-    // Listen for bottom nav clicks
-    document.querySelectorAll("[data-screen]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+    // Global event delegation for data-screen elements (handles static + dynamically added buttons)
+    document.body.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-screen]");
+      if (btn) {
         const targetScreen = btn.getAttribute("data-screen");
-        this.navigate(targetScreen);
-      });
+        if (targetScreen) {
+          this.navigate(targetScreen);
+        }
+      }
     });
-
-    // Note: initial navigation is handled by onAuthStateChange in app.js
   },
 
   navigate(screenKey, params = null) {
+    if (!screenKey) return;
+    const cleanKey = screenKey.replace(/^\//, "");
+
     // If screen not found, do nothing
-    if (!screens[screenKey]) {
-      console.error(`Screen "${screenKey}" not found.`);
+    if (!screens[cleanKey]) {
+      console.error(`Screen "${cleanKey}" not found.`);
       return;
     }
 
-    currentScreen = screenKey;
+    currentScreen = cleanKey;
     currentParams = params;
 
     // Update bottom nav UI (hide nav elements if on auth screen)

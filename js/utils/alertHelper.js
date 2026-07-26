@@ -163,4 +163,24 @@ export const alerts = {
     });
     return email;
   },
+
+  async confirmLoginIgnoreLocalStorage() {
+    const isDark = store.settings.isDarkMode;
+    const lang = store.settings.language;
+    const result = await Swal.fire({
+      title: lang === 'en' ? 'Warning: Ignore Local Data?' : 'คำเตือนการเข้าสู่ระบบ',
+      text: lang === 'en'
+        ? 'Logging in will ignore local data stored on this device (LocalStorage) and load data from your cloud account. Do you want to continue?'
+        : 'การเข้าสู่ระบบจะข้าม/ไม่นำเข้าข้อมูลในเครื่อง (LocalStorage) ไปยังบัญชีของคุณ และจะใช้ข้อมูลจากคลาวด์แทน คุณต้องการดำเนินการต่อหรือไม่?',
+      icon: 'warning',
+      showCancelButton: true,
+      background: isDark ? "#1C2128" : "#FFFFFF",
+      color: isDark ? "#FFFFFF" : "#1F2937",
+      confirmButtonColor: "#FFB800",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: lang === 'en' ? 'Continue Login' : 'ดำเนินการเข้าสู่ระบบ',
+      cancelButtonText: lang === 'en' ? 'Cancel' : 'ยกเลิก',
+    });
+    return result.isConfirmed;
+  },
 };

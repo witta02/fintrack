@@ -3,6 +3,9 @@ import { t, getLanguage } from "../i18n.js";
 import { router } from "../router.js";
 import { alerts } from "../utils/alertHelper.js";
 import { gachaItems } from "./collectibles.js";
+import QRCode from "qrcode";
+import generatePayload from "promptpay-qr";
+import { validateBankSlip } from "../utils/slipValidator.js";
 
 export function renderRewards(container) {
   const lang = getLanguage();
@@ -55,6 +58,7 @@ export function renderRewards(container) {
       <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; background: rgba(245,200,66,0.15); padding: 6px 12px; border-radius: 20px;">
         <span style="font-size: 16px;">🪙</span>
         <span style="font-weight: 800; color: var(--gold); font-size: 14px;">${coins}</span>
+        <button id="buy-coins-plus-btn" style="background: var(--gold); border: none; border-radius: 50%; width: 24px; height: 24px; font-weight: 900; cursor: pointer; color: #000; display: flex; justify-content: center; align-items: center; line-height: 1; padding: 0;">+</button>
       </div>
     </div>
 
@@ -92,8 +96,8 @@ export function renderRewards(container) {
       `;
     } else {
       btnHTML = `
-        <button class="buy-btn" data-id="${item.id}" data-type="${item.type}" data-price="${item.price}" style="margin-top: auto; width: 100%; padding: 10px; background: ${canAfford ? 'var(--gold)' : 'var(--surface)'}; color: ${canAfford ? '#000' : 'var(--text-muted)'}; border: none; border-radius: 8px; font-weight: 800; cursor: ${canAfford ? 'pointer' : 'not-allowed'}; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all var(--transition);">
-          ${item.price} 🪙
+        <button class="buy-btn" data-id="${item.id}" data-type="${item.type}" data-price="${item.price}" style="margin-top: auto; width: 100%; padding: 10px; background: ${canAfford ? 'var(--gold)' : 'rgba(245,200,66,0.15)'}; color: ${canAfford ? '#000' : 'var(--gold)'}; border: 1px solid var(--gold); border-radius: 8px; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all var(--transition);">
+          ${item.price} 🪙 ${canAfford ? '' : '(Get Coins)'}
         </button>
       `;
     }
@@ -126,7 +130,7 @@ export function renderRewards(container) {
       const price = parseInt(target.getAttribute("data-price"));
 
       if (store.settings.coins < price) {
-        alerts.error(lang === 'en' ? "Not enough coins!" : "เหรียญไม่พอ!");
+        showBuyCoinsModal(container, lang);
         return;
       }
 
@@ -170,7 +174,10 @@ export function renderRewards(container) {
   });
 
   container.querySelector("#roll-gacha-btn")?.addEventListener("click", () => {
-    if (store.settings.coins < 100) return;
+    if (store.settings.coins < 100) {
+      showBuyCoinsModal(container, lang);
+      return;
+    }
     store.settings.coins -= 100;
     
     // Gacha RNG logic
@@ -190,5 +197,128 @@ export function renderRewards(container) {
 
     alerts.success(`${t('youGot')} ${item.name[lang]} ${item.icon}`);
     renderRewards(container); // Refresh
+  });
+
+  container.querySelector("#buy-coins-plus-btn")?.addEventListener("click", () => {
+    showBuyCoinsModal(container, lang);
+  });
+}
+
+function showBuyCoinsModal(container, lang) {
+  const promptpayId = import.meta.env.VITE_PROMPTPAY_ID || "";
+  
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.style.zIndex = "1000";
+  modal.innerHTML = `
+    <div class="modal-dialog" style="background: var(--surface); color: var(--text-primary); max-width: 400px; text-align: center;">
+      <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+        <h3 class="modal-title" style="font-size: 20px; color: var(--gold);">🪙 Buy FinCoins</h3>
+        <button class="modal-close-btn" style="position: absolute; right: 20px; top: 20px;">&times;</button>
+      </div>
+      <div class="modal-body" style="padding-top: 10px;">
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Support FinTrack and unlock premium items!</p>
+        
+        <div style="display: flex; gap: 12px; margin-bottom: 24px; justify-content: center;">
+          <div class="coin-pack" data-coins="500" data-price="29" style="flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: 0.2s;">
+            <div style="font-size: 24px; margin-bottom: 8px;">🪙</div>
+            <div style="font-weight: 800; font-size: 16px;">500 Coins</div>
+            <div style="color: var(--gold); font-weight: 700; margin-top: 4px;">฿29</div>
+          </div>
+          <div class="coin-pack" data-coins="2000" data-price="99" style="flex: 1; background: var(--card); border: 2px solid var(--gold); border-radius: 12px; padding: 16px; cursor: pointer; transition: 0.2s; position: relative;">
+            <div style="position: absolute; top: -10px; right: -10px; background: var(--expense); color: white; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 12px;">BEST DEAL</div>
+            <div style="font-size: 24px; margin-bottom: 8px;">👑</div>
+            <div style="font-weight: 800; font-size: 16px;">2000 Coins</div>
+            <div style="color: var(--gold); font-weight: 700; margin-top: 4px;">฿99</div>
+          </div>
+        </div>
+
+        <div id="coin-payment-section" style="display: none; background: #fff; padding: 20px; border-radius: 16px;">
+          <h4 style="color: #1a1a1a; margin-top: 0; margin-bottom: 8px; font-size: 14px;" id="coin-payment-desc">Transfer ฿0</h4>
+          <canvas id="coin-promptpay-qr" style="margin: 0 auto; display: block;"></canvas>
+          <div style="margin-top: 16px;">
+            <input type="file" id="coin-slip-upload" accept="image/*" style="display: none;" />
+            <button id="coin-upload-btn" class="btn-primary" style="width: 100%; background: #1a1a1a; color: #fff; padding: 12px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer;">
+              Upload Slip
+            </button>
+            <p id="coin-upload-status" style="font-size: 12px; margin-top: 10px; color: #22c55e; font-weight: 600;"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => document.body.removeChild(modal);
+  modal.querySelector(".modal-close-btn").onclick = close;
+
+  const packs = modal.querySelectorAll(".coin-pack");
+  const paymentSection = modal.querySelector("#coin-payment-section");
+  const desc = modal.querySelector("#coin-payment-desc");
+  const canvas = modal.querySelector("#coin-promptpay-qr");
+  const uploadInput = modal.querySelector("#coin-slip-upload");
+  const uploadBtn = modal.querySelector("#coin-upload-btn");
+  const uploadStatus = modal.querySelector("#coin-upload-status");
+
+  let selectedCoins = 0;
+  let selectedPrice = 0;
+
+  packs.forEach(pack => {
+    pack.addEventListener("click", () => {
+      selectedCoins = parseInt(pack.getAttribute("data-coins"));
+      selectedPrice = parseInt(pack.getAttribute("data-price"));
+      
+      packs.forEach(p => p.style.transform = "scale(1)");
+      pack.style.transform = "scale(1.05)";
+
+      desc.textContent = `Transfer ฿${selectedPrice} for ${selectedCoins} FinCoins`;
+      paymentSection.style.display = "block";
+      
+      const payload = generatePayload(promptpayId, { amount: selectedPrice });
+      QRCode.toCanvas(canvas, payload, { width: 160, margin: 1 }, (err) => {
+        if (err) console.error(err);
+      });
+    });
+  });
+
+  uploadBtn.addEventListener("click", () => uploadInput.click());
+
+  uploadInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<div class="spinner" style="display:inline-block; vertical-align:middle; width:16px; height:16px; border-width:2px; border-color: #fff transparent #fff transparent;"></div> Validating...';
+    uploadStatus.textContent = "Scanning image for Bank Slip QR...";
+    uploadStatus.style.color = "var(--text-secondary)";
+
+    const validation = await validateBankSlip(file);
+    if (!validation.isValid) {
+      uploadBtn.disabled = false;
+      uploadBtn.innerHTML = 'Upload Slip';
+      uploadStatus.textContent = "❌ " + validation.reason;
+      uploadStatus.style.color = "var(--expense)";
+      alerts.error("Invalid Transfer Slip!", validation.reason);
+      return;
+    }
+
+    uploadBtn.innerHTML = '<div class="spinner" style="display:inline-block; vertical-align:middle; width:16px; height:16px; border-width:2px; border-color: #fff transparent #fff transparent;"></div> Granting Coins...';
+    
+    setTimeout(() => {
+      uploadStatus.textContent = `✅ Success! ${selectedCoins} Coins added.`;
+      uploadStatus.style.color = "var(--income)";
+      
+      store.settings.coins = (store.settings.coins || 0) + selectedCoins;
+      store.save();
+      store.saveSettingsToCloud();
+      
+      setTimeout(() => {
+        close();
+        renderRewards(container); // Refresh UI
+        alerts.success(`Purchased ${selectedCoins} FinCoins! 🎉`);
+      }, 1500);
+      
+    }, 1200);
   });
 }

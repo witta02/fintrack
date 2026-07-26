@@ -258,11 +258,17 @@ input:focus, select:focus, textarea:focus {
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh; /* dvh accounts for iOS Safari browser chrome */
+  height: 100vh;  /* fallback for older browsers */
+  height: 100dvh;
   width: 100%;
   margin: 0 auto;
   position: relative;
   z-index: 1;
+  /* Push content below iOS notch/Dynamic Island */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* ─── Scrollbars ──────────────────────────────────────────────────────── */
@@ -279,7 +285,8 @@ input:focus, select:focus, textarea:focus {
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
-  padding-bottom: 110px;
+  /* Extra bottom padding accounts for nav bar + iOS home indicator */
+  padding-bottom: calc(110px + env(safe-area-inset-bottom));
 }
 
 /* ─── Responsive / Desktop ────────────────────────────────────────────── */
@@ -395,9 +402,10 @@ input:focus, select:focus, textarea:focus {
 /* ─── Bottom Navigation ───────────────────────────────────────────────── */
 .bottom-nav {
   position: absolute;
-  bottom: 16px;
-  left: 16px;
-  right: 16px;
+  /* Push nav above iOS home indicator */
+  bottom: max(16px, calc(env(safe-area-inset-bottom) + 8px));
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -407,7 +415,6 @@ input:focus, select:focus, textarea:focus {
   border: 1px solid var(--border-strong);
   border-radius: 26px;
   padding: 8px 4px;
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
   box-shadow:
     0 16px 50px rgba(0, 0, 0, 0.45),
     0 1px 0 rgba(255,255,255,0.05) inset,
@@ -484,6 +491,9 @@ input:focus, select:focus, textarea:focus {
 /* ─── Screen Layout ───────────────────────────────────────────────────── */
 .screen {
   padding: 22px 18px;
+  /* Prevent content from being hidden under iOS notch on landscape */
+  padding-left: max(18px, env(safe-area-inset-left));
+  padding-right: max(18px, env(safe-area-inset-right));
   animation: slideUpFade 0.35s var(--transition);
 }
 @keyframes slideUpFade {
@@ -1506,7 +1516,7 @@ input:focus, select:focus, textarea:focus {
 /* ─── Desktop Polish ──────────────────────────────────────────────────── */
 @media (min-width: 768px) {
   /* More breathing room on the screen */
-  .screen { padding: 28px 24px; }
+  .screen { padding: 28px max(24px, env(safe-area-inset-right)) 28px max(24px, env(safe-area-inset-left)); }
 
   /* Nav items slightly bigger on desktop for easier clicking */
   .nav-item { min-width: 60px; padding: 8px 10px; font-size: 11px; }
@@ -1546,10 +1556,13 @@ input:focus, select:focus, textarea:focus {
     display: flex;
     flex-direction: column;
     width: 260px;
-    height: 100vh;
+    height: 100%;
+    height: 100dvh;
     position: fixed;
     left: 0;
+    left: env(safe-area-inset-left, 0);
     top: 0;
+    top: env(safe-area-inset-top, 0);
     background: var(--bg-secondary);
     border-right: 1px solid var(--border);
     padding: 32px 20px;
@@ -1656,21 +1669,28 @@ input:focus, select:focus, textarea:focus {
   /* Main Container Desktop layout */
   .app {
     flex-direction: row !important;
-    height: 100vh;
+    height: 100dvh;
+    height: 100vh; /* fallback */
+    height: 100dvh;
     overflow: hidden;
     width: 100%;
+    /* Restore safe area insets for iPad notch/Dynamic Island */
+    padding-top: env(safe-area-inset-top) !important;
+    padding-left: 0 !important; /* sidebar handles left safe area */
+    padding-right: env(safe-area-inset-right) !important;
   }
   .screen-container {
     margin-left: 260px;
     padding-bottom: 30px;
-    height: 100vh;
+    height: 100%;
     overflow-y: auto;
     width: calc(100% - 260px);
     transition: margin-left var(--transition), width var(--transition);
   }
   .screen {
     max-width: 1080px !important;
-    padding: 40px !important;
+    /* Use max() to ensure safe area insets are respected on iPad landscape */
+    padding: 40px max(40px, env(safe-area-inset-right)) 40px max(40px, env(safe-area-inset-left)) !important;
     margin: 0 auto;
     transition: padding-left var(--transition);
   }
@@ -1714,7 +1734,7 @@ input:focus, select:focus, textarea:focus {
     display: flex !important;
   }
   .sidebar-hidden .screen {
-    padding-left: 80px !important;
+    padding-left: max(80px, env(safe-area-inset-left)) !important;
   }
 
   /* Dashboard Desktop Layout */
