@@ -2617,4 +2617,191 @@ body::before {
   background: rgba(0, 0, 0, 0.5) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   iPhone 17 & Tall Narrow Phone Fixes  (≤ 430px viewport width)
+   Target: iPhone 17 (402×874pt), iPhone 16/15 (393×852pt), iPhone 14 (390×844pt)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 430px) {
 
+  /* ── 1. iOS Safari Auto-Zoom Fix ────────────────────────────────────────
+     iOS Safari auto-zooms any input with font-size < 16px. Setting all
+     inputs to 16px prevents the jarring zoom-on-focus behaviour on iPhone. */
+  .form-control,
+  .auth-input,
+  .period-select,
+  .analysis-select,
+  select,
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  input[type="time"],
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* ── 2. Screen Padding — tighter horizontal inset on narrow screens ─── */
+  .screen {
+    padding: 16px 14px;
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+
+  /* ── 3. Card padding — reduce nested inset on narrow screens ─────────── */
+  .card,
+  .balance-card,
+  .chart-card,
+  .starter-guide,
+  .empty-state {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  /* ── 4. Balance Amount — scale down to prevent number overflow ─────── */
+  .balance-amount {
+    font-size: 34px;
+    letter-spacing: -1.5px;
+    word-break: break-word;
+    margin: 6px 0 16px;
+  }
+
+  /* ── 5. Balance Card main padding tightened ─────────────────────────── */
+  .balance-card {
+    padding: 20px 16px 16px;
+    margin-bottom: 12px;
+  }
+
+  /* ── 6. Balance Row — tighten income/expense mini cards ─────────────── */
+  .balance-row { gap: 8px; }
+  .balance-item {
+    padding: 10px;
+    gap: 8px;
+  }
+  .balance-item-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .balance-item-value { font-size: 13px; }
+  .balance-item-label { font-size: 9px; }
+
+  /* ── 7. Dashboard Header — hide email pill, tighten right-side gap ──── */
+  .user-pill { display: none !important; }
+  .screen-header { margin-bottom: 16px; }
+
+  /* ── 8. Modal — add safe area padding bottom for home indicator ─────── */
+  .modal-overlay {
+    padding: 12px 12px max(16px, env(safe-area-inset-bottom)) 12px;
+  }
+  .modal-dialog {
+    padding: 18px 16px;
+    border-radius: 20px;
+    max-height: min(90dvh, 90vh);
+  }
+  .modal-title { font-size: 16px; }
+
+  /* ── 9. Net Worth Modal — stack 2-col grid to single column ──────────── */
+  /* Targets the inline grid-template-columns: 1fr 1fr in showNetWorthModal */
+  .modal-dialog div[style*="grid-template-columns"],
+  .nw-grid-2col {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── 10. Category Grid — tighter tiles ──────────────────────────────── */
+  .category-grid-selector {
+    grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+    gap: 8px;
+  }
+  .category-picker-item {
+    padding: 12px 4px 10px;
+    border-radius: 14px;
+  }
+  .category-picker-item .cat-icon,
+  .category-picker-item > .cat-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 17px;
+  }
+
+  /* ── 11. Transaction Tile — reduce wasted right margin ────────────────
+     On mobile, delete is triggered by touch, not hover, so the 36px right
+     margin that clears the hidden ::after delete button is unnecessary.   */
+  .tile-amount { margin-right: 12px; }
+
+  /* ── 12. Auth Form Card — reduce excessive side padding ─────────────── */
+  .auth-form-card { padding: 24px 18px; }
+  .auth-mode-title { font-size: 20px; }
+
+  /* ── 13. Form control padding tightened ─────────────────────────────── */
+  .form-control { padding: 12px 14px; }
+
+  /* ── 14. Nav active indicator — remove ::before duplicate ────────────── */
+  /* styles.css L455 defines ::before indicator at top of active nav item;  */
+  /* styles.css L2539 defines ::after glow dot at bottom. Hide the top one. */
+  .nav-item.active::before { display: none; }
+
+  /* ── 15. Nav items — tighter for 6-item nav on 402px ────────────────── */
+  .nav-item {
+    min-width: 44px;
+    padding: 7px 4px 5px;
+    font-size: 9px;
+  }
+
+  /* ── 16. Period select arrow alignment after font-size bump ─────────── */
+  .period-select {
+    padding: 11px 36px 11px 14px;
+    background-position: right 12px center;
+    border-radius: 12px;
+  }
+
+  /* ── 17. Section titles ─────────────────────────────────────────────── */
+  .card-title,
+  .section-title { font-size: 14px; }
+
+  /* ── 18. Chart card less padding to give chart more breathing room ───── */
+  .chart-card { padding: 14px; }
+
+  /* ── 19. Screen container bottom padding aligned with actual nav height */
+  .screen-container {
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  }
+
+  /* ── 20. Pie chart legend ─────────────────────────────────────────────── */
+  .pie-legend-item { font-size: 10px; }
+
+  /* ── 21. Brand title ─────────────────────────────────────────────────── */
+  .brand-title { font-size: 22px !important; }
+
+  /* ── 22. Icon buttons ────────────────────────────────────────────────── */
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  /* ── 23. Amount input on Add Transaction — keep large but not zoom-inducing */
+  #amount { font-size: 22px !important; }
+
+  /* ── 24. Bottom nav active state 3D lift — reduce on small screens ────── */
+  .nav-item.active {
+    transform: translateY(-3px) translateZ(10px);
+  }
+}
+
+/* Extra small phones: iPhone SE, older iPhones ≤ 375px */
+@media (max-width: 375px) {
+  .balance-amount {
+    font-size: 28px;
+    letter-spacing: -1px;
+  }
+  .nav-item {
+    min-width: 38px;
+    font-size: 8.5px;
+  }
+  .category-grid-selector {
+    grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  }
+  .auth-form-card { padding: 20px 14px; }
+}

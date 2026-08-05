@@ -876,7 +876,7 @@ function showNetWorthModal(container) {
           }
         </p>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; text-align: left;">
+        <div class="nw-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; text-align: left;">
           <!-- Assets column -->
           <div>
             <h4 style="font-size: 13px; font-weight: 700; color: var(--income); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; margin-top: 0;">

@@ -239,8 +239,8 @@ export function renderSettings(container) {
 
     <!-- Footer -->
     <div style="text-align: center; padding: 24px 0 12px; display: flex; flex-direction: column; gap: 4px;">
-      <div style="font-family: var(--font-heading); font-weight: 800; font-size: 14px; background: linear-gradient(135deg, var(--gold-light), var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FinTrack Ecosystem</div>
-      <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;">Designed for the Future • v2.70</div>
+      <div style="font-family: var(--font-heading); font-weight: 800; font-size: 14px; background: linear-gradient(135deg, var(--gold-light), var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FinTrack</div>
+      <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;">v2.70</div>
     </div>
   `;
 
