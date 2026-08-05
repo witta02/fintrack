@@ -305,10 +305,6 @@ input:focus, select:focus, textarea:focus {
     transform: translateX(-50%) !important;
     right: auto !important;
     width: calc(100% - 48px) !important;
-    bottom: max(16px, calc(env(safe-area-inset-bottom) + 8px)) !important;
-    border-radius: 26px !important;
-    border: 1px solid var(--border-strong) !important;
-    padding: 8px 4px !important;
   }
 }
 
@@ -412,29 +408,32 @@ input:focus, select:focus, textarea:focus {
 
 /* ─── Bottom Navigation ───────────────────────────────────────────────── */
 .bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
+  position: absolute;
+  /* Push nav above iOS home indicator */
+  bottom: max(16px, calc(env(safe-area-inset-bottom) + 8px));
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: #060a14;
+  background: var(--nav-bg);
   backdrop-filter: blur(28px) saturate(1.8);
   -webkit-backdrop-filter: blur(28px) saturate(1.8);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0;
-  padding: 8px 4px max(12px, env(safe-area-inset-bottom)) 4px;
-  box-shadow: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 26px;
+  padding: 8px 4px;
+  box-shadow:
+    0 16px 50px rgba(0, 0, 0, 0.45),
+    0 1px 0 rgba(255,255,255,0.05) inset,
+    0 0 0 1px rgba(245,200,66,0.04);
   z-index: 100;
   transition: all var(--transition);
 }
 
 [data-theme="light"] .bottom-nav {
-  background: #f4f6fc;
-  border-top: 1px solid rgba(0, 0, 0, 0.07);
-  box-shadow: none;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), 0 1px 0 rgba(255,255,255,0.8) inset;
 }
 
 .nav-item {
@@ -458,7 +457,7 @@ input:focus, select:focus, textarea:focus {
 
 .nav-item.active {
   color: var(--gold);
-  background: transparent;
+  background: rgba(245, 200, 66, 0.10);
 }
 .nav-item.active::before {
   content: '';
