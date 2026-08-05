@@ -170,7 +170,14 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html { font-size: 16px; height: 100%; }
+html {
+  font-size: 16px;
+  height: 100%;
+  /* Fill iOS safe area gaps (home indicator, status bar) with app bg color */
+  background-color: #060a14;
+}
+[data-theme="light"] { background-color: #f4f6fc; }
+[data-theme="midnight"] { background-color: #010409; }
 
 body {
   font-family: var(--font);
@@ -405,7 +412,7 @@ input:focus, select:focus, textarea:focus {
 
 /* ─── Bottom Navigation ───────────────────────────────────────────────── */
 .bottom-nav {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
@@ -413,21 +420,21 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: rgba(10, 16, 32, 0.94);
+  background: #060a14;
   backdrop-filter: blur(28px) saturate(1.8);
   -webkit-backdrop-filter: blur(28px) saturate(1.8);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0;
-  padding: 6px 4px max(10px, env(safe-area-inset-bottom)) 4px;
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5);
+  padding: 8px 4px max(12px, env(safe-area-inset-bottom)) 4px;
+  box-shadow: none;
   z-index: 100;
   transition: all var(--transition);
 }
 
 [data-theme="light"] .bottom-nav {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), 0 1px 0 rgba(255,255,255,0.8) inset;
+  background: #f4f6fc;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: none;
 }
 
 .nav-item {
