@@ -409,18 +409,17 @@ input:focus, select:focus, textarea:focus {
   bottom: 0;
   left: 0;
   right: 0;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: var(--nav-bg);
+  background: rgba(10, 16, 32, 0.94);
   backdrop-filter: blur(28px) saturate(1.8);
   -webkit-backdrop-filter: blur(28px) saturate(1.8);
-  border-top: 1px solid var(--border-strong);
-  border-radius: 20px 20px 0 0;
-  padding: 8px 6px max(10px, env(safe-area-inset-bottom)) 6px;
-  box-shadow:
-    0 -10px 40px rgba(0, 0, 0, 0.45),
-    0 1px 0 rgba(255,255,255,0.05) inset;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  padding: 6px 4px max(10px, env(safe-area-inset-bottom)) 4px;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5);
   z-index: 100;
   transition: all var(--transition);
 }
@@ -452,7 +451,7 @@ input:focus, select:focus, textarea:focus {
 
 .nav-item.active {
   color: var(--gold);
-  background: rgba(245, 200, 66, 0.10);
+  background: transparent;
 }
 .nav-item.active::before {
   content: '';
@@ -2072,8 +2071,7 @@ input:focus, select:focus, textarea:focus {
 
 /* Nav item active pill indicator */
 .nav-item.active {
-  background: rgba(245, 200, 66, 0.12);
-  border-radius: 16px;
+  background: transparent;
 }
 
 /* Smoother screen entry animation */
