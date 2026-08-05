@@ -33,8 +33,87 @@
         });
       }
     </script>
+    <style>
+      /* iOS PWA Install Banner */
+      .ios-install-banner {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 99999;
+        background: linear-gradient(135deg, #111b38 0%, #0b1226 100%);
+        border-top: 1px solid rgba(245, 200, 66, 0.25);
+        padding: 16px 18px max(16px, env(safe-area-inset-bottom)) 18px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+        animation: iosInstallSlideUp 0.4s ease-out;
+        font-family: 'Sora', 'Inter', system-ui, sans-serif;
+      }
+      .ios-install-banner.hidden { display: none !important; }
+      @keyframes iosInstallSlideUp {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .ios-install-icon {
+        width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+        background: linear-gradient(135deg, #F5C842, #FF9A00);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; font-weight: 800; color: #000;
+        box-shadow: 0 4px 12px rgba(245, 200, 66, 0.3);
+      }
+      .ios-install-text { flex: 1; min-width: 0; }
+      .ios-install-text strong {
+        display: block; font-size: 13px; font-weight: 700; color: #f0f4ff; margin-bottom: 2px;
+      }
+      .ios-install-text span {
+        font-size: 11px; color: #8896b0; line-height: 1.4;
+      }
+      .ios-install-text .share-icon {
+        display: inline-block; width: 16px; height: 16px; vertical-align: -3px;
+      }
+      .ios-install-close {
+        width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #8896b0; font-size: 16px; line-height: 1;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.2s;
+      }
+      .ios-install-close:hover { background: rgba(255, 255, 255, 0.15); color: #f0f4ff; }
+    </style>
   </head>
   <body>
+    <!-- iOS PWA Install Prompt (shown only in Safari browser, not standalone) -->
+    <div id="ios-install-banner" class="ios-install-banner hidden">
+      <div class="ios-install-icon">F</div>
+      <div class="ios-install-text">
+        <strong>เปิดแบบเต็มจอ — ไม่มี URL Bar</strong>
+        <span>กด <svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="#F5C842" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> แล้วเลือก <strong style="display:inline; color:#F5C842;">เพิ่มในหน้าจอโฮม</strong></span>
+      </div>
+      <button class="ios-install-close" id="ios-install-close" aria-label="Close">✕</button>
+    </div>
+    <script>
+      // Show iOS install banner only if: 1) on iOS Safari 2) not already standalone 3) not dismissed recently
+      (function() {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+        const dismissed = localStorage.getItem('fintrack_install_dismissed');
+        const dismissedAt = dismissed ? parseInt(dismissed, 10) : 0;
+        const sevenDays = 7 * 24 * 60 * 60 * 1000;
+        
+        if (isIOS && !isStandalone && (Date.now() - dismissedAt > sevenDays)) {
+          const banner = document.getElementById('ios-install-banner');
+          if (banner) {
+            banner.classList.remove('hidden');
+            document.getElementById('ios-install-close').addEventListener('click', function() {
+              banner.classList.add('hidden');
+              localStorage.setItem('fintrack_install_dismissed', Date.now().toString());
+            });
+          }
+        }
+      })();
+    </script>
     <!-- Splash Screen -->
     <div id="splash-screen" class="splash-screen splash-3d">
       <div class="splash-glow"></div>
