@@ -172,9 +172,8 @@
 
 html {
   font-size: 16px;
-  /* Use dvh so iOS Safari PWA fills the full screen height */
-  height: 100dvh;
-  height: -webkit-fill-available;
+  /* --vh is set by JS to window.innerHeight/100 — fixes iOS Safari 100vh bug */
+  height: calc(var(--vh, 1vh) * 100);
   /* Fill iOS safe area gaps (home indicator, status bar) with app bg color */
   background-color: #060a14;
 }
@@ -185,10 +184,9 @@ body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--text-primary);
-  /* Must match html height so app stretches full screen on iOS */
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
-  height: 100dvh;
+  /* Use JS-computed height so iOS Safari PWA fills the real screen */
+  height: calc(var(--vh, 1vh) * 100);
+  max-height: calc(var(--vh, 1vh) * 100);
   overflow: hidden;
   transition: background var(--transition), color var(--transition);
   position: relative;
@@ -270,9 +268,8 @@ input:focus, select:focus, textarea:focus {
 .app {
   display: flex;
   flex-direction: column;
-  /* Use dvh to correctly fill the screen on iOS Safari PWA */
-  height: 100dvh;
-  height: -webkit-fill-available;
+  /* Use JS-computed --vh to fill the real screen height on iOS Safari PWA */
+  height: calc(var(--vh, 1vh) * 100);
   width: 100%;
   max-width: 100%;
   margin: 0;

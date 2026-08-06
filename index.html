@@ -3,6 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <script>
+      // iOS Safari PWA full-screen fix: set --vh to the real window height.
+      // 100vh in CSS = incorrect on iOS; window.innerHeight = correct.
+      (function () {
+        function setVh() {
+          var vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', vh + 'px');
+        }
+        setVh();
+        window.addEventListener('resize', setVh);
+        window.addEventListener('orientationchange', function() {
+          setTimeout(setVh, 100);
+        });
+      })();
+    </script>
     <meta name="description" content="FinTrack — วางแผนและจัดการเงิน" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
