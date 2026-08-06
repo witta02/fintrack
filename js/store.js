@@ -339,6 +339,8 @@ export const store = {
           ...this.settings,
           selectedCurrency: dbSettings.selected_currency,
           isDarkMode: dbSettings.is_dark_mode,
+          // FIX: Restore theme from cloud (falls back to isDarkMode if not stored yet)
+          theme: dbSettings.theme || (dbSettings.is_dark_mode === false ? 'light' : (dbSettings.is_dark_mode === true ? 'dark' : this.settings.theme || 'dark')),
           language: dbSettings.language,
           taxPersonalDeduction: parseFloat(dbSettings.tax_personal_deduction),
           taxSocialSecurity: parseFloat(dbSettings.tax_social_security),
@@ -359,7 +361,8 @@ export const store = {
             }
             return merged;
           })(),
-          coins: ignoreLocalStorage ? (dbSettings.coins || 0) : (dbSettings.coins || this.settings.coins || 0),
+          // FIX: Always prefer cloud coins — cloud is source of truth after login
+          coins: dbSettings.coins != null ? dbSettings.coins : (this.settings.coins || 0),
           claimedAchievements: ignoreLocalStorage ? (dbSettings.claimed_achievements || []) : (dbSettings.claimed_achievements || this.settings.claimedAchievements || []),
           unlockedThemes: dbSettings.unlocked_themes || ["light", "dark"],
           forgivenTransactions: ignoreLocalStorage ? (dbSettings.forgiven_transactions || []) : (dbSettings.forgiven_transactions || this.settings.forgivenTransactions || []),
@@ -372,6 +375,7 @@ export const store = {
           user_id: user.id,
           selected_currency: this.settings.selectedCurrency || 'THB',
           is_dark_mode: this.settings.isDarkMode !== undefined ? this.settings.isDarkMode : true,
+          theme: this.settings.theme || 'dark',
           language: this.settings.language || 'th',
           tax_personal_deduction: this.settings.taxPersonalDeduction !== undefined ? this.settings.taxPersonalDeduction : 60000,
           tax_social_security: this.settings.taxSocialSecurity !== undefined ? this.settings.taxSocialSecurity : 9000,
@@ -528,6 +532,11 @@ export const store = {
       // --- DYNAMIC XP CALCULATION ---
       this.recalculateXP();
 
+      // FIX: Apply restored theme to document after login sync
+      if (this.settings.theme) {
+        document.documentElement.setAttribute('data-theme', this.settings.theme);
+      }
+
       // Save merged data to LocalStorage
       localStorage.setItem("fintrack_transactions", JSON.stringify(this.transactions));
       localStorage.setItem("fintrack_recurring_rules", JSON.stringify(this.recurringRules));
@@ -546,6 +555,8 @@ export const store = {
         user_id: this.user.id,
         selected_currency: this.settings.selectedCurrency,
         is_dark_mode: this.settings.isDarkMode,
+        // FIX: Save the active theme name to the cloud so it restores on next login
+        theme: this.settings.theme || 'dark',
         language: this.settings.language,
         tax_personal_deduction: this.settings.taxPersonalDeduction,
         tax_social_security: this.settings.taxSocialSecurity,
