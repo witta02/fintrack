@@ -1,4 +1,4 @@
-const CACHE_NAME = "fintrack-cache-v12";
+const CACHE_NAME = "fintrack-cache-v13";
 const ASSETS = ["/", "/index.html", "/favicon.png", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
