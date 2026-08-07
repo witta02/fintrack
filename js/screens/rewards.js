@@ -4,8 +4,8 @@ import { router } from "../router.js";
 import { alerts } from "../utils/alertHelper.js";
 import { gachaItems } from "./collectibles.js";
 import QRCode from "qrcode";
-import generatePayload from "promptpay-qr";
 import { validateBankSlip } from "../utils/slipValidator.js";
+import { generatePromptPayPayload, maskPromptPayId, DEFAULT_PROMPTPAY_ID } from "../utils/promptpayQR.js";
 
 export function renderRewards(container) {
   const lang = getLanguage();
@@ -205,7 +205,8 @@ export function renderRewards(container) {
 }
 
 function showBuyCoinsModal(container, lang) {
-  const promptpayId = import.meta.env.VITE_PROMPTPAY_ID || "";
+  const promptpayId = DEFAULT_PROMPTPAY_ID;
+  const maskedPromptPayId = maskPromptPayId(promptpayId);
   
   const modal = document.createElement("div");
   modal.className = "modal-overlay";
@@ -234,13 +235,19 @@ function showBuyCoinsModal(container, lang) {
         </div>
 
         <div id="coin-payment-section" style="display: none; background: #fff; padding: 20px; border-radius: 16px;">
-          <h4 style="color: #1a1a1a; margin-top: 0; margin-bottom: 8px; font-size: 14px;" id="coin-payment-desc">Transfer ฿0</h4>
-          <canvas id="coin-promptpay-qr" style="margin: 0 auto; display: block;"></canvas>
+          <h4 style="color: #1a1a1a; margin-top: 0; margin-bottom: 4px; font-size: 15px;" id="coin-payment-desc">Transfer ฿0</h4>
+          <p style="color: #6b7280; font-size: 12px; margin-top: 0; margin-bottom: 14px;">PromptPay: <strong style="color: #111827; letter-spacing: 0.5px;">${maskedPromptPayId}</strong></p>
+          <canvas id="coin-promptpay-qr" style="margin: 0 auto; display: block; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);"></canvas>
           <div style="margin-top: 16px;">
             <input type="file" id="coin-slip-upload" accept="image/*" style="display: none;" />
-            <button id="coin-upload-btn" class="btn-primary" style="width: 100%; background: #1a1a1a; color: #fff; padding: 12px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer;">
-              Upload Slip
-            </button>
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+              <button id="coin-save-qr-btn" style="flex: 1; background: #f3f4f6; color: #1f2937; padding: 12px; border-radius: 8px; font-weight: 600; border: 1px solid #e5e7eb; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;">
+                ${lang === 'en' ? 'Save QR Code' : 'บันทึก QR Code'}
+              </button>
+              <button id="coin-upload-btn" class="btn-primary" style="flex: 1; background: #1a1a1a; color: #fff; padding: 12px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer;">
+                Upload Slip
+              </button>
+            </div>
             <p id="coin-upload-status" style="font-size: 12px; margin-top: 10px; color: #22c55e; font-weight: 600;"></p>
           </div>
         </div>
@@ -259,6 +266,7 @@ function showBuyCoinsModal(container, lang) {
   const canvas = modal.querySelector("#coin-promptpay-qr");
   const uploadInput = modal.querySelector("#coin-slip-upload");
   const uploadBtn = modal.querySelector("#coin-upload-btn");
+  const saveQrBtn = modal.querySelector("#coin-save-qr-btn");
   const uploadStatus = modal.querySelector("#coin-upload-status");
 
   let selectedCoins = 0;
@@ -275,11 +283,35 @@ function showBuyCoinsModal(container, lang) {
       desc.textContent = `Transfer ฿${selectedPrice} for ${selectedCoins} FinCoins`;
       paymentSection.style.display = "block";
       
-      const payload = generatePayload(promptpayId, { amount: selectedPrice });
-      QRCode.toCanvas(canvas, payload, { width: 160, margin: 1 }, (err) => {
+      const payload = generatePromptPayPayload(promptpayId, selectedPrice);
+      QRCode.toCanvas(canvas, payload, { width: 170, margin: 1 }, (err) => {
         if (err) console.error(err);
       });
     });
+  });
+
+  saveQrBtn?.addEventListener("click", () => {
+    if (!canvas) return;
+    try {
+      const dataUrl = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = `PromptPay_QR_฿${selectedPrice || 0}.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alerts.success(
+        lang === 'en' ? "QR Code Saved!" : "บันทึก QR Code แล้ว!",
+        lang === 'en' ? "Image saved to your device. You can now scan it in your banking app." : "บันทึกรูปภาพแล้ว สามารถนำไปเลือกสแกนในแอปธนาคารได้เลย"
+      );
+    } catch (err) {
+      console.error("Failed to save QR Code image:", err);
+      alerts.error(
+        lang === 'en' ? "Save Failed" : "บันทึกไม่สำเร็จ",
+        lang === 'en' ? "Unable to download QR code image." : "ไม่สามารถดาวน์โหลดรูปภาพ QR code ได้"
+      );
+    }
   });
 
   uploadBtn.addEventListener("click", () => uploadInput.click());
