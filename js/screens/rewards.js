@@ -322,7 +322,7 @@ function showBuyCoinsModal(container, lang) {
 
     uploadBtn.disabled = true;
     uploadBtn.innerHTML = '<div class="spinner" style="display:inline-block; vertical-align:middle; width:16px; height:16px; border-width:2px; border-color: #fff transparent #fff transparent;"></div> Validating...';
-    uploadStatus.textContent = "Scanning image for Bank Slip QR...";
+    uploadStatus.textContent = "Scanning image for Bank Slip QR... / กำลังสแกน QR Code สลิป...";
     uploadStatus.style.color = "var(--text-secondary)";
 
     const validation = await validateBankSlip(file, { expectedPrice: selectedPrice }, (msg) => {
@@ -331,10 +331,13 @@ function showBuyCoinsModal(container, lang) {
 
     if (!validation.isValid) {
       uploadBtn.disabled = false;
-      uploadBtn.innerHTML = 'Upload Slip';
+      uploadBtn.innerHTML = lang === 'en' ? 'Upload Slip' : 'อัปโหลดสลิป';
       uploadStatus.textContent = "❌ " + validation.reason;
       uploadStatus.style.color = "var(--expense)";
-      alerts.error("Invalid Transfer Slip!", validation.reason);
+      alerts.error(
+        lang === 'en' ? "Invalid Transfer Slip!" : "สลิปไม่ถูกต้อง!",
+        validation.reason
+      );
       return;
     }
 
@@ -351,12 +354,12 @@ function showBuyCoinsModal(container, lang) {
 
     if (isDuplicate) {
       uploadBtn.disabled = false;
-      uploadBtn.innerHTML = 'Upload Slip';
-      uploadStatus.textContent = "❌ This slip has already been used!";
+      uploadBtn.innerHTML = lang === 'en' ? 'Upload Slip' : 'อัปโหลดสลิป';
+      uploadStatus.textContent = "❌ Duplicate slip! This slip has already been used. / สลิปนี้ถูกใช้งานไปแล้ว!";
       uploadStatus.style.color = "var(--expense)";
       alerts.error(
-        lang === 'en' ? "Duplicate Slip!" : "สลิปซ้ำ!",
-        lang === 'en' ? "This transfer slip has already been redeemed for FinCoins." : "สลิปโอนเงินนี้ถูกใช้งานรับเหรียญไปแล้ว"
+        "Duplicate Slip! / สลิปซ้ำ!",
+        "This transfer slip has already been redeemed for FinCoins. / สลิปโอนเงินนี้ถูกใช้งานรับเหรียญไปแล้ว"
       );
       return;
     }
