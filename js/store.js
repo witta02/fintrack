@@ -37,6 +37,7 @@ export const store = {
     unlockedThemes: ["light", "dark"],
     forgivenTransactions: [],
     collectibles: [],
+    showNetWorthCard: true,
     questsState: { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
   },
 

@@ -188,6 +188,23 @@ export function renderSettings(container) {
         </select>
       </div>
 
+      <!-- Net Worth Card Toggle -->
+      <div class="settings-list-row" style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="setting-icon-badge" style="background: rgba(255,184,0,0.1); width: 32px; height: 32px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">${t("showNetWorthCard")}</div>
+            <div style="font-size: 10.5px; color: var(--text-secondary);">${t("showNetWorthCardHint")}</div>
+          </div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggle-networth-card" ${store.settings.showNetWorthCard !== false ? "checked" : ""}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
       <!-- Tax -->
       <div id="tax-row-wrapper" class="settings-list-row" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -274,6 +291,14 @@ function setupEventListeners(container) {
     .addEventListener("change", (e) => {
       store.setCurrency(e.target.value);
     });
+
+  const toggleNetWorth = container.querySelector("#toggle-networth-card");
+  if (toggleNetWorth) {
+    toggleNetWorth.addEventListener("change", (e) => {
+      store.settings.showNetWorthCard = e.target.checked;
+      store.save();
+    });
+  }
 
   container.querySelector("#language-th-btn").addEventListener("click", () => {
     store.setLanguage("th");

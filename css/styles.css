@@ -2801,3 +2801,47 @@ body::before {
   }
   .auth-form-card { padding: 20px 14px; }
 }
+
+/* ─── Toggle Switch Component ────────────────────────────────────────────── */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+  border-radius: 24px;
+}
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--text-secondary);
+  transition: all var(--transition);
+  border-radius: 50%;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background-color: rgba(245, 200, 66, 0.2);
+  border-color: var(--gold);
+}
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(18px);
+  background-color: var(--gold);
+  box-shadow: 0 0 8px rgba(245, 200, 66, 0.6);
+}
+
