@@ -211,7 +211,7 @@ function printReport(container) {
               .map(
                 (t) => `
               <tr>
-                <td>${t.date.toLocaleDateString(locale())}</td>
+                <td>${(() => { const d = t.date instanceof Date ? t.date : new Date(t.date); return !isNaN(d.getTime()) ? d.toLocaleDateString(locale()) : ""; })()}</td>
                 <td>${t.title}</td>
                 <td>${getCategoryInfo(t.category).label}</td>
                 <td class="${t.isIncome ? "income" : "expense"}">

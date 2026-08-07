@@ -293,7 +293,10 @@ function showBuyCoinsModal(container, lang) {
     uploadStatus.textContent = "Scanning image for Bank Slip QR...";
     uploadStatus.style.color = "var(--text-secondary)";
 
-    const validation = await validateBankSlip(file);
+    const validation = await validateBankSlip(file, { expectedPrice: selectedPrice }, (msg) => {
+      uploadStatus.textContent = msg;
+    });
+
     if (!validation.isValid) {
       uploadBtn.disabled = false;
       uploadBtn.innerHTML = 'Upload Slip';
@@ -303,12 +306,25 @@ function showBuyCoinsModal(container, lang) {
       return;
     }
 
+    // Anti-replay protection: prevent redeeming the same slip twice
+    const slipIdentifier = validation.qrData || `${file.name}_${file.size}_${file.lastModified}`;
+    store.settings.usedSlips = store.settings.usedSlips || [];
+    if (store.settings.usedSlips.includes(slipIdentifier)) {
+      uploadBtn.disabled = false;
+      uploadBtn.innerHTML = 'Upload Slip';
+      uploadStatus.textContent = "❌ This slip has already been used!";
+      uploadStatus.style.color = "var(--expense)";
+      alerts.error("Duplicate Slip!", "This transfer slip has already been redeemed for FinCoins.");
+      return;
+    }
+
     uploadBtn.innerHTML = '<div class="spinner" style="display:inline-block; vertical-align:middle; width:16px; height:16px; border-width:2px; border-color: #fff transparent #fff transparent;"></div> Granting Coins...';
     
     setTimeout(() => {
       uploadStatus.textContent = `✅ Success! ${selectedCoins} Coins added.`;
       uploadStatus.style.color = "var(--income)";
       
+      store.settings.usedSlips.push(slipIdentifier);
       store.settings.coins = (store.settings.coins || 0) + selectedCoins;
       store.save();
       store.saveSettingsToCloud();

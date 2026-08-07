@@ -137,14 +137,16 @@ export const currencies = {
 };
 
 export function convert(amountInTHB, targetCurrency) {
+  if (typeof amountInTHB !== "number" || isNaN(amountInTHB)) return 0;
   const info = currencies[targetCurrency];
   if (!info) return amountInTHB;
   return amountInTHB * info.rate;
 }
 
 export function convertToTHB(amount, sourceCurrency) {
+  if (typeof amount !== "number" || isNaN(amount)) return 0;
   const info = currencies[sourceCurrency];
-  if (!info) return amount;
+  if (!info || !info.rate) return amount;
   return amount / info.rate;
 }
 

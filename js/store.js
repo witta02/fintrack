@@ -193,6 +193,11 @@ export const store = {
     );
     localStorage.setItem("fintrack_down_payments", JSON.stringify(this.downPayments));
     localStorage.setItem("fintrack_settings", JSON.stringify(this.settings));
+    if (this.user) {
+      this.saveSettingsToCloud().catch((err) =>
+        console.error("Error auto-saving settings to cloud:", err)
+      );
+    }
     this.notify();
   },
 
@@ -231,7 +236,11 @@ export const store = {
     this.settings.questsState.checkIn = true;
 
     // 2. First Income
-    const todayTxs = this.transactions.filter(t => new Date(t.date).toISOString().split('T')[0] === today);
+    const todayTxs = this.transactions.filter(t => {
+      if (!t.date) return false;
+      const d = new Date(t.date);
+      return !isNaN(d.getTime()) && d.toISOString().split('T')[0] === today;
+    });
     if (todayTxs.some(t => t.isIncome)) {
       this.settings.questsState.firstIncome = true;
     }
@@ -334,21 +343,45 @@ export const store = {
 
       // --- SETTINGS SYNC ---
       if (dbSettings) {
-        // Use cloud settings
+        // Merge arrays so unlocked items, themes, achievements, coins are never lost upon login
+        const dbUnlocked = Array.isArray(dbSettings.unlocked_themes) ? dbSettings.unlocked_themes : [];
+        const localUnlocked = Array.isArray(this.settings.unlockedThemes) ? this.settings.unlockedThemes : ["light", "dark"];
+        const mergedUnlockedThemes = Array.from(new Set([...dbUnlocked, ...localUnlocked, "light", "dark"]));
+
+        const dbCollectibles = Array.isArray(dbSettings.collectibles) ? dbSettings.collectibles : [];
+        const localCollectibles = Array.isArray(this.settings.collectibles) ? this.settings.collectibles : [];
+        const mergedCollectibles = Array.from(new Set([...dbCollectibles, ...localCollectibles]));
+
+        const dbAchievements = Array.isArray(dbSettings.claimed_achievements) ? dbSettings.claimed_achievements : [];
+        const localAchievements = Array.isArray(this.settings.claimedAchievements) ? this.settings.claimedAchievements : [];
+        const mergedAchievements = Array.from(new Set([...dbAchievements, ...localAchievements]));
+
+        const dbForgiven = Array.isArray(dbSettings.forgiven_transactions) ? dbSettings.forgiven_transactions : [];
+        const localForgiven = Array.isArray(this.settings.forgivenTransactions) ? this.settings.forgivenTransactions : [];
+        const mergedForgiven = Array.from(new Set([...dbForgiven, ...localForgiven]));
+
+        const dbUsedSlips = Array.isArray(dbSettings.used_slips) ? dbSettings.used_slips : [];
+        const localUsedSlips = Array.isArray(this.settings.usedSlips) ? this.settings.usedSlips : [];
+        const mergedUsedSlips = Array.from(new Set([...dbUsedSlips, ...localUsedSlips]));
+
+        // For coins: take the max between cloud coins and local coins so coins are never lost
+        const cloudCoins = dbSettings.coins != null ? Number(dbSettings.coins) : 0;
+        const localCoins = Number(this.settings.coins) || 0;
+        const finalCoins = Math.max(cloudCoins, localCoins);
+
         this.settings = {
           ...this.settings,
-          selectedCurrency: dbSettings.selected_currency,
-          isDarkMode: dbSettings.is_dark_mode,
-          // FIX: Restore theme from cloud (falls back to isDarkMode if not stored yet)
+          selectedCurrency: dbSettings.selected_currency || this.settings.selectedCurrency || 'THB',
+          isDarkMode: dbSettings.is_dark_mode !== undefined ? dbSettings.is_dark_mode : this.settings.isDarkMode,
           theme: dbSettings.theme || (dbSettings.is_dark_mode === false ? 'light' : (dbSettings.is_dark_mode === true ? 'dark' : this.settings.theme || 'dark')),
-          language: dbSettings.language,
-          taxPersonalDeduction: parseFloat(dbSettings.tax_personal_deduction),
-          taxSocialSecurity: parseFloat(dbSettings.tax_social_security),
-          taxProvidentFund: parseFloat(dbSettings.tax_provident_fund),
-          taxMutualFunds: parseFloat(dbSettings.tax_mutual_funds),
-          taxOtherDeductions: parseFloat(dbSettings.tax_other_deductions),
-          xp: ignoreLocalStorage ? (dbSettings.xp || 0) : Math.max(dbSettings.xp || 0, this.settings.xp || 0),
-          level: ignoreLocalStorage ? (dbSettings.level || 1) : Math.max(dbSettings.level || 1, this.settings.level || 1),
+          language: dbSettings.language || this.settings.language || 'th',
+          taxPersonalDeduction: dbSettings.tax_personal_deduction != null ? parseFloat(dbSettings.tax_personal_deduction) : 60000,
+          taxSocialSecurity: dbSettings.tax_social_security != null ? parseFloat(dbSettings.tax_social_security) : 9000,
+          taxProvidentFund: dbSettings.tax_provident_fund != null ? parseFloat(dbSettings.tax_provident_fund) : 0,
+          taxMutualFunds: dbSettings.tax_mutual_funds != null ? parseFloat(dbSettings.tax_mutual_funds) : 0,
+          taxOtherDeductions: dbSettings.tax_other_deductions != null ? parseFloat(dbSettings.tax_other_deductions) : 0,
+          xp: Math.max(dbSettings.xp || 0, this.settings.xp || 0),
+          level: Math.max(dbSettings.level || 1, this.settings.level || 1),
           customCategories: (() => {
             const cloud = dbSettings.custom_categories || [];
             if (ignoreLocalStorage) return cloud;
@@ -361,14 +394,17 @@ export const store = {
             }
             return merged;
           })(),
-          // FIX: Always prefer cloud coins — cloud is source of truth after login
-          coins: dbSettings.coins != null ? dbSettings.coins : (this.settings.coins || 0),
-          claimedAchievements: ignoreLocalStorage ? (dbSettings.claimed_achievements || []) : (dbSettings.claimed_achievements || this.settings.claimedAchievements || []),
-          unlockedThemes: dbSettings.unlocked_themes || ["light", "dark"],
-          forgivenTransactions: ignoreLocalStorage ? (dbSettings.forgiven_transactions || []) : (dbSettings.forgiven_transactions || this.settings.forgivenTransactions || []),
-          collectibles: ignoreLocalStorage ? (dbSettings.collectibles || []) : (dbSettings.collectibles || this.settings.collectibles || []),
-          questsState: dbSettings.quests_state || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
+          coins: finalCoins,
+          claimedAchievements: mergedAchievements,
+          unlockedThemes: mergedUnlockedThemes,
+          forgivenTransactions: mergedForgiven,
+          collectibles: mergedCollectibles,
+          questsState: dbSettings.quests_state || this.settings.questsState,
+          usedSlips: mergedUsedSlips,
         };
+
+        // Immediately sync back merged state to cloud database
+        await this.saveSettingsToCloud();
       } else {
         // No cloud settings, upload local settings
         const settingsPayload = {
@@ -551,29 +587,36 @@ export const store = {
 
   async saveSettingsToCloud() {
     if (this.user) {
-      const payload = {
-        user_id: this.user.id,
-        selected_currency: this.settings.selectedCurrency,
-        is_dark_mode: this.settings.isDarkMode,
-        // FIX: Save the active theme name to the cloud so it restores on next login
-        theme: this.settings.theme || 'dark',
-        language: this.settings.language,
-        tax_personal_deduction: this.settings.taxPersonalDeduction,
-        tax_social_security: this.settings.taxSocialSecurity,
-        tax_provident_fund: this.settings.taxProvidentFund,
-        tax_mutual_funds: this.settings.taxMutualFunds,
-        tax_other_deductions: this.settings.taxOtherDeductions,
-        xp: this.settings.xp,
-        level: this.settings.level,
-        custom_categories: this.settings.customCategories || [],
-        coins: this.settings.coins || 0,
-        claimed_achievements: this.settings.claimedAchievements || [],
-        unlocked_themes: this.settings.unlockedThemes || ["light", "dark"],
-        forgiven_transactions: this.settings.forgivenTransactions || [],
-        collectibles: this.settings.collectibles || [],
-        quests_state: this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
-      };
-      await supabase.from('user').upsert(payload);
+      try {
+        const payload = {
+          user_id: this.user.id,
+          selected_currency: this.settings.selectedCurrency || 'THB',
+          is_dark_mode: this.settings.isDarkMode !== undefined ? this.settings.isDarkMode : true,
+          theme: this.settings.theme || 'dark',
+          language: this.settings.language || 'th',
+          tax_personal_deduction: this.settings.taxPersonalDeduction || 60000,
+          tax_social_security: this.settings.taxSocialSecurity || 9000,
+          tax_provident_fund: this.settings.taxProvidentFund || 0,
+          tax_mutual_funds: this.settings.taxMutualFunds || 0,
+          tax_other_deductions: this.settings.taxOtherDeductions || 0,
+          xp: this.settings.xp || 0,
+          level: this.settings.level || 1,
+          custom_categories: this.settings.customCategories || [],
+          coins: this.settings.coins || 0,
+          claimed_achievements: this.settings.claimedAchievements || [],
+          unlocked_themes: this.settings.unlockedThemes || ["light", "dark"],
+          forgiven_transactions: this.settings.forgivenTransactions || [],
+          collectibles: this.settings.collectibles || [],
+          quests_state: this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
+          used_slips: this.settings.usedSlips || []
+        };
+        const { error } = await supabase.from('user').upsert(payload);
+        if (error) {
+          console.error("Cloud save settings error:", error);
+        }
+      } catch (err) {
+        console.error("Exception in saveSettingsToCloud:", err);
+      }
     }
   },
 
@@ -1186,6 +1229,10 @@ export const store = {
   // --- Currency Display Convert helpers ---
   toDisplay(amountInTHB) {
     return convert(amountInTHB, this.settings.selectedCurrency);
+  },
+
+  toBase(amountInDisplayCurrency) {
+    return convertToTHB(amountInDisplayCurrency, this.settings.selectedCurrency);
   },
 
   // --- Computed Finance metrics ---

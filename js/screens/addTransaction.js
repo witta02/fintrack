@@ -460,8 +460,10 @@ function setupFormListeners(container) {
       rawTitle = catInfo ? catInfo.label : selectedCategory;
     }
     const titleVal = rawTitle;
-    const amountVal = parseFloat(container.querySelector("#amount").value);
-    const dateVal = new Date(container.querySelector("#date").value);
+    const amountVal = parseFloat(container.querySelector("#amount")?.value || "0");
+    const rawDate = container.querySelector("#date")?.value;
+    const parsedDate = rawDate ? new Date(rawDate) : new Date();
+    const dateVal = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
 
     if (isNaN(amountVal) || amountVal <= 0) {
       alerts.warning(
@@ -471,10 +473,7 @@ function setupFormListeners(container) {
     }
 
     // Convert display currency amount back to base THB currency amount
-    const thbAmount =
-      store.settings.selectedCurrency === "THB"
-        ? amountVal
-        : amountVal / store.toDisplay(1.0); // Simple base-rate scale conversion
+    const thbAmount = store.toBase(amountVal);
 
     if (editingTransactionId) {
       // Update

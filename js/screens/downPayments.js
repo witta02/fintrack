@@ -36,7 +36,11 @@ function planCard(plan) {
   const remaining = Math.max(0, plan.totalAmount - plan.paidAmount);
   const percentage = plan.totalAmount ? Math.min(100, (plan.paidAmount / plan.totalAmount) * 100) : 0;
   const complete = remaining === 0;
-  const due = plan.dueDate ? plan.dueDate.toLocaleDateString(store.settings.language === "en" ? "en-GB" : "th-TH", { day: "numeric", month: "short", year: "numeric" }) : t("downPaymentNoDate");
+  const dueDateObj = plan.dueDate ? (plan.dueDate instanceof Date ? plan.dueDate : new Date(plan.dueDate)) : null;
+  const isDueValid = dueDateObj && !isNaN(dueDateObj.getTime());
+  const due = isDueValid
+    ? dueDateObj.toLocaleDateString(store.settings.language === "en" ? "en-GB" : "th-TH", { day: "numeric", month: "short", year: "numeric" })
+    : t("downPaymentNoDate");
   return `<article class="down-payment-card ${complete ? "is-complete" : ""}">
     <div class="down-payment-card-top"><div><h2>${escapeHtml(plan.title)}</h2><span class="payment-status">${complete ? t("downPaymentComplete") : t("downPaymentRemaining", { amount: money(remaining) })}</span></div><button class="payment-delete" data-delete-plan="${plan.id}" aria-label="${t("deleteThis")}">×</button></div>
     <div class="payment-ratio"><strong>${money(plan.paidAmount)}</strong><span>/ ${money(plan.totalAmount)}</span></div>
