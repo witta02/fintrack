@@ -338,15 +338,26 @@ function showBuyCoinsModal(container, lang) {
       return;
     }
 
-    // Anti-replay protection: prevent redeeming the same slip twice
-    const slipIdentifier = validation.qrData || `${file.name}_${file.size}_${file.lastModified}`;
-    store.settings.usedSlips = store.settings.usedSlips || [];
-    if (store.settings.usedSlips.includes(slipIdentifier)) {
+    // Anti-replay protection: prevent redeeming the same slip twice via ref, QR data, image pixel hash, or file metadata
+    const usedSlips = store.settings.usedSlips || [];
+    const slipIdentifiers = [
+      validation.ref ? `ref_${validation.ref}` : null,
+      validation.qrData ? `qr_${validation.qrData}` : null,
+      validation.imageHash ? `img_${validation.imageHash}` : null,
+      `file_${file.name}_${file.size}`
+    ].filter(Boolean);
+
+    const isDuplicate = slipIdentifiers.some(id => usedSlips.includes(id));
+
+    if (isDuplicate) {
       uploadBtn.disabled = false;
       uploadBtn.innerHTML = 'Upload Slip';
       uploadStatus.textContent = "❌ This slip has already been used!";
       uploadStatus.style.color = "var(--expense)";
-      alerts.error("Duplicate Slip!", "This transfer slip has already been redeemed for FinCoins.");
+      alerts.error(
+        lang === 'en' ? "Duplicate Slip!" : "สลิปซ้ำ!",
+        lang === 'en' ? "This transfer slip has already been redeemed for FinCoins." : "สลิปโอนเงินนี้ถูกใช้งานรับเหรียญไปแล้ว"
+      );
       return;
     }
 
@@ -356,10 +367,13 @@ function showBuyCoinsModal(container, lang) {
       uploadStatus.textContent = `✅ Success! ${selectedCoins} Coins added.`;
       uploadStatus.style.color = "var(--income)";
       
-      store.settings.usedSlips.push(slipIdentifier);
+      slipIdentifiers.forEach(id => {
+        if (!store.settings.usedSlips.includes(id)) {
+          store.settings.usedSlips.push(id);
+        }
+      });
       store.settings.coins = (store.settings.coins || 0) + selectedCoins;
       store.save();
-      store.saveSettingsToCloud();
       
       setTimeout(() => {
         close();

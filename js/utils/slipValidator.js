@@ -27,6 +27,43 @@ export function parseQRAmount(qrData) {
 }
 
 /**
+ * Computes a fast pixel canvas fingerprint from image
+ */
+export function computeCanvasHash(canvas) {
+  try {
+    const ctx = canvas.getContext("2d");
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let hash = 0;
+    const step = Math.max(1, Math.floor(imgData.length / 1000));
+    for (let i = 0; i < imgData.length; i += step) {
+      hash = ((hash << 5) - hash) + imgData[i];
+      hash |= 0;
+    }
+    return `px_${canvas.width}x${canvas.height}_${Math.abs(hash).toString(16)}`;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Extracts Transaction Reference Number from QR data or OCR text
+ */
+export function parseQRRefNumber(qrData) {
+  if (!qrData || typeof qrData !== "string") return null;
+  const match = qrData.match(/00\d{2}01\d{2}[^0-9]*(\d{8,30})/);
+  if (match) return match[1];
+  const refMatch = qrData.match(/(?:02\d{2})([A-Za-z0-9]{8,30})/);
+  if (refMatch) return refMatch[1];
+  return null;
+}
+
+export function parseOCRRefNumber(text) {
+  if (!text) return null;
+  const match = text.match(/(?:รหัสอ้างอิง|เลขที่อ้างอิง|ref|trans\s*ref|transaction\s*id|no\.)\s*[:\.]?\s*([a-z0-9]{8,30})/i);
+  return match ? match[1] : null;
+}
+
+/**
  * Validates whether an uploaded image file is a valid Thai bank transfer slip,
  * and verifies that the transfer amount matches the expected price (if specified).
  */
@@ -55,6 +92,7 @@ export async function validateBankSlip(file, options = {}, statusCb) {
   let isValidSlip = false;
   let qrData = null;
   let ocrText = null;
+  let imageHash = qrResult.imageHash || null;
 
   if (qrResult.isValid) {
     isValidSlip = true;
@@ -110,6 +148,11 @@ export async function validateBankSlip(file, options = {}, statusCb) {
     }
   }
 
+  let ref = qrData ? parseQRRefNumber(qrData) : null;
+  if (!ref && ocrText) {
+    ref = parseOCRRefNumber(ocrText);
+  }
+
   return {
     isValid: true,
     reason: detectedAmount
@@ -117,6 +160,8 @@ export async function validateBankSlip(file, options = {}, statusCb) {
       : "Valid Thai Bank Transfer Slip verified!",
     detectedAmount,
     qrData,
+    ref,
+    imageHash,
     ocrText
   };
 }
@@ -132,6 +177,8 @@ function scanQRFromImage(file) {
         canvas.height = img.height;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0);
+
+        const imageHash = computeCanvasHash(canvas);
 
         try {
           const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -149,15 +196,16 @@ function scanQRFromImage(file) {
             resolve({
               isValid: true,
               reason: "Valid Thai Bank Transfer Slip QR detected!",
-              qrData: code.data
+              qrData: code.data,
+              imageHash
             });
             return;
           }
 
-          resolve({ isValid: false, reason: "No valid bank QR code detected." });
+          resolve({ isValid: false, reason: "No valid bank QR code detected.", imageHash });
         } catch (err) {
           console.error("Slip QR validation error:", err);
-          resolve({ isValid: false, reason: "Unable to process slip image." });
+          resolve({ isValid: false, reason: "Unable to process slip image.", imageHash });
         }
       };
       img.onerror = () => resolve({ isValid: false, reason: "Failed to load image." });
