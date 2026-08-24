@@ -21,11 +21,21 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (!event.request.url.startsWith("http")) return;
 
-  // Network-first strategy for development & instant updates
+  // Bypass cache for live financial APIs and external services
+  if (
+    event.request.url.includes("finance.yahoo.com") ||
+    event.request.url.includes("open.er-api.com") ||
+    event.request.url.includes("supabase.co") ||
+    event.request.url.includes("api.allorigins.win")
+  ) {
+    return event.respondWith(fetch(event.request));
+  }
+
+  // Network-first strategy for app assets
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
+        if (networkResponse && networkResponse.status === 200 && event.request.method === "GET") {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);

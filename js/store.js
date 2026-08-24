@@ -16,10 +16,13 @@ export const store = {
   transactions: [],
   recurringRules: [],
   downPayments: [],
+  wallets: [],
+  portfolio: { holdings: [], cashUSD: 0, cashTHB: 0 },
   settings: {
     selectedCurrency: "THB",
     isDarkMode: true,
     isPremium: true,
+    isTraderMode: false,
     language: "th",
     hasCompletedOnboarding: false,
     taxDeduction: 60000,
@@ -63,9 +66,27 @@ export const store = {
     const savedDownPayments = localStorage.getItem("fintrack_down_payments");
     const savedSettings = localStorage.getItem("fintrack_settings");
     const savedNetWorth = localStorage.getItem("fintrack_net_worth");
+    const savedWallets = localStorage.getItem("fintrack_wallets");
+    const savedPortfolio = localStorage.getItem("fintrack_portfolio");
 
     if (savedSettings) {
       this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
+    }
+
+    if (savedWallets) {
+      this.wallets = JSON.parse(savedWallets);
+    } else {
+      this.wallets = [
+        { id: "default", name: "เงินสด (Cash)", type: "cash", color: "#F5C842", icon: "💵", balance: 0, isDefault: true, currency: "THB" },
+        { id: "bank_main", name: "บัญชีธนาคาร (Bank)", type: "bank", color: "#3B82F6", icon: "🏦", balance: 0, isDefault: false, currency: "THB" },
+        { id: "invest_main", name: "พอร์ตลงทุน (Invest)", type: "investment", color: "#6366F1", icon: "📈", balance: 0, isDefault: false, currency: "THB" },
+      ];
+    }
+
+    if (savedPortfolio) {
+      this.portfolio = JSON.parse(savedPortfolio);
+    } else {
+      this.portfolio = { holdings: [], cashUSD: 0, cashTHB: 0 };
     }
 
     if (savedNetWorth) {
@@ -193,6 +214,8 @@ export const store = {
       JSON.stringify(this.recurringRules),
     );
     localStorage.setItem("fintrack_down_payments", JSON.stringify(this.downPayments));
+    localStorage.setItem("fintrack_wallets", JSON.stringify(this.wallets));
+    localStorage.setItem("fintrack_portfolio", JSON.stringify(this.portfolio));
     localStorage.setItem("fintrack_settings", JSON.stringify(this.settings));
     if (this.user) {
       this.saveSettingsToCloud().catch((err) =>
@@ -317,14 +340,24 @@ export const store = {
     this.user = user;
 
     try {
-      // 1. Fetch settings from Supabase
-      const { data: dbSettings, error: settingsError } = await supabase
-        .from('user')
+      // 1. Fetch settings from Supabase (user_profiles or legacy user table)
+      let { data: dbSettings, error: settingsError } = await supabase
+        .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (settingsError) throw settingsError;
+      if (settingsError && settingsError.code === '42P01') {
+        // Fallback to legacy 'user' table if user_profiles doesn't exist
+        const legacy = await supabase
+          .from('user')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        dbSettings = legacy.data;
+      } else if (settingsError) {
+        console.warn("Error fetching user_profiles:", settingsError);
+      }
 
       // 2. Fetch transactions
       const { data: dbTransactions, error: txError } = await supabase
@@ -408,28 +441,7 @@ export const store = {
         await this.saveSettingsToCloud();
       } else {
         // No cloud settings, upload local settings
-        const settingsPayload = {
-          user_id: user.id,
-          selected_currency: this.settings.selectedCurrency || 'THB',
-          is_dark_mode: this.settings.isDarkMode !== undefined ? this.settings.isDarkMode : true,
-          theme: this.settings.theme || 'dark',
-          language: this.settings.language || 'th',
-          tax_personal_deduction: this.settings.taxPersonalDeduction !== undefined ? this.settings.taxPersonalDeduction : 60000,
-          tax_social_security: this.settings.taxSocialSecurity !== undefined ? this.settings.taxSocialSecurity : 9000,
-          tax_provident_fund: this.settings.taxProvidentFund || 0,
-          tax_mutual_funds: this.settings.taxMutualFunds || 0,
-          tax_other_deductions: this.settings.taxOtherDeductions || 0,
-          xp: this.settings.xp || 0,
-          level: this.settings.level || 1,
-          custom_categories: this.settings.customCategories || [],
-          coins: this.settings.coins || 0,
-          claimed_achievements: this.settings.claimedAchievements || [],
-          unlocked_themes: this.settings.unlockedThemes || ["light", "dark"],
-          forgiven_transactions: this.settings.forgivenTransactions || [],
-          collectibles: this.settings.collectibles || [],
-          quests_state: this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
-        };
-        await supabase.from('user').upsert(settingsPayload);
+        await this.saveSettingsToCloud();
       }
 
       if (ignoreLocalStorage) {
@@ -611,8 +623,11 @@ export const store = {
           quests_state: this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
           used_slips: this.settings.usedSlips || []
         };
-        const { error } = await supabase.from('user').upsert(payload);
-        if (error) {
+        let { error } = await supabase.from('user_profiles').upsert(payload, { onConflict: 'user_id' });
+        if (error && error.code === '42P01') {
+          // Fallback to legacy 'user' table
+          await supabase.from('user').upsert(payload, { onConflict: 'user_id' });
+        } else if (error) {
           console.error("Cloud save settings error:", error);
         }
       } catch (err) {
@@ -660,6 +675,7 @@ export const store = {
       const userId = this.user.id;
       await supabase.from('transactions').delete().eq('user_id', userId);
       await supabase.from('recurring_rules').delete().eq('user_id', userId);
+      await supabase.from('user_profiles').delete().eq('user_id', userId);
       await supabase.from('user').delete().eq('user_id', userId);
       
       // Clear local data as well
@@ -895,9 +911,188 @@ export const store = {
     this.save();
   },
 
+  // --- Wallets API ---
+  getWallets() {
+    return [...this.wallets];
+  },
+
+  getWallet(id) {
+    return this.wallets.find((w) => w.id === id) || null;
+  },
+
+  getWalletBalance(walletId) {
+    const wallet = this.getWallet(walletId);
+    if (!wallet) return 0;
+    const startingBalance = parseFloat(wallet.balance) || 0;
+    const txs = this.transactions.filter((t) => (t.walletId || 'default') === walletId);
+    let totalIncome = 0;
+    let totalExpense = 0;
+    txs.forEach((t) => {
+      if (t.isIncome) totalIncome += t.amount;
+      else totalExpense += t.amount;
+    });
+    return startingBalance + totalIncome - totalExpense;
+  },
+
+  addWallet(wallet) {
+    const newWallet = {
+      id: wallet.id || Math.random().toString(36).substring(2, 11),
+      name: wallet.name || "กระเป๋าใหม่",
+      type: wallet.type || "cash",
+      color: wallet.color || "#F5C842",
+      icon: wallet.icon || "💵",
+      balance: parseFloat(wallet.balance) || 0,
+      isDefault: !!wallet.isDefault,
+      currency: wallet.currency || "THB",
+      createdAt: new Date(),
+    };
+    this.wallets.push(newWallet);
+    this.save();
+    return newWallet;
+  },
+
+  updateWallet(updated) {
+    const idx = this.wallets.findIndex((w) => w.id === updated.id);
+    if (idx !== -1) {
+      this.wallets[idx] = {
+        ...this.wallets[idx],
+        ...updated,
+        balance: parseFloat(updated.balance !== undefined ? updated.balance : this.wallets[idx].balance) || 0,
+      };
+      this.save();
+    }
+  },
+
+  deleteWallet(id) {
+    if (this.wallets.length <= 1) return false; // keep at least 1 wallet
+    this.wallets = this.wallets.filter((w) => w.id !== id);
+    // Unassign transactions
+    this.transactions.forEach((t) => {
+      if (t.walletId === id) t.walletId = "default";
+    });
+    this.save();
+    return true;
+  },
+
+  transferFunds({ fromWalletId, toWalletId, amount, note = "", date = new Date() }) {
+    const fromWallet = this.getWallet(fromWalletId);
+    const toWallet = this.getWallet(toWalletId);
+    if (!fromWallet || !toWallet || !amount || amount <= 0) return false;
+
+    const baseAmount = parseFloat(amount);
+    const transferDate = date instanceof Date ? date : new Date(date);
+
+    // 1. Expense from source wallet
+    this.addTransaction({
+      title: `โอนไป ${toWallet.name}${note ? ` (${note})` : ''}`,
+      amount: baseAmount,
+      isIncome: false,
+      category: "Transfer",
+      date: transferDate,
+      walletId: fromWalletId,
+      isTransfer: true,
+      transferToWalletId: toWalletId,
+    });
+
+    // 2. Income into target wallet
+    this.addTransaction({
+      title: `รับโอนจาก ${fromWallet.name}${note ? ` (${note})` : ''}`,
+      amount: baseAmount,
+      isIncome: true,
+      category: "Transfer",
+      date: transferDate,
+      walletId: toWalletId,
+      isTransfer: true,
+      transferToWalletId: fromWalletId,
+    });
+
+    return true;
+  },
+
+  // --- Portfolio & Stock Tracker API (Trader Mode) ---
+  getPortfolio() {
+    return this.portfolio || { holdings: [], cashUSD: 0, cashTHB: 0 };
+  },
+
+  addStockHolding(item) {
+    if (!this.portfolio) this.portfolio = { holdings: [] };
+    if (!this.portfolio.holdings) this.portfolio.holdings = [];
+
+    const holding = {
+      id: item.id || Math.random().toString(36).substring(2, 11),
+      symbol: (item.symbol || "UNKNOWN").toUpperCase().trim(),
+      name: item.name || item.symbol || "",
+      shares: parseFloat(item.shares) || 0,
+      avgPrice: parseFloat(item.avgPrice) || 0,
+      currency: item.currency || "USD",
+      type: item.type || "stock", // stock, etf, crypto, mutual_fund
+      note: item.note || "",
+      createdAt: new Date(),
+    };
+
+    // If symbol already exists, update position with weighted average price
+    const existingIdx = this.portfolio.holdings.findIndex(
+      (h) => h.symbol === holding.symbol && h.currency === holding.currency
+    );
+
+    if (existingIdx !== -1) {
+      const existing = this.portfolio.holdings[existingIdx];
+      const totalShares = existing.shares + holding.shares;
+      const totalCost = (existing.shares * existing.avgPrice) + (holding.shares * holding.avgPrice);
+      existing.shares = totalShares;
+      existing.avgPrice = totalShares > 0 ? totalCost / totalShares : existing.avgPrice;
+    } else {
+      this.portfolio.holdings.push(holding);
+    }
+
+    this.save();
+    return holding;
+  },
+
+  updateStockHolding(updated) {
+    if (!this.portfolio || !this.portfolio.holdings) return;
+    const idx = this.portfolio.holdings.findIndex((h) => h.id === updated.id);
+    if (idx !== -1) {
+      this.portfolio.holdings[idx] = {
+        ...this.portfolio.holdings[idx],
+        ...updated,
+        shares: parseFloat(updated.shares) || 0,
+        avgPrice: parseFloat(updated.avgPrice) || 0,
+      };
+      this.save();
+    }
+  },
+
+  deleteStockHolding(id) {
+    if (!this.portfolio || !this.portfolio.holdings) return;
+    this.portfolio.holdings = this.portfolio.holdings.filter((h) => h.id !== id);
+    this.save();
+  },
+
+  importPortfolio(items) {
+    if (!Array.isArray(items)) return 0;
+    let addedCount = 0;
+    items.forEach((item) => {
+      if (item.symbol && item.shares > 0) {
+        this.addStockHolding(item);
+        addedCount++;
+      }
+    });
+    return addedCount;
+  },
+
+  setTraderMode(enabled) {
+    this.settings.isTraderMode = !!enabled;
+    this.save();
+  },
+
   // --- Transactions API ---
-  getAllTransactions() {
-    return [...this.transactions].sort((a, b) => b.date - a.date);
+  getAllTransactions(walletId = null) {
+    let list = [...this.transactions];
+    if (walletId && walletId !== 'all') {
+      list = list.filter((t) => (t.walletId || 'default') === walletId);
+    }
+    return list.sort((a, b) => b.date - a.date);
   },
 
   addTransaction(t) {
@@ -916,6 +1111,9 @@ export const store = {
       category: category,
       date: t.date ? new Date(t.date) : new Date(),
       recurringId: t.recurringId || null,
+      walletId: t.walletId || "default",
+      isTransfer: !!t.isTransfer,
+      transferToWalletId: t.transferToWalletId || null,
     };
     this.transactions.push(transaction);
     this.checkQuests();

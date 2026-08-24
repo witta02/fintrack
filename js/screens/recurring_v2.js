@@ -11,12 +11,13 @@ import { t, locale } from "../i18n.js";
 
 export function renderRecurring(container) {
   container.innerHTML = `
-    <div class="screen-header">
-      <h1 class="brand-title">${t("recurringTitle")}</h1>
-      <button id="add-recurring-btn" class="icon-btn icon-btn-primary" title="${t("navAdd")}" style="transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px var(--gold-glow);">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
-    </div>
+    <div class="screen screen-enter" style="padding: 0 16px 24px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 16px;">
+        <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">${t("recurringTitle")}</h1>
+        <button id="add-recurring-btn" class="icon-btn" title="${t("navAdd")}" style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--gold), var(--amber)); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--shadow-gold);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
 
     <div class="info-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(124, 92, 252, 0.15) 0%, rgba(124, 92, 252, 0.05) 100%); border: 1px solid rgba(124, 92, 252, 0.3); border-radius: 16px; padding: 18px; box-shadow: 0 8px 32px rgba(124, 92, 252, 0.05); backdrop-filter: blur(10px); transition: transform 0.3s ease;">
       <div style="display: flex; gap: 14px; align-items: flex-start;">

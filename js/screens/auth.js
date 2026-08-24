@@ -9,11 +9,11 @@ export function renderAuth(container) {
     <div class="auth-page-wrapper">
       <div class="auth-card-wrapper">
         <!-- Logo -->
-        <div class="auth-logo-section">
-          <div class="auth-logo-icon">
-            <img src="/icons/icon-192.png" alt="FinTrack" style="width:44px;height:44px;border-radius:14px;" onerror="this.style.display='none';this.parentElement.innerHTML='<svg width=32 height=32 viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.5&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><path d=&quot;M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z&quot;/></svg>'" />
+        <div class="auth-logo-section" style="margin-bottom: 24px;">
+          <div class="auth-logo-icon" style="width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 12px auto; overflow: hidden; box-shadow: 0 12px 30px rgba(245, 200, 66, 0.25);">
+            <img src="/icons/icon-192.png" alt="FinTrack 3.0" style="width: 100%; height: 100%; object-fit: cover;" />
           </div>
-          <div class="auth-brand-name">FinTrack</div>
+          <div class="auth-brand-name" style="font-size: 26px; font-weight: 900; color: var(--text-primary);">FinTrack <span style="color: var(--gold); font-size: 16px; font-weight: 800;">3.0</span></div>
         </div>
 
         <!-- Form Card -->

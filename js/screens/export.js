@@ -3,8 +3,6 @@ import { router } from "../router.js";
 import { t, locale, getLanguage } from "../i18n.js";
 import { alerts } from "../utils/alertHelper.js";
 import { getCategoryInfo } from "../categories.js";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 
 export function renderExport(container) {
   const now = new Date();
@@ -12,61 +10,60 @@ export function renderExport(container) {
   const currentMonth = now.getMonth();
 
   container.innerHTML = `
-    <div class="screen-header" style="display: flex; align-items: center; gap: 16px; padding-bottom: 20px;">
-      <button id="back-btn" class="icon-btn-secondary" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text-primary);">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      </button>
-      <h1 class="brand-title" style="font-size: 24px; font-weight: 800; letter-spacing: -1px; color: var(--text-primary); margin: 0;">${t("exportTitle")}</h1>
+    <div class="screen screen-enter" style="padding: 0 16px 24px;">
+      <!-- Header -->
+      <div style="display: flex; align-items: center; gap: 14px; padding: 14px 0 16px;">
+        <button id="back-btn" class="icon-btn" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text-primary);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+        <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">${t("exportTitle")}</h1>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Period Switcher Tabs -->
+        <div class="add-tx-type-tabs" style="margin-bottom: 6px;">
+          <button class="add-tx-tab active" data-mode="month">${t("exportMonth")}</button>
+          <button class="add-tx-tab" data-mode="year">${t("exportYear")}</button>
+          <button class="add-tx-tab" data-mode="range">${t("exportRange")}</button>
+        </div>
+
+        <!-- Month Selector -->
+        <div id="month-selector-container" class="filter-section">
+          <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 12px; color: var(--text-secondary);">${t("selectMonth")}</label>
+          <input type="month" id="export-month" class="form-control" value="${currentYear}-${String(currentMonth + 1).padStart(2, "0")}" style="width: 100%; height: 48px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px;">
+        </div>
+
+        <!-- Year Selector -->
+        <div id="year-selector-container" class="filter-section" style="display: none;">
+          <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 12px; color: var(--text-secondary);">${t("selectYear")}</label>
+          <select id="export-year" class="form-control" style="width: 100%; height: 48px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px;">
+            ${Array.from({ length: 5 }, (_, i) => currentYear - i)
+              .map((y) => `<option value="${y}">${y}</option>`)
+              .join("")}
+          </select>
+        </div>
+
+        <!-- Range Selector -->
+        <div id="range-selector-container" class="filter-section" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 12px; color: var(--text-secondary);">${t("startDate")}</label>
+            <input type="date" id="export-start-date" class="form-control" value="${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-01" style="width: 100%; height: 48px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 14px; font-size: 13px;">
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 12px; color: var(--text-secondary);">${t("endDate")}</label>
+            <input type="date" id="export-end-date" class="form-control" value="${now.toISOString().split("T")[0]}" style="width: 100%; height: 48px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 14px; font-size: 13px;">
+          </div>
+        </div>
+
+        <!-- Print / PDF Button -->
+        <button id="print-report-btn" class="primary-btn" style="margin-top: 10px; height: 52px; border-radius: var(--radius-lg); background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 800; font-size: 15px; border: none; box-shadow: var(--shadow-gold); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          ${t("printReport")}
+        </button>
+      </div>
+
+      <div id="print-area" style="display: none;"></div>
     </div>
-
-    <div class="export-options" style="display: flex; flex-direction: column; gap: 20px;">
-      <!-- Filter Type Selector -->
-      <div class="form-group">
-        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: var(--text-secondary);">${t("category")}</label>
-        <div class="period-selector" style="margin-bottom: 16px;">
-          <button class="period-tab active" data-mode="month">${t("exportMonth")}</button>
-          <button class="period-tab" data-mode="year">${t("exportYear")}</button>
-          <button class="period-tab" data-mode="range">${t("exportRange")}</button>
-        </div>
-      </div>
-
-      <!-- Month Selector -->
-      <div id="month-selector-container" class="filter-section">
-        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: var(--text-secondary);">${t("selectMonth")}</label>
-        <input type="month" id="export-month" class="form-control" value="${currentYear}-${String(currentMonth + 1).padStart(2, "0")}" style="width: 100%; height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px;">
-      </div>
-
-      <!-- Year Selector -->
-      <div id="year-selector-container" class="filter-section" style="display: none;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: var(--text-secondary);">${t("selectYear")}</label>
-        <select id="export-year" class="form-control" style="width: 100%; height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px;">
-          ${Array.from({ length: 5 }, (_, i) => currentYear - i)
-            .map((y) => `<option value="${y}">${y}</option>`)
-            .join("")}
-        </select>
-      </div>
-
-      <!-- Range Selector (Responsive Fix) -->
-      <div id="range-selector-container" class="filter-section" style="display: none; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; width: 100%;">
-        <div style="width: 100%;">
-          <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: var(--text-secondary);">${t("startDate")}</label>
-          <input type="date" id="export-start-date" class="form-control" value="${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-01" style="width: 100%; height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px; font-size: 14px;">
-        </div>
-        <div style="width: 100%;">
-          <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: var(--text-secondary);">${t("endDate")}</label>
-          <input type="date" id="export-end-date" class="form-control" value="${now.toISOString().split("T")[0]}" style="width: 100%; height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px; font-size: 14px;">
-        </div>
-      </div>
-
-      <button id="print-report-btn" class="primary-btn" style="margin-top: 20px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 700; font-size: 16px; border: none; box-shadow: var(--shadow-gold); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        ${t("printReport")}
-      </button>
-    </div>
-
-    <div id="print-area" style="display: none;"></div>
-
-    <div style="height: 100px;"></div>
   `;
 
   setupEventListeners(container);
@@ -74,11 +71,11 @@ export function renderExport(container) {
 
 function setupEventListeners(container) {
   const backBtn = container.querySelector("#back-btn");
-  backBtn.addEventListener("click", () => {
+  backBtn?.addEventListener("click", () => {
     router.navigate("transactions");
   });
 
-  const tabs = container.querySelectorAll(".period-tab");
+  const tabs = container.querySelectorAll(".add-tx-tab");
   const sections = {
     month: container.querySelector("#month-selector-container"),
     year: container.querySelector("#year-selector-container"),
@@ -92,54 +89,62 @@ function setupEventListeners(container) {
 
       const mode = tab.getAttribute("data-mode");
       Object.keys(sections).forEach((k) => {
-        sections[k].style.display =
-          k === mode ? (k === "range" ? "grid" : "block") : "none";
+        if (sections[k]) {
+          sections[k].style.display =
+            k === mode ? (k === "range" ? "grid" : "block") : "none";
+        }
       });
     });
   });
 
   const printBtn = container.querySelector("#print-report-btn");
-  printBtn.addEventListener("click", () => {
+  printBtn?.addEventListener("click", () => {
     printReport(container);
   });
 }
 
 function getFilteredData(container) {
   const mode = container
-    .querySelector(".period-tab.active")
-    .getAttribute("data-mode");
+    .querySelector(".add-tx-tab.active")
+    ?.getAttribute("data-mode") || "month";
   let filteredTransactions = store.getAllTransactions();
   let titleSuffix = "";
 
   try {
     if (mode === "month") {
-      const monthVal = container.querySelector("#export-month").value;
+      const monthVal = container.querySelector("#export-month")?.value;
       if (!monthVal) return null;
       const [y, m] = monthVal.split("-").map(Number);
       filteredTransactions = filteredTransactions.filter(
-        (t) => t.date.getFullYear() === y && t.date.getMonth() === m - 1,
+        (t) => {
+          const d = new Date(t.date);
+          return d.getFullYear() === y && d.getMonth() === m - 1;
+        }
       );
       titleSuffix = monthVal;
     } else if (mode === "year") {
-      const y = parseInt(container.querySelector("#export-year").value);
+      const y = parseInt(container.querySelector("#export-year")?.value || "");
       filteredTransactions = filteredTransactions.filter(
-        (t) => t.date.getFullYear() === y,
+        (t) => new Date(t.date).getFullYear() === y,
       );
       titleSuffix = y.toString();
     } else if (mode === "range") {
-      const startInput = container.querySelector("#export-start-date").value;
-      const endInput = container.querySelector("#export-end-date").value;
+      const startInput = container.querySelector("#export-start-date")?.value;
+      const endInput = container.querySelector("#export-end-date")?.value;
       if (!startInput || !endInput) return null;
       const start = new Date(startInput);
       const end = new Date(endInput);
       end.setHours(23, 59, 59, 999);
       filteredTransactions = filteredTransactions.filter(
-        (t) => t.date >= start && t.date <= end,
+        (t) => {
+          const d = new Date(t.date);
+          return d >= start && d <= end;
+        }
       );
       titleSuffix = `${start.toISOString().split("T")[0]}_to_${end.toISOString().split("T")[0]}`;
     }
 
-    filteredTransactions.sort((a, b) => a.date - b.date);
+    filteredTransactions.sort((a, b) => new Date(a.date) - new Date(b.date));
     return { data: filteredTransactions, suffix: titleSuffix };
   } catch (err) {
     console.error("Filtering error:", err);

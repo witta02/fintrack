@@ -45,14 +45,19 @@ export function renderCollectibles(container) {
   const progressPercent = Math.round((ownedCount / totalItems) * 100);
 
   let html = `
-    <div class="screen-header" style="padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
-      <div style="display: flex; align-items: center; gap: 14px;">
-        <button class="back-btn" style="background: transparent; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface);">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        </button>
-        <h1 class="brand-title" style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0;">${t('theVault')}</h1>
+    <div class="screen screen-enter" style="padding: 0 16px 24px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 16px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="back-btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h1 style="font-size: 22px; font-weight: 900; color: var(--text-primary); margin: 0;">${lang === 'en' ? 'Collection' : 'ตู้โชว์ของสะสม'}</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; background: rgba(168, 85, 247, 0.15); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(168, 85, 247, 0.25);">
+          <span style="font-size: 13px;">🏆</span>
+          <span style="font-weight: 800; color: #a855f7; font-size: 13px;">${ownedCount}/${totalItems}</span>
+        </div>
       </div>
-    </div>
 
     <!-- Collection Progress -->
     <div style="background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 24px; text-align: center;">

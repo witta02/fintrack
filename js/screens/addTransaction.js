@@ -35,7 +35,6 @@ export function renderAddTransaction(container, params) {
       selectedCategory = transaction.category;
     }
   } else {
-    // Reset defaults for a new transaction
     isIncome = false;
     selectedCategory = "Food";
   }
@@ -48,7 +47,6 @@ export function renderAddTransaction(container, params) {
     : "";
   const displayTitle = transaction ? transaction.title : "";
 
-  // Format transaction date to YYYY-MM-DDThh:mm for datetime-local input
   let formattedDate = "";
   if (transaction && transaction.date) {
     const d = new Date(transaction.date);
@@ -61,128 +59,142 @@ export function renderAddTransaction(container, params) {
   }
 
   container.innerHTML = `
-    <div class="screen-header" style="display: flex; align-items: center; justify-content: space-between;">
-      <h1 class="brand-title">${titleText}</h1>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        ${
-          !editingTransactionId
-            ? `
-          <button id="scan-receipt-btn" type="button" class="icon-btn" title="${t("scanReceiptTitle")}" style="color: var(--gold); border: 1px solid var(--border); border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--surface);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-          </button>
-        `
-            : ""
-        }
-        <button id="cancel-btn" class="icon-btn" title="${t("cancel")}">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <div class="screen screen-enter" style="padding: 0 16px 24px;">
+      <!-- Header -->
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 16px;">
+        <button id="cancel-btn" class="icon-btn" title="${t("cancel")}" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text-primary);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
-      </div>
-    </div>
-
-    <!-- Hidden file input -->
-    <input type="file" id="scan-receipt-file-input" accept="image/*" class="hidden" />
-
-    <!-- Scanning Spinner -->
-    <div id="ocr-spinner-overlay" class="scanning-overlay hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 200;">
-      <div class="scanning-dialog" style="background: #1C2128; border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; max-width: 280px; color: white; font-family: sans-serif;">
-        <div class="scan-spinner" style="width: 48px; height: 48px; border: 3px solid rgba(255, 184, 0, 0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 16px auto;"></div>
-        <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: white;">${t("scanningOcrTitle")}</h4>
-        <p style="margin: 0; font-size: 11px; opacity: 0.6; color: #9CA3AF;">${t("scanningOcrSubtitle")}</p>
-      </div>
-    </div>
-
-    <form id="transaction-form" class="transaction-form">
-      <!-- Income/Expense Selector -->
-      <div class="form-group" style="margin-bottom: 20px;">
-        <div class="type-switcher">
-          <button type="button" class="type-btn expense-btn ${!isIncome ? "active" : ""}" id="switch-expense">${t("expense")}</button>
-          <button type="button" class="type-btn income-btn ${isIncome ? "active" : ""}" id="switch-income">${t("income")}</button>
+        <h1 style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0;">${titleText}</h1>
+        <div>
+          ${
+            !editingTransactionId
+              ? `
+            <button id="scan-receipt-btn" type="button" class="icon-btn" title="${t("scanReceiptTitle")}" style="color: var(--gold); border: 1px solid var(--border); border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--surface);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+            </button>
+          `
+              : `<div style="width:40px;"></div>`
+          }
         </div>
       </div>
 
-      <!-- Amount Input -->
-      <div class="form-group">
-        <label class="form-label" for="amount">${t("amount")} (${store.getCurrencySymbol()})</label>
-        <input 
-          type="number" 
-          step="0.01" 
-          id="amount" 
-          placeholder="0.00" 
-          required 
-          class="form-control amount-input-field" 
-          value="${displayAmount}"
-          style="font-size: 24px; font-weight: 700; text-align: center;"
-        />
-      </div>
+      <!-- Hidden file input for scanner -->
+      <input type="file" id="scan-receipt-file-input" accept="image/*" class="hidden" />
 
-      <!-- Title Input -->
-      <div class="form-group">
-        <label class="form-label" for="title">${t("title")}</label>
-        <input 
-          type="text" 
-          id="title" 
-          placeholder="${t("titlePlaceholder")}" 
-          class="form-control" 
-          value="${escapeHTML(displayTitle)}"
-        />
-      </div>
-
-      <!-- Date Input -->
-      <div class="form-group">
-        <label class="form-label" for="date">${t("dateTime")}</label>
-        <input 
-          type="datetime-local" 
-          id="date" 
-          required 
-          class="form-control" 
-          value="${formattedDate}"
-        />
-      </div>
-
-      <!-- Category Selector -->
-      <div class="form-group">
-        <label class="form-label">${t("category")}</label>
-        <div id="category-selector-container" class="category-grid-selector">
-          <!-- Rendered dynamically -->
+      <!-- Scanning Spinner Overlay -->
+      <div id="ocr-spinner-overlay" class="scanning-overlay hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.75); display: flex; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(8px);">
+        <div class="scanning-dialog" style="background: var(--card-solid); border: 1px solid var(--border); border-radius: 20px; padding: 28px; text-align: center; max-width: 290px; color: white;">
+          <div class="scan-spinner" style="width: 48px; height: 48px; border: 3px solid rgba(245, 200, 66, 0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 16px auto;"></div>
+          <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: white;">${t("scanningOcrTitle")}</h4>
+          <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">${t("scanningOcrSubtitle")}</p>
         </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div style="margin-top: 32px; display: flex; flex-direction: column; gap: 12px;">
-        <button type="submit" class="btn-primary" style="padding: 14px;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          ${t("saveTransaction")}
-        </button>
-        
-        ${
-          editingTransactionId
-            ? `
-          <button type="button" id="delete-trans-btn" class="btn" style="background: rgba(248, 81, 73, 0.1); color: #F85149; border: 1px solid rgba(248, 81, 73, 0.2); padding: 12px; border-radius: var(--radius-lg); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-            ${t("deleteThis")}
+      <form id="transaction-form" class="transaction-form">
+        <!-- Type Switcher Tabs (Spendee style) -->
+        <div class="add-tx-type-tabs">
+          <button type="button" class="add-tx-tab ${!isIncome ? "active expense" : ""}" id="switch-expense">${t("expense")}</button>
+          <button type="button" class="add-tx-tab ${isIncome ? "active income" : ""}" id="switch-income">${t("income")}</button>
+        </div>
+
+        <!-- Big Amount Card -->
+        <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 20px 16px; margin-bottom: 20px; text-align: center;">
+          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px;">
+            ${t("amount")} (${store.getCurrencySymbol()})
+          </div>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <span style="font-size: 28px; font-weight: 800; color: var(--text-secondary);">${store.getCurrencySymbol()}</span>
+            <input 
+              type="number" 
+              step="0.01" 
+              inputmode="decimal"
+              id="amount" 
+              placeholder="0.00" 
+              required 
+              autofocus
+              class="amount-input-field" 
+              value="${displayAmount}"
+              style="font-size: 40px; font-weight: 900; text-align: left; background: transparent; border: none; outline: none; width: 220px; color: var(--text-primary); font-family: var(--font-heading);"
+            />
+          </div>
+        </div>
+
+        <!-- Title / Note -->
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">${t("title")}</label>
+          <input 
+            type="text" 
+            id="title" 
+            placeholder="${t("titlePlaceholder")}" 
+            value="${escapeHTML(displayTitle)}"
+            style="width: 100%; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); font-size: 14px; color: var(--text-primary);"
+          />
+        </div>
+
+        <!-- Wallet & Date Row -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">${store.settings.language === 'en' ? 'Wallet' : 'กระเป๋าเงิน'}</label>
+            <select id="transaction-wallet-select" style="width: 100%; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); font-size: 13px; color: var(--text-primary);">
+              ${store.getWallets().map(w => `<option value="${w.id}" ${transaction?.walletId === w.id ? 'selected' : ''}>${w.name}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">${t("dateTime")}</label>
+            <input 
+              type="datetime-local" 
+              id="date" 
+              required 
+              value="${formattedDate}"
+              style="width: 100%; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); font-size: 13px; color: var(--text-primary);"
+            />
+          </div>
+        </div>
+
+        <!-- Category Grid -->
+        <div style="margin-bottom: 24px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px;">${t("category")}</label>
+          <div id="category-selector-container" class="category-grid-30">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Submit & Delete Buttons -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 16px; font-size: 15px; font-weight: 800; border-radius: var(--radius-lg); background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: var(--shadow-gold);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            ${t("saveTransaction")}
           </button>
-        `
-            : ""
-        }
-      </div>
+          
+          ${
+            editingTransactionId
+              ? `
+            <button type="button" id="delete-trans-btn" style="width: 100%; padding: 14px; background: rgba(248, 81, 73, 0.1); color: #F85149; border: 1px solid rgba(248, 81, 73, 0.25); border-radius: var(--radius-lg); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              ${t("deleteThis")}
+            </button>
+          `
+              : ""
+          }
+        </div>
+      </form>
+    </div>
   `;
 
-  // Initial category picker setup
   renderCategoryPicker(container);
-
-  // Setup form submit & click event listeners
   setupFormListeners(container);
 }
 
 function renderCategoryPicker(container) {
   const catContainer = container.querySelector("#category-selector-container");
+  if (!catContainer) return;
   catContainer.innerHTML = "";
 
   const list = isIncome ? getIncomeCategories() : getExpenseCategories();
 
-  // Make sure the selectedCategory fits the list, if not reset to the first option
   if (!list.some((c) => c.name === selectedCategory)) {
-    selectedCategory = list[0].name;
+    selectedCategory = list[0]?.name || "Other";
   }
 
   list.forEach((cat) => {
@@ -190,40 +202,35 @@ function renderCategoryPicker(container) {
     const isSelected = cat.name === selectedCategory;
 
     const item = document.createElement("div");
-    item.className = `category-picker-item ${isSelected ? "selected" : ""}`;
-
-    // Style when selected vs unselected
+    item.className = `category-grid-item ${isSelected ? "selected" : ""}`;
     if (isSelected) {
       item.style.borderColor = info.color;
-      item.style.background = `${info.color}15`;
-      item.style.color = info.color;
+      item.style.background = `${info.color}18`;
     }
 
     item.innerHTML = `
-      <div class="category-picker-icon" style="background: ${info.color}15; color: ${info.color};">
-        <span style="display: flex; align-items: center; justify-content: center; width: 22px; height: 22px;">${info.svg}</span>
+      <div style="width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: ${info.color}20; color: ${info.color}; font-size: 18px;">
+        ${info.svg ? `<span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${info.svg}</span>` : '📦'}
       </div>
-      <div class="category-picker-label">${info.label}</div>
+      <div class="category-grid-label" style="${isSelected ? `color: ${info.color}; font-weight: 800;` : ''}">${info.label}</div>
     `;
 
     item.addEventListener("click", () => {
       selectedCategory = cat.name;
-      renderCategoryPicker(container); // Re-render to update classes
+      renderCategoryPicker(container);
     });
 
     catContainer.appendChild(item);
   });
 
-  // Add "+" tile for custom categories
+  // Custom Category Tile
   const addTile = document.createElement("div");
-  addTile.className = `category-picker-item`;
+  addTile.className = `category-grid-item`;
   addTile.innerHTML = `
-    <div class="category-picker-icon" style="background: var(--surface); color: var(--text-secondary); border: 1.5px dashed var(--border);">
-      <span style="display: flex; align-items: center; justify-content: center; width: 22px; height: 22px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </span>
+    <div style="width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--surface); color: var(--text-secondary); border: 1.5px dashed var(--border);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </div>
-    <div class="category-picker-label">${store.settings.language === 'en' ? 'Add' : 'เพิ่ม'}</div>
+    <div class="category-grid-label">${store.settings.language === 'en' ? 'Add' : 'เพิ่ม'}</div>
   `;
   addTile.addEventListener("click", () => {
     showCustomCategoryModal(() => {
@@ -235,123 +242,67 @@ function renderCategoryPicker(container) {
 
 function setupFormListeners(container) {
   const form = container.querySelector("#transaction-form");
-
-  // Toggle Expense / Income buttons
   const expBtn = container.querySelector("#switch-expense");
   const incBtn = container.querySelector("#switch-income");
 
-  incBtn.addEventListener("click", () => {
-    if (isIncome) return; // Already income
+  incBtn?.addEventListener("click", () => {
+    if (isIncome) return;
     isIncome = true;
-    incBtn.classList.add("active");
-    expBtn.classList.remove("active");
+    incBtn.classList.add("active", "income");
+    expBtn.classList.remove("active", "expense");
     selectedCategory = "Salary";
     renderCategoryPicker(container);
   });
 
-  expBtn.addEventListener("click", () => {
-    if (!isIncome) return; // Already expense
+  expBtn?.addEventListener("click", () => {
+    if (!isIncome) return;
     isIncome = false;
-    expBtn.classList.add("active");
-    incBtn.classList.remove("active");
+    expBtn.classList.add("active", "expense");
+    incBtn.classList.remove("active", "income");
     selectedCategory = "Food";
     renderCategoryPicker(container);
   });
 
-  // Cancel Button
-  container.querySelector("#cancel-btn").addEventListener("click", () => {
+  container.querySelector("#cancel-btn")?.addEventListener("click", () => {
     router.navigate("dashboard");
   });
 
-  // Scan Receipt Action
   const scanBtn = container.querySelector("#scan-receipt-btn");
   const fileInput = container.querySelector("#scan-receipt-file-input");
 
   if (scanBtn && fileInput) {
-    scanBtn.addEventListener("click", () => {
-      fileInput.click();
-    });
+    scanBtn.addEventListener("click", () => fileInput.click());
 
     fileInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (file) {
         const spinner = container.querySelector("#ocr-spinner-overlay");
-        const statusSubtitle =
-          container.querySelector("#ocr-spinner-overlay p") || spinner;
-        spinner.classList.remove("hidden");
+        const statusSubtitle = container.querySelector("#ocr-spinner-overlay p") || spinner;
+        spinner?.classList.remove("hidden");
 
         try {
-          // 1. Try local QR scanner first
           const qrData = await scanImageQR(file);
           if (qrData) {
             const parsed = parseSlipQR(qrData);
             if (parsed) {
-              // Pre-fill form fields
-              container.querySelector("#title").value = parsed.title;
-              if (parsed.amount) {
-                container.querySelector("#amount").value =
-                  parsed.amount.toFixed(2);
-              } else {
-                // Try to extract amount from the slip using OCR
-                try {
-                  const originalText = statusSubtitle.textContent;
-                  if (statusSubtitle) {
-                    statusSubtitle.textContent =
-                      store.settings.language === "en"
-                        ? "Reading transaction amount from slip..."
-                        : "กำลังอ่านยอดเงินจากสลิป...";
-                  }
+              const titleEl = container.querySelector("#title");
+              const amtEl = container.querySelector("#amount");
+              const dateEl = container.querySelector("#date");
+              if (titleEl) titleEl.value = parsed.title;
+              if (amtEl && parsed.amount) amtEl.value = parsed.amount.toFixed(2);
+              if (dateEl && parsed.date) dateEl.value = parsed.date;
 
-                  const rawText = await runLocalOCR(file, (msg) => {
-                    if (statusSubtitle) statusSubtitle.textContent = msg;
-                  });
-
-                  if (statusSubtitle) statusSubtitle.textContent = originalText;
-
-                  const extractedAmount = parseBankSlipAmount(rawText);
-                  if (extractedAmount) {
-                    container.querySelector("#amount").value =
-                      extractedAmount.toFixed(2);
-                  } else {
-                    setTimeout(
-                      () => container.querySelector("#amount").focus(),
-                      150,
-                    );
-                  }
-                } catch (ocrErr) {
-                  console.error(
-                    "Failed to read amount from slip via OCR:",
-                    ocrErr,
-                  );
-                  setTimeout(
-                    () => container.querySelector("#amount").focus(),
-                    150,
-                  );
-                }
-              }
-              if (parsed.date) {
-                container.querySelector("#date").value = parsed.date;
-              }
-
-              // Automatically set category and active switcher
               selectedCategory = "Other";
-              isIncome = false; // standard transfer is expense
-              container
-                .querySelector("#switch-expense")
-                .classList.add("active");
-              container
-                .querySelector("#switch-income")
-                .classList.remove("active");
+              isIncome = false;
+              expBtn?.classList.add("active", "expense");
+              incBtn?.classList.remove("active", "income");
               renderCategoryPicker(container);
 
               alerts.success(
-                store.settings.language === "en"
-                  ? `QR scan done — nice!`
-                  : `สแกน QR เสร็จแล้ว เรื่ด!`,
+                store.settings.language === "en" ? `QR scan done!` : `สแกน QR เสร็จแล้ว!`,
                 parsed.title,
               );
-
-              spinner.classList.add("hidden");
+              spinner?.classList.add("hidden");
               return;
             }
           }
@@ -359,83 +310,54 @@ function setupFormListeners(container) {
           console.error("Local QR Scan failed, falling back to OCR:", qrErr);
         }
 
-        // 2. Fallback to Local OCR scanner
         try {
-          const originalText = statusSubtitle.textContent;
           const rawText = await runLocalOCR(file, (msg) => {
             if (statusSubtitle) statusSubtitle.textContent = msg;
           });
 
-          if (statusSubtitle) statusSubtitle.textContent = originalText;
-
           if (detectIfBankSlip(rawText)) {
-            // It's a bank/e-wallet slip without a QR code
             const payeeName = parseBankSlipReceiver(rawText);
             const amountVal = parseBankSlipAmount(rawText);
-
-            container.querySelector("#title").value = payeeName;
-            if (amountVal) {
-              container.querySelector("#amount").value = amountVal.toFixed(2);
-            } else {
-              setTimeout(() => container.querySelector("#amount").focus(), 150);
-            }
+            const titleEl = container.querySelector("#title");
+            const amtEl = container.querySelector("#amount");
+            if (titleEl) titleEl.value = payeeName;
+            if (amtEl && amountVal) amtEl.value = amountVal.toFixed(2);
 
             selectedCategory = guessCategory(rawText, payeeName);
             isIncome = false;
-
-            container.querySelector("#switch-expense").classList.add("active");
-            container
-              .querySelector("#switch-income")
-              .classList.remove("active");
+            expBtn?.classList.add("active", "expense");
+            incBtn?.classList.remove("active", "income");
             renderCategoryPicker(container);
 
             alerts.success(
-              store.settings.language === "en"
-                ? `Slip scanned — nice!`
-                : `สแกนสลิปเสร็จแล้ว เรื่ด!`,
+              store.settings.language === "en" ? `Slip scanned!` : `สแกนสลิปเสร็จแล้ว!`,
               payeeName,
             );
           } else {
-            // It's a regular itemized receipt
             const parsed = parseReceiptText(rawText);
+            const titleEl = container.querySelector("#title");
+            const amtEl = container.querySelector("#amount");
+            if (titleEl) titleEl.value = parsed.payee || t("merchantFallback");
+            if (amtEl && parsed.total > 0) amtEl.value = parsed.total.toFixed(2);
 
-            // Pre-fill form fields
-            container.querySelector("#title").value = parsed.payee || t("merchantFallback");
-            if (parsed.total > 0) {
-              container.querySelector("#amount").value =
-                parsed.total.toFixed(2);
-            } else {
-              setTimeout(() => container.querySelector("#amount").focus(), 150);
-            }
-
-            // Guess category
             selectedCategory = guessCategory(rawText, parsed.payee);
-            isIncome = false; // receipts are typically expense
-
-            container.querySelector("#switch-expense").classList.add("active");
-            container
-              .querySelector("#switch-income")
-              .classList.remove("active");
+            isIncome = false;
+            expBtn?.classList.add("active", "expense");
+            incBtn?.classList.remove("active", "income");
             renderCategoryPicker(container);
 
-            alerts.success(
-              t("receiptScannedSuccess"),
-              parsed.payee,
-            );
+            alerts.success(t("receiptScannedSuccess"), parsed.payee);
           }
         } catch (ocrErr) {
           console.error("Local OCR failed:", ocrErr);
-          alerts.error(
-            t("noQrOrReceiptFound"),
-          );
+          alerts.error(t("noQrOrReceiptFound"));
         } finally {
-          spinner.classList.add("hidden");
+          spinner?.classList.add("hidden");
         }
       }
     });
   }
 
-  // Delete transaction button (if editing)
   const delBtn = container.querySelector("#delete-trans-btn");
   if (delBtn) {
     delBtn.addEventListener("click", async () => {
@@ -450,11 +372,10 @@ function setupFormListeners(container) {
     });
   }
 
-  // Handle Form Submission
-  form.addEventListener("submit", (e) => {
+  form?.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    let rawTitle = container.querySelector("#title").value.trim();
+    let rawTitle = container.querySelector("#title")?.value?.trim() || "";
     if (!rawTitle) {
       const catInfo = getCategoryInfo(selectedCategory);
       rawTitle = catInfo ? catInfo.label : selectedCategory;
@@ -466,17 +387,14 @@ function setupFormListeners(container) {
     const dateVal = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
 
     if (isNaN(amountVal) || amountVal <= 0) {
-      alerts.warning(
-        t("validAmountWarning"),
-      );
+      alerts.warning(t("validAmountWarning"));
       return;
     }
 
-    // Convert display currency amount back to base THB currency amount
     const thbAmount = store.toBase(amountVal);
+    const walletVal = container.querySelector("#transaction-wallet-select")?.value || "default";
 
     if (editingTransactionId) {
-      // Update
       const oldTrans = store
         .getAllTransactions()
         .find((t) => t.id === editingTransactionId);
@@ -487,23 +405,21 @@ function setupFormListeners(container) {
         isIncome: isIncome,
         category: selectedCategory,
         date: dateVal,
+        walletId: walletVal,
         recurringId: oldTrans ? oldTrans.recurringId : null,
       });
     } else {
-      // Add
       store.addTransaction({
         title: titleVal,
         amount: thbAmount,
         isIncome: isIncome,
         category: selectedCategory,
         date: dateVal,
+        walletId: walletVal,
       });
-
-
       showCoinAnimation();
     }
 
-    // Navigate back after a slight delay to allow animation to start
     setTimeout(() => {
       router.navigate("dashboard");
     }, 150);
@@ -567,7 +483,6 @@ function scanImageQR(file) {
 function parseSlipQR(qrData) {
   if (!qrData.startsWith("00")) return null;
 
-  // Helper to parse TLV
   const parseTLV = (s) => {
     const res = {};
     let idx = 0;
@@ -584,14 +499,12 @@ function parseSlipQR(qrData) {
 
   const outerTags = parseTLV(qrData);
 
-  // Detect if it is a Slip Verification QR (Mini QR)
   if (outerTags["00"] && outerTags["00"].length > 10) {
     const subTags = parseTLV(outerTags["00"]);
     const sendingBankCode = subTags["01"] || "";
     const ref = subTags["02"] || "";
     const amountVal = subTags["04"] ? parseFloat(subTags["04"]) : null;
 
-    // Map bank code to name
     const bankMap = {
       "002": "ธนาคารกรุงเทพ",
       "004": "ธนาคารกสิกรไทย",
@@ -606,7 +519,6 @@ function parseSlipQR(qrData) {
     };
     const bankName = bankMap[sendingBankCode] || t("bankFallback");
 
-    // Parse date from ref (YYYYMMDDHHmm)
     let parsedDate = "";
     if (ref.length >= 12) {
       const match = ref.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/);
@@ -625,7 +537,6 @@ function parseSlipQR(qrData) {
     };
   }
 
-  // Detect if it is a Payment PromptPay QR
   if (outerTags["29"] || outerTags["30"]) {
     const amountVal = outerTags["54"] ? parseFloat(outerTags["54"]) : null;
     return {

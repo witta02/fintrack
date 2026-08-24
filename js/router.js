@@ -1,3 +1,4 @@
+import { store } from "./store.js";
 import { renderDashboard } from "./screens/dashboard.js";
 import { renderTransactions } from "./screens/transactions.js";
 import { renderAddTransaction } from "./screens/addTransaction.js";
@@ -11,8 +12,11 @@ import { renderDownPayments } from "./screens/downPayments.js";
 import { renderAchievements } from "./screens/achievements.js";
 import { renderRewards } from "./screens/rewards.js";
 import { renderCollectibles } from "./screens/collectibles.js";
+import { renderWallets } from "./screens/wallets.js";
+import { renderPortfolio } from "./screens/portfolio.js";
 let currentScreen = "dashboard";
 let currentParams = null;
+
 
 const screens = {
   auth: renderAuth,
@@ -28,6 +32,8 @@ const screens = {
   achievements: renderAchievements,
   rewards: renderRewards,
   collectibles: renderCollectibles,
+  wallets: renderWallets,
+  portfolio: renderPortfolio,
 };
 
 export const router = {
@@ -51,6 +57,11 @@ export const router = {
     // If screen not found, do nothing
     if (!screens[cleanKey]) {
       console.error(`Screen "${cleanKey}" not found.`);
+      return;
+    }
+
+    if (cleanKey === "portfolio" && !store.settings.isTraderMode) {
+      this.navigate("dashboard");
       return;
     }
 
@@ -106,6 +117,9 @@ export const router = {
       window.scrollTo(0, 0);
 
       // Call screen render function
+      container.classList.remove('screen-enter');
+      void container.offsetWidth; // force reflow
+      container.classList.add('screen-enter');
       screens[screenKey](container, params);
     }
   },

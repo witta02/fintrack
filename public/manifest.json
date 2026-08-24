@@ -1,7 +1,7 @@
 {
-  "name": "FinTrack — วางแผนและจัดการเงิน",
+  "name": "FinTrack 3.0 — วางแผนและจัดการเงิน",
   "short_name": "FinTrack",
-  "description": "วางแผนและจัดการเงินแบบออฟไลน์ พรีเมียม",
+  "description": "FinTrack 3.0 — วางแผนและจัดการเงินสุดพรีเมียม",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#060a14",

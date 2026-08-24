@@ -466,14 +466,14 @@ input:focus, select:focus, textarea:focus {
 .nav-item.active::before {
   content: '';
   position: absolute;
-  top: -6px;
+  bottom: -6px; /* was top: -6px */
   left: 50%;
   transform: translateX(-50%);
-  width: 24px;
+  width: 20px;
   height: 3px;
   background: var(--gold);
-  border-radius: 0 0 3px 3px;
-  box-shadow: 0 2px 8px var(--gold-glow);
+  border-radius: 3px 3px 0 0;
+  box-shadow: 0 -2px 8px var(--gold-glow);
 }
 .nav-item.active svg { transform: scale(1.05); }
 
@@ -2845,3 +2845,497 @@ body::before {
   box-shadow: 0 0 8px rgba(245, 200, 66, 0.6);
 }
 
+
+/* ============================================
+   FinTrack 3.0 — Spendee-Inspired Components
+   ============================================ */
+
+/* ─── Category Color Tokens ──────────────────────────────── */
+:root {
+  --cat-food:        #FF6B6B;
+  --cat-transport:   #4ECDC4;
+  --cat-shopping:    #A855F7;
+  --cat-bills:       #3B82F6;
+  --cat-health:      #10B981;
+  --cat-entertainment: #F59E0B;
+  --cat-salary:      #34D399;
+  --cat-investment:  #6366F1;
+  --cat-education:   #EC4899;
+  --cat-travel:      #14B8A6;
+  --cat-other:       #8896B0;
+}
+
+/* ─── Hero Balance Card (Spendee-style) ──────────────────── */
+.hero-balance-card {
+  background: var(--balance-bg);
+  border-radius: var(--radius-xl);
+  padding: 24px 20px 20px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.hero-balance-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.hero-balance-amount {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--balance-text);
+  letter-spacing: -1.5px;
+  line-height: 1;
+  margin-bottom: 20px;
+  font-family: var(--font-heading);
+}
+.hero-balance-row {
+  display: flex;
+  gap: 12px;
+}
+.hero-stat {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.hero-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.hero-stat-label.income { color: var(--income); }
+.hero-stat-label.expense { color: var(--expense); }
+.hero-stat-value {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* ─── Month Navigator ────────────────────────────────────── */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 0 14px;
+}
+.month-nav-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.month-nav-btn:hover {
+  background: var(--gold-soft);
+  color: var(--gold);
+  border-color: var(--gold-glow);
+}
+.month-nav-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 120px;
+  text-align: center;
+}
+
+/* ─── Ring Chart Card ────────────────────────────────────── */
+.ring-chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.ring-chart-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+.ring-chart-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.ring-chart-canvas-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 130px;
+  height: 130px;
+}
+.ring-chart-center-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.ring-chart-center-amount {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.ring-chart-center-sub {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ring-legend {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ring-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.ring-legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ring-legend-name {
+  flex: 1;
+  color: var(--text-secondary);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ring-legend-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ─── Category Breakdown List ────────────────────────────── */
+.category-breakdown-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.category-row:last-child { border-bottom: none; }
+.category-icon-pill {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.category-row-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.category-row-right {
+  text-align: right;
+}
+.category-row-amount {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.category-row-bar-wrap {
+  width: 100%;
+  height: 3px;
+  background: var(--surface);
+  border-radius: 3px;
+  margin-top: 3px;
+  overflow: hidden;
+}
+.category-row-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Recent Transactions Section (3.0 style) ────────────── */
+.recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.recent-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+.recent-see-all {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-glow);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  transition: all var(--transition);
+}
+.recent-see-all:hover {
+  background: var(--gold);
+  color: #000;
+}
+
+/* ─── Day Group (Transactions screen) ───────────────────── */
+.day-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0 8px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+.day-group-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+.day-group-total {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.day-group-income { color: var(--income); }
+.day-group-expense { color: var(--expense); }
+
+/* ─── Transaction Tile 3.0 ───────────────────────────────── */
+.tx-tile-30 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+  border-radius: 0;
+}
+.tx-tile-30:last-child { border-bottom: none; }
+.tx-tile-30:active { background: var(--surface); }
+.tx-cat-icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.tx-tile-body { flex: 1; min-width: 0; }
+.tx-tile-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tx-tile-category {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.tx-tile-amount {
+  font-size: 15px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.tx-tile-amount.income { color: var(--income); }
+.tx-tile-amount.expense { color: var(--expense); }
+
+/* ─── Add Transaction 3.0 ────────────────────────────────── */
+.add-tx-type-tabs {
+  display: flex;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  margin-bottom: 24px;
+  gap: 2px;
+}
+.add-tx-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  text-align: center;
+}
+.add-tx-tab.active {
+  background: var(--card-solid);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.add-tx-tab.active.expense { color: var(--expense); }
+.add-tx-tab.active.income  { color: var(--income); }
+.add-tx-tab.active.transfer { color: var(--violet); }
+
+.amount-display-big {
+  text-align: center;
+  padding: 20px 0 24px;
+}
+.amount-display-currency {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+.amount-display-value {
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--text-primary);
+  letter-spacing: -2px;
+  font-family: var(--font-heading);
+}
+
+.category-grid-30 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.category-grid-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+  background: var(--surface);
+  transition: all var(--transition);
+  cursor: pointer;
+}
+.category-grid-item:hover { background: var(--surface-hover); }
+.category-grid-item.selected {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+}
+.category-grid-emoji { font-size: 22px; line-height: 1; }
+.category-grid-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.2;
+}
+.category-grid-item.selected .category-grid-label { color: var(--gold); }
+
+/* ─── Splash Screen 3.0 (wallet icon) ───────────────────── */
+.splash-30 {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #060a14;
+  z-index: 9999;
+  transition: opacity 0.5s ease;
+}
+.splash-30.fade-out { opacity: 0; pointer-events: none; }
+.splash-30-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(245,200,66,0.25);
+  animation: splash30Pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.splash-30-icon img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes splash30Pop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.splash-30-title {
+  font-size: 28px;
+  font-weight: 900;
+  color: #f0f4ff;
+  letter-spacing: -1px;
+  animation: splash30FadeUp 0.4s 0.2s ease both;
+}
+.splash-30-sub {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  animation: splash30FadeUp 0.4s 0.35s ease both;
+}
+@keyframes splash30FadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.splash-30-bar-wrap {
+  width: 120px;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  animation: splash30FadeUp 0.4s 0.5s ease both;
+}
+.splash-30-bar {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 3px;
+  animation: splash30Load 1s 0.5s ease forwards;
+  width: 0;
+}
+@keyframes splash30Load {
+  to { width: 100%; }
+}
+
+/* ─── Screen transition ──────────────────────────────────── */
+.screen-enter {
+  animation: screenSlideIn 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes screenSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

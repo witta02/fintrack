@@ -1,4 +1,5 @@
 import "../css/styles.css";
+import Swal from "sweetalert2";
 import { store } from "./store.js";
 import { router } from "./router.js";
 import { t, getLanguage } from "./i18n.js";
@@ -14,51 +15,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-  // Initialize the router
+  let hasInitialNavigated = false;
+
+  // Initialize the router & navigate to starting screen
   router.init();
   updateStaticLabels();
 
-  // Listen for auth state changes — INITIAL_SESSION fires on every page load
+  store.subscribe(() => {
+    updateTraderModeVisibility();
+  });
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const screenParam = urlParams.get("screen");
+  const startingScreen = screenParam || "dashboard";
+
+  router.navigate(startingScreen);
+  hasInitialNavigated = true;
+
+  // Listen for auth state changes without interrupting user navigation
   supabase.auth.onAuthStateChange(async (event, session) => {
     store.user = session ? session.user : null;
 
     if (event === 'INITIAL_SESSION') {
-      // Always start at dashboard — login is optional via Settings
-      router.navigate('dashboard');
+      if (session?.user) {
+        await store.handleLoginSync(session.user);
+        store.notify();
+      }
     } else if (event === 'SIGNED_IN') {
       await store.handleLoginSync(session.user);
       store.notify();
-      router.navigate('dashboard');
+      // Only navigate to dashboard if user was specifically on the auth/login screen
+      if (router.getCurrentScreen() === 'auth') {
+        router.navigate('dashboard');
+      }
     } else if (event === 'SIGNED_OUT') {
       store.user = null;
       store.notify();
-      router.navigate('dashboard');
+      if (router.getCurrentScreen() === 'auth') {
+        router.navigate('dashboard');
+      }
     } else if (event === 'PASSWORD_RECOVERY') {
-      // Prompt the user to update password immediately
       setTimeout(async () => {
         const newPassword = await alerts.promptPasswordChange();
         if (newPassword) {
           const { error } = await supabase.auth.updateUser({ password: newPassword });
           if (error) {
-            alerts.error(
-              t('updateFailed'),
-              error.message
-            );
+            alerts.error(t('updateFailed'), error.message);
           } else {
-            alerts.success(
-              t('successTitle'),
-              t('passwordUpdated')
-            );
+            alerts.success(t('successTitle'), t('passwordUpdated'));
             router.navigate('dashboard');
           }
         }
       }, 500);
     }
   });
-
-  // Check URL query parameters for PWA shortcut/deep link navigation
-  const urlParams = new URLSearchParams(window.location.search);
-  const screenParam = urlParams.get("screen");
 
   const splash = document.getElementById("splash-screen");
   const app = document.getElementById("app");
@@ -91,9 +101,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (app) {
       app.classList.remove("hidden");
       console.log("FinTrack: App Ready");
-      if (screenParam) {
-        router.navigate(screenParam);
-      }
     }
   }, 800);
 
@@ -180,5 +187,14 @@ export function updateStaticLabels() {
     const screen = btn.getAttribute("data-screen");
     const label = btn.querySelector("span");
     if (label && labels[screen]) label.textContent = labels[screen];
+  });
+
+  updateTraderModeVisibility();
+}
+
+export function updateTraderModeVisibility() {
+  const isTrader = !!store.settings.isTraderMode;
+  document.querySelectorAll('[data-screen="portfolio"]').forEach((el) => {
+    el.style.display = isTrader ? "flex" : "none";
   });
 }
