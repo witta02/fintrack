@@ -175,19 +175,44 @@ function updatePortfolioDOM(container, stats) {
   }
 }
 
+function getStockBrandStyle(symbol) {
+  const sym = (symbol || "").toUpperCase();
+  const brands = {
+    VOO: { bg: "rgba(197, 34, 31, 0.18)", color: "#f87171" },
+    QQQM: { bg: "rgba(0, 47, 108, 0.25)", color: "#60a5fa" },
+    QQQ: { bg: "rgba(0, 47, 108, 0.25)", color: "#60a5fa" },
+    O: { bg: "rgba(179, 27, 27, 0.22)", color: "#fb7185" },
+    SCHD: { bg: "rgba(0, 160, 223, 0.22)", color: "#38bdf8" },
+    BIL: { bg: "rgba(11, 59, 96, 0.3)", color: "#93c5fd" },
+    SPY: { bg: "rgba(11, 59, 96, 0.3)", color: "#93c5fd" },
+    NVDA: { bg: "rgba(118, 185, 0, 0.2)", color: "#a3e635" },
+    AAPL: { bg: "rgba(255, 255, 255, 0.12)", color: "#f1f5f9" },
+    TSLA: { bg: "rgba(232, 33, 39, 0.2)", color: "#f43f5e" },
+    DELTA: { bg: "rgba(0, 130, 138, 0.22)", color: "#2dd4bf" },
+    PTT: { bg: "rgba(0, 84, 148, 0.25)", color: "#38bdf8" },
+    CPALL: { bg: "rgba(34, 139, 34, 0.22)", color: "#4ade80" },
+  };
+  return brands[sym] || { bg: "rgba(99, 102, 241, 0.12)", color: "#818cf8" };
+}
+
 function renderHoldingTile(h) {
   const isUSD = h.currency === "USD";
   const sym = isUSD ? "$" : "฿";
   const isProfit = h.profitLoss >= 0;
+  const brand = getStockBrandStyle(h.symbol);
   const sharesFormatted = typeof h.shares === 'number' 
     ? h.shares.toLocaleString('en-US', { maximumFractionDigits: 7 }) 
     : h.shares;
+
+  const plAmountTHB = h.profitLossTHB !== undefined 
+    ? Math.abs(h.profitLossTHB) 
+    : Math.abs(h.profitLoss);
 
   return `
     <div class="card holding-card" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 16px; transition: all var(--transition);">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(99, 102, 241, 0.12); color: #818cf8; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; font-family: var(--font-heading); text-transform: uppercase;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: ${brand.bg}; color: ${brand.color}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; font-family: var(--font-heading); text-transform: uppercase; border: 1px solid rgba(255,255,255,0.06);">
             ${h.symbol.slice(0, 4)}
           </div>
           <div>
@@ -213,7 +238,7 @@ function renderHoldingTile(h) {
             </div>
           ` : ''}
           <div style="font-size: 11px; font-weight: 700; color: ${isProfit ? 'var(--income)' : 'var(--expense)'}; margin-top: 2px;">
-            ${isProfit ? '+' : ''}${h.profitLossPct.toFixed(2)}% (${isProfit ? '+' : ''}${isUSD ? '$' : '฿'}${Math.abs(h.profitLoss).toFixed(2)})
+            ${isProfit ? '+' : ''}${h.profitLossPct.toFixed(2)}% (${isProfit ? '+' : '-'}฿${plAmountTHB.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
           </div>
         </div>
       </div>

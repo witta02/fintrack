@@ -371,16 +371,23 @@ export async function calculatePortfolioStats(holdings, quotes = {}) {
     const resolvedName = (h.name && h.name !== h.symbol) 
       ? h.name 
       : (q.name && q.name !== h.symbol ? q.name : (meta ? meta.name : h.symbol));
+    const resolvedType = meta ? meta.type : (h.type || 'stock');
+    const profitLossTHB = isUSD ? profitLoss * usdThbRate : profitLoss;
+    const profitLossUSD = isUSD ? profitLoss : profitLoss / usdThbRate;
 
     return {
       ...h,
       name: resolvedName,
+      type: resolvedType,
       currentPrice,
       marketValue,
       totalCost,
       profitLoss,
+      profitLossTHB,
+      profitLossUSD,
       profitLossPct,
       dayGain,
+      dayGainInTHB,
       changePct: q.changePct || 0,
       valInTHB,
       isRealtime: q.isRealtime !== false,
