@@ -8,6 +8,7 @@ import {
   parseDimeCSV,
   calculatePortfolioStats,
   getLiveUsdThbRate,
+  lookupStockMeta,
 } from "../utils/stockQuotes.js";
 
 let liveQuotes = {};
@@ -354,6 +355,22 @@ function showEditStockModal(container, holding) {
   const close = () => modal.remove();
   modal.querySelector(".modal-close-btn").addEventListener("click", close);
   modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+
+  const symbolInput = modal.querySelector('input[name="symbol"]');
+  const nameInput = modal.querySelector('input[name="name"]');
+  const currencySelect = modal.querySelector('select[name="currency"]');
+  const typeSelect = modal.querySelector('select[name="type"]');
+
+  symbolInput.addEventListener("input", (e) => {
+    const sym = e.target.value.trim();
+    const meta = lookupStockMeta(sym);
+    if (meta && meta.name !== sym) {
+      nameInput.value = meta.name;
+      if (currencySelect) currencySelect.value = meta.currency;
+      if (typeSelect) typeSelect.value = meta.type;
+    }
+  });
+
   modal.querySelector("form").addEventListener("submit", (e) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
@@ -564,6 +581,22 @@ function showAddStockModal(container) {
   const close = () => modal.remove();
   modal.querySelector(".modal-close-btn").addEventListener("click", close);
   modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+
+  const symbolInput = modal.querySelector('input[name="symbol"]');
+  const nameInput = modal.querySelector('input[name="name"]');
+  const currencySelect = modal.querySelector('select[name="currency"]');
+  const typeSelect = modal.querySelector('select[name="type"]');
+
+  symbolInput.addEventListener("input", (e) => {
+    const sym = e.target.value.trim();
+    const meta = lookupStockMeta(sym);
+    if (meta && meta.name !== sym) {
+      nameInput.value = meta.name;
+      if (currencySelect) currencySelect.value = meta.currency;
+      if (typeSelect) typeSelect.value = meta.type;
+    }
+  });
+
   modal.querySelector("form").addEventListener("submit", (e) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);

@@ -46,6 +46,101 @@ function normalizeSymbol(symbol) {
   return s;
 }
 
+// Top-level Stock & Company Registry for instant auto-matching
+export const STOCK_REGISTRY = {
+  // Top US Stocks
+  "AAPL": { name: "Apple Inc.", price: 226.50, prev: 224.20, currency: "USD", type: "stock" },
+  "NVDA": { name: "NVIDIA Corp.", price: 128.50, prev: 126.00, currency: "USD", type: "stock" },
+  "TSLA": { name: "Tesla Inc.", price: 218.00, prev: 215.50, currency: "USD", type: "stock" },
+  "MSFT": { name: "Microsoft Corp.", price: 448.00, prev: 445.90, currency: "USD", type: "stock" },
+  "GOOGL": { name: "Alphabet Inc. (Google)", price: 178.60, prev: 177.50, currency: "USD", type: "stock" },
+  "GOOG": { name: "Alphabet Inc. (Google)", price: 179.20, prev: 178.00, currency: "USD", type: "stock" },
+  "AMZN": { name: "Amazon.com Inc.", price: 186.40, prev: 185.50, currency: "USD", type: "stock" },
+  "META": { name: "Meta Platforms (Facebook)", price: 512.30, prev: 506.90, currency: "USD", type: "stock" },
+  "AMD": { name: "Advanced Micro Devices", price: 154.20, prev: 151.00, currency: "USD", type: "stock" },
+  "INTC": { name: "Intel Corp.", price: 21.50, prev: 20.80, currency: "USD", type: "stock" },
+  "PLTR": { name: "Palantir Technologies", price: 32.40, prev: 31.25, currency: "USD", type: "stock" },
+  "COIN": { name: "Coinbase Global", price: 215.00, prev: 210.00, currency: "USD", type: "stock" },
+  "O": { name: "Realty Income Corp.", price: 61.20, prev: 60.80, currency: "USD", type: "stock" },
+  "DIS": { name: "Walt Disney Co.", price: 92.40, prev: 91.50, currency: "USD", type: "stock" },
+  "NFLX": { name: "Netflix Inc.", price: 685.00, prev: 678.00, currency: "USD", type: "stock" },
+  "BABA": { name: "Alibaba Group", price: 85.00, prev: 83.50, currency: "USD", type: "stock" },
+  "BRK.B": { name: "Berkshire Hathaway Inc.", price: 450.00, prev: 448.00, currency: "USD", type: "stock" },
+  "JNJ": { name: "Johnson & Johnson", price: 165.00, prev: 164.20, currency: "USD", type: "stock" },
+  "JPM": { name: "JPMorgan Chase & Co.", price: 220.00, prev: 218.50, currency: "USD", type: "stock" },
+  "V": { name: "Visa Inc.", price: 280.00, prev: 278.00, currency: "USD", type: "stock" },
+  "MA": { name: "Mastercard Inc.", price: 475.00, prev: 472.00, currency: "USD", type: "stock" },
+  "KO": { name: "Coca-Cola Co.", price: 71.00, prev: 70.50, currency: "USD", type: "stock" },
+  "PEP": { name: "PepsiCo Inc.", price: 175.00, prev: 174.00, currency: "USD", type: "stock" },
+  "MCD": { name: "McDonald's Corp.", price: 290.00, prev: 288.00, currency: "USD", type: "stock" },
+  "NKE": { name: "Nike Inc.", price: 83.00, prev: 82.00, currency: "USD", type: "stock" },
+  "SBUX": { name: "Starbucks Corp.", price: 95.00, prev: 94.00, currency: "USD", type: "stock" },
+
+  // Top US ETFs & Index Funds
+  "VOO": { name: "Vanguard S&P 500 ETF", price: 512.40, prev: 509.80, currency: "USD", type: "etf" },
+  "SPY": { name: "SPDR S&P 500 ETF Trust", price: 560.20, prev: 558.00, currency: "USD", type: "etf" },
+  "QQQ": { name: "Invesco QQQ Trust (Nasdaq 100)", price: 486.20, prev: 482.30, currency: "USD", type: "etf" },
+  "QQQM": { name: "Invesco NASDAQ 100 ETF", price: 200.50, prev: 198.80, currency: "USD", type: "etf" },
+  "SCHD": { name: "Schwab US Dividend Equity ETF", price: 28.50, prev: 28.20, currency: "USD", type: "etf" },
+  "BIL": { name: "SPDR Bloomberg 1-3 Month T-Bill ETF", price: 91.61, prev: 91.59, currency: "USD", type: "etf" },
+  "IVV": { name: "iShares Core S&P 500 ETF", price: 562.00, prev: 560.00, currency: "USD", type: "etf" },
+  "VTI": { name: "Vanguard Total Stock Market ETF", price: 275.00, prev: 273.50, currency: "USD", type: "etf" },
+  "VT": { name: "Vanguard Total World Stock ETF", price: 115.00, prev: 114.20, currency: "USD", type: "etf" },
+  "SMH": { name: "VanEck Semiconductor ETF", price: 245.00, prev: 242.00, currency: "USD", type: "etf" },
+  "SOXX": { name: "iShares Semiconductor ETF", price: 225.00, prev: 222.00, currency: "USD", type: "etf" },
+  "DIA": { name: "SPDR Dow Jones Industrial Average", price: 412.00, prev: 410.00, currency: "USD", type: "etf" },
+  "VNQ": { name: "Vanguard Real Estate ETF", price: 92.00, prev: 91.20, currency: "USD", type: "etf" },
+  "JEPI": { name: "JPMorgan Equity Premium Income", price: 58.00, prev: 57.80, currency: "USD", type: "etf" },
+  "JEPQ": { name: "JPMorgan Nasdaq Equity Premium", price: 54.50, prev: 54.20, currency: "USD", type: "etf" },
+  "TLT": { name: "iShares 20+ Year Treasury Bond ETF", price: 98.00, prev: 97.50, currency: "USD", type: "etf" },
+
+  // Top Thai SET Stocks
+  "DELTA": { name: "Delta Electronics (Thailand)", price: 110.00, prev: 109.00, currency: "THB", type: "stock" },
+  "PTT": { name: "PTT Public Company Limited", price: 34.00, prev: 33.75, currency: "THB", type: "stock" },
+  "CPALL": { name: "CP ALL (7-Eleven Thailand)", price: 65.50, prev: 65.00, currency: "THB", type: "stock" },
+  "AOT": { name: "Airports of Thailand", price: 62.25, prev: 61.75, currency: "THB", type: "stock" },
+  "SCB": { name: "SCB X Public Company Limited", price: 112.00, prev: 111.50, currency: "THB", type: "stock" },
+  "KBANK": { name: "Kasikornbank", price: 155.00, prev: 154.00, currency: "THB", type: "stock" },
+  "BBL": { name: "Bangkok Bank", price: 152.00, prev: 151.00, currency: "THB", type: "stock" },
+  "KTB": { name: "Krungthai Bank", price: 20.20, prev: 20.00, currency: "THB", type: "stock" },
+  "GULF": { name: "Gulf Energy Development", price: 64.00, prev: 63.50, currency: "THB", type: "stock" },
+  "ADVANC": { name: "Advanced Info Service (AIS)", price: 275.00, prev: 273.00, currency: "THB", type: "stock" },
+  "TRUE": { name: "True Corporation", price: 11.80, prev: 11.60, currency: "THB", type: "stock" },
+  "BDMS": { name: "Bangkok Dusit Medical Services", price: 28.50, prev: 28.25, currency: "THB", type: "stock" },
+  "CPN": { name: "Central Pattana (Central)", price: 66.00, prev: 65.50, currency: "THB", type: "stock" },
+  "MINT": { name: "Minor International", price: 28.00, prev: 27.75, currency: "THB", type: "stock" },
+  "OR": { name: "PTT Oil and Retail (Café Amazon)", price: 15.60, prev: 15.40, currency: "THB", type: "stock" },
+
+  // Top Crypto
+  "BTC": { name: "Bitcoin", price: 64000.0, prev: 63500.0, currency: "USD", type: "crypto" },
+  "ETH": { name: "Ethereum", price: 2750.0, prev: 2700.0, currency: "USD", type: "crypto" },
+  "SOL": { name: "Solana", price: 150.0, prev: 146.0, currency: "USD", type: "crypto" },
+  "BNB": { name: "BNB", price: 580.0, prev: 575.0, currency: "USD", type: "crypto" },
+};
+
+/**
+ * Fast metadata lookup for any ticker
+ */
+export function lookupStockMeta(rawSymbol) {
+  if (!rawSymbol || typeof rawSymbol !== 'string') return null;
+  const sym = rawSymbol.toUpperCase().trim().replace('.BK', '');
+  if (STOCK_REGISTRY[sym]) {
+    return {
+      symbol: sym,
+      name: STOCK_REGISTRY[sym].name,
+      currency: STOCK_REGISTRY[sym].currency,
+      type: STOCK_REGISTRY[sym].type,
+    };
+  }
+  const isThai = rawSymbol.toUpperCase().endsWith('.BK') || ["DELTA", "PTT", "CPALL", "AOT", "SCB", "KBANK", "BBL", "GULF", "ADVANC", "TRUE", "BDMS", "CPN", "MINT", "OR"].includes(sym);
+  return {
+    symbol: sym,
+    name: sym,
+    currency: isThai ? "THB" : "USD",
+    type: ["SPY", "QQQ", "VOO", "QQQM", "SCHD", "BIL", "IVV", "VTI", "VT", "DIA"].includes(sym) ? "etf" : "stock",
+  };
+}
+
 /**
  * Fetch real-time live stock quote from live financial exchange endpoints
  */
@@ -110,25 +205,7 @@ export async function fetchStockQuote(rawSymbol) {
   }
 
   // Backup fallback with accurate baseline prices if network offline
-  const STATIC_BASELINE = {
-    "AAPL": { name: "Apple Inc.", price: 312.35, prev: 309.35, currency: "USD", type: "stock" },
-    "NVDA": { name: "NVIDIA Corp.", price: 209.89, prev: 214.72, currency: "USD", type: "stock" },
-    "TSLA": { name: "Tesla Inc.", price: 356.06, prev: 362.86, currency: "USD", type: "stock" },
-    "MSFT": { name: "Microsoft Corp.", price: 448.00, prev: 445.90, currency: "USD", type: "stock" },
-    "GOOGL": { name: "Alphabet Inc.", price: 178.60, prev: 177.50, currency: "USD", type: "stock" },
-    "AMZN": { name: "Amazon.com Inc.", price: 186.40, prev: 185.50, currency: "USD", type: "stock" },
-    "META": { name: "Meta Platforms", price: 512.30, prev: 506.90, currency: "USD", type: "stock" },
-    "SPY": { name: "SPDR S&P 500 ETF", price: 764.36, prev: 765.72, currency: "USD", type: "etf" },
-    "QQQ": { name: "Invesco QQQ Trust", price: 486.20, prev: 482.30, currency: "USD", type: "etf" },
-    "VOO": { name: "Vanguard S&P 500", price: 512.40, prev: 509.80, currency: "USD", type: "etf" },
-    "PLTR": { name: "Palantir Tech", price: 32.40, prev: 31.25, currency: "USD", type: "stock" },
-    "DELTA": { name: "Delta Electronics (TH)", price: 254.00, prev: 258.00, currency: "THB", type: "stock" },
-    "PTT": { name: "PTT Public Co.", price: 41.00, prev: 40.75, currency: "THB", type: "stock" },
-    "CPALL": { name: "CP ALL Public Co.", price: 58.75, prev: 59.25, currency: "THB", type: "stock" },
-    "AOT": { name: "Airports of Thailand", price: 59.25, prev: 58.50, currency: "THB", type: "stock" },
-  };
-
-  const base = STATIC_BASELINE[displaySymbol] || {
+  const base = STOCK_REGISTRY[displaySymbol] || {
     name: displaySymbol,
     price: 100.0,
     prev: 100.0,
@@ -136,7 +213,7 @@ export async function fetchStockQuote(rawSymbol) {
     type: 'stock',
   };
 
-  const change = base.price - base.prev;
+  const change = base.price - (base.prev || base.price);
   const changePct = base.prev > 0 ? (change / base.prev) * 100 : 0;
 
   const fallback = {
@@ -144,7 +221,7 @@ export async function fetchStockQuote(rawSymbol) {
     rawSymbol: symbol,
     name: base.name,
     price: base.price,
-    previousClose: base.prev,
+    previousClose: base.prev || base.price,
     change: Number(change.toFixed(2)),
     changePct: Number(changePct.toFixed(2)),
     currency: base.currency,
@@ -226,17 +303,19 @@ export function parseDimeCSV(csvText) {
     const rawSym = (symIdx !== -1 && cols[symIdx] ? cols[symIdx] : cols[0])?.toUpperCase().trim();
     const shares = cleanNum(sharesIdx !== -1 ? cols[sharesIdx] : cols[1]);
     const avgPrice = cleanNum(priceIdx !== -1 ? cols[priceIdx] : cols[2]);
-    const name = nameIdx !== -1 && cols[nameIdx] ? cols[nameIdx] : rawSym;
+    const extractedName = nameIdx !== -1 && cols[nameIdx] ? cols[nameIdx] : "";
 
     if (rawSym && shares > 0) {
-      const isThai = rawSym.endsWith('.BK') || ["DELTA", "PTT", "CPALL", "AOT", "SCB", "KBANK", "GULF", "ADVANC"].includes(rawSym);
+      const meta = lookupStockMeta(rawSym);
+      const isThai = rawSym.endsWith('.BK') || (meta && meta.currency === 'THB');
+      
       parsedHoldings.push({
         symbol: rawSym.replace('.BK', ''),
-        name: name || rawSym,
+        name: (extractedName && extractedName !== rawSym) ? extractedName : (meta ? meta.name : rawSym),
         shares: shares,
         avgPrice: avgPrice,
-        currency: isThai ? 'THB' : 'USD',
-        type: ['SPY', 'QQQ', 'VOO', 'IVV', 'VTI', 'SCHD'].includes(rawSym) ? 'etf' : 'stock',
+        currency: isThai ? 'THB' : (meta ? meta.currency : 'USD'),
+        type: meta ? meta.type : (isThai ? 'stock' : 'stock'),
       });
     }
   }
@@ -288,8 +367,14 @@ export async function calculatePortfolioStats(holdings, quotes = {}) {
       totalCostUSD += totalCost / usdThbRate;
     }
 
+    const meta = lookupStockMeta(h.symbol);
+    const resolvedName = (h.name && h.name !== h.symbol) 
+      ? h.name 
+      : (q.name && q.name !== h.symbol ? q.name : (meta ? meta.name : h.symbol));
+
     return {
       ...h,
+      name: resolvedName,
       currentPrice,
       marketValue,
       totalCost,
