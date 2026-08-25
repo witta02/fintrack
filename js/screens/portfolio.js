@@ -178,13 +178,16 @@ function renderHoldingTile(h) {
   const isUSD = h.currency === "USD";
   const sym = isUSD ? "$" : "฿";
   const isProfit = h.profitLoss >= 0;
+  const sharesFormatted = typeof h.shares === 'number' 
+    ? h.shares.toLocaleString('en-US', { maximumFractionDigits: 7 }) 
+    : h.shares;
 
   return `
     <div class="card holding-card" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 16px; transition: all var(--transition);">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(99, 102, 241, 0.12); color: #818cf8; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 900; font-family: var(--font-heading);">
-            ${h.symbol.slice(0, 3)}
+          <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(99, 102, 241, 0.12); color: #818cf8; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; font-family: var(--font-heading); text-transform: uppercase;">
+            ${h.symbol.slice(0, 4)}
           </div>
           <div>
             <div style="display: flex; align-items: center; gap: 6px;">
@@ -194,17 +197,22 @@ function renderHoldingTile(h) {
               </span>
             </div>
             <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              ${h.name}
+              ${h.name || h.symbol}
             </div>
           </div>
         </div>
 
         <div style="text-align: right;">
           <div style="font-size: 16px; font-weight: 900; color: var(--text-primary); font-family: var(--font-heading);">
-            ${sym}${h.marketValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ฿${(h.valInTHB || h.marketValue).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
+          ${isUSD ? `
+            <div style="font-size: 11px; color: var(--text-secondary); font-weight: 600; margin-top: 1px;">
+              ≈ $${h.marketValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+            </div>
+          ` : ''}
           <div style="font-size: 11px; font-weight: 700; color: ${isProfit ? 'var(--income)' : 'var(--expense)'}; margin-top: 2px;">
-            ${isProfit ? '+' : ''}${h.profitLossPct.toFixed(2)}% (${isProfit ? '+' : ''}${sym}${Math.abs(h.profitLoss).toFixed(2)})
+            ${isProfit ? '+' : ''}${h.profitLossPct.toFixed(2)}% (${isProfit ? '+' : ''}${isUSD ? '$' : '฿'}${Math.abs(h.profitLoss).toFixed(2)})
           </div>
         </div>
       </div>
@@ -212,7 +220,7 @@ function renderHoldingTile(h) {
       <!-- Details Row -->
       <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--text-secondary);">
         <div>
-          <span>${h.shares.toLocaleString()} ${store.settings.language === 'en' ? 'shares' : 'หุ้น'} @ ${sym}${h.avgPrice.toFixed(2)}</span>
+          <span>${sharesFormatted} ${store.settings.language === 'en' ? 'shares' : 'หุ้น'} @ ${sym}${h.avgPrice.toFixed(2)}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="color: var(--text-primary); font-weight: 700;">
