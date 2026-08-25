@@ -170,7 +170,7 @@ function updatePortfolioDOM(container, stats) {
   }
   if (list) {
     list.innerHTML = stats.holdings.length ? stats.holdings.map(renderHoldingTile).join('') : emptyPortfolioState();
-    attachDeleteHandlers(container);
+    attachHoldingHandlers(container);
   }
 }
 
@@ -226,7 +226,10 @@ function renderHoldingTile(h) {
           <span style="color: var(--text-primary); font-weight: 700;">
             ${store.settings.language === 'en' ? 'Live:' : 'ราคา:'} ${sym}${h.currentPrice.toFixed(2)}
           </span>
-          <button class="delete-holding-btn" data-holding-id="${h.id}" title="Delete" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px;">
+          <button class="edit-holding-btn" data-holding-id="${h.id}" title="Edit" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; display: flex; align-items: center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="delete-holding-btn" data-holding-id="${h.id}" title="Delete" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; display: flex; align-items: center;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg>
           </button>
         </div>
@@ -257,7 +260,7 @@ function emptyPortfolioState() {
   `;
 }
 
-function attachDeleteHandlers(container) {
+function attachHoldingHandlers(container) {
   container.querySelectorAll(".delete-holding-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
@@ -271,6 +274,101 @@ function attachDeleteHandlers(container) {
         renderPortfolio(container);
       }
     });
+  });
+
+  container.querySelectorAll(".edit-holding-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute("data-holding-id");
+      const holdings = store.getPortfolio().holdings || [];
+      const h = holdings.find((item) => item.id === id);
+      if (h) {
+        showEditStockModal(container, h);
+      }
+    });
+  });
+}
+
+function showEditStockModal(container, holding) {
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-dialog" style="background: var(--card-solid); border: 1px solid var(--border); border-radius: 20px; padding: 24px; max-width: 360px; width: 90%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0;">
+          ${store.settings.language === 'en' ? 'Edit Asset Position' : 'แก้ไขสินทรัพย์ในพอร์ต'}
+        </h3>
+        <button class="modal-close-btn" style="background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer;">×</button>
+      </div>
+      <form id="edit-stock-form" style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">
+            ${store.settings.language === 'en' ? 'Ticker Symbol' : 'ชื่อย่อหุ้น (Ticker)'}
+          </label>
+          <input name="symbol" value="${holding.symbol}" required style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); text-transform: uppercase; font-weight: 800;" />
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">
+            ${store.settings.language === 'en' ? 'Company Name / Description' : 'ชื่อบริษัท / สินทรัพย์'}
+          </label>
+          <input name="name" value="${holding.name || holding.symbol}" placeholder="Apple Inc." style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">
+              ${store.settings.language === 'en' ? 'Shares' : 'จำนวนหุ้น (Shares)'}
+            </label>
+            <input name="shares" type="number" step="any" min="0.0000001" value="${holding.shares}" required style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-weight: 700;" />
+          </div>
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">
+              ${store.settings.language === 'en' ? 'Avg Cost' : 'ราคาต้นทุนเฉลี่ย'}
+            </label>
+            <input name="avgPrice" type="number" step="any" min="0.0001" value="${holding.avgPrice}" required style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-weight: 700;" />
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">สกุลเงิน (Currency)</label>
+            <select name="currency" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);">
+              <option value="USD" ${holding.currency === 'USD' ? 'selected' : ''}>USD ($)</option>
+              <option value="THB" ${holding.currency === 'THB' ? 'selected' : ''}>THB (฿)</option>
+            </select>
+          </div>
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">ประเภท (Type)</label>
+            <select name="type" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);">
+              <option value="stock" ${holding.type === 'stock' ? 'selected' : ''}>หุ้น (Stock)</option>
+              <option value="etf" ${holding.type === 'etf' ? 'selected' : ''}>ETF</option>
+              <option value="crypto" ${holding.type === 'crypto' ? 'selected' : ''}>คริปโต (Crypto)</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 14px; background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 800; border: none; border-radius: var(--radius); cursor: pointer;">
+          ${t("save")}
+        </button>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.querySelector(".modal-close-btn").addEventListener("click", close);
+  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+  modal.querySelector("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    store.updateStockHolding({
+      id: holding.id,
+      symbol: data.get("symbol"),
+      name: data.get("name") || data.get("symbol"),
+      shares: parseFloat(data.get("shares")),
+      avgPrice: parseFloat(data.get("avgPrice")),
+      currency: data.get("currency"),
+      type: data.get("type"),
+    });
+    close();
+    alerts.success(store.settings.language === 'en' ? 'Position Updated!' : 'แก้ไขรายการสำเร็จ!');
+    renderPortfolio(container);
   });
 }
 
@@ -313,7 +411,7 @@ function setupPortfolioListeners(container) {
     alerts.success(store.settings.language === 'en' ? 'Prices Updated!' : 'อัปเดตราคาล่าสุดแล้ว!');
   });
 
-  attachDeleteHandlers(container);
+  attachHoldingHandlers(container);
 }
 
 function showDimeImportModal(container) {
