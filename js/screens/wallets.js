@@ -209,8 +209,13 @@ function showAddWalletModal(container) {
           </select>
         </div>
         <div>
-          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${store.settings.language === 'en' ? 'Starting Balance' : 'ยอดเงินเริ่มต้น'}</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">${store.settings.language === 'en' ? 'Starting Amount' : 'ยอดเงินเริ่มต้น (บันทึกเป็นรายรับ)'}</label>
+          </div>
           <input name="balance" type="number" step="0.01" value="0" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
+          <small style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 3px;">
+            ${store.settings.language === 'en' ? 'Will be added as an income transaction.' : 'จะถูกบันทึกเป็นรายการ "รายรับ" ตามปกติ'}
+          </small>
         </div>
         <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 14px; background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 800; border: none; border-radius: var(--radius); cursor: pointer;">${t("save")}</button>
       </form>
@@ -232,10 +237,12 @@ function showAddWalletModal(container) {
       color: typeObj.color,
     });
     close();
+    alerts.success(store.settings.language === 'en' ? 'Wallet created!' : 'สร้างกระเป๋าเงินเรียบร้อยแล้ว');
   });
 }
 
 function showEditWalletModal(container, wallet) {
+  const currentBal = store.getWalletBalance(wallet.id);
   const modal = document.createElement("div");
   modal.className = "modal-overlay";
   modal.innerHTML = `
@@ -256,8 +263,16 @@ function showEditWalletModal(container, wallet) {
           </select>
         </div>
         <div>
-          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${store.settings.language === 'en' ? 'Initial Balance' : 'ยอดเงินเริ่มต้น'}</label>
-          <input name="balance" type="number" step="0.01" value="${wallet.balance || 0}" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">${store.settings.language === 'en' ? 'Current Balance' : 'ยอดเงินในกระเป๋า (ปรับยอด)'}</label>
+            <button type="button" id="set-zero-btn" style="background: rgba(239, 68, 68, 0.1); color: var(--expense); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 800; cursor: pointer;">
+              ${store.settings.language === 'en' ? 'Set to 0' : 'ตั้งเป็น 0 ฿'}
+            </button>
+          </div>
+          <input id="edit-wallet-balance-input" name="balance" type="number" step="0.01" value="${currentBal.toFixed(2)}" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
+          <small style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 3px;">
+            ${store.settings.language === 'en' ? 'Changing balance will record an adjustment transaction.' : 'การแก้ไขตัวเลขจะปรับยอดเงินให้ตรงตามที่ระบุอัตโนมัติ'}
+          </small>
         </div>
         <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 14px; background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 800; border: none; border-radius: var(--radius); cursor: pointer;">${t("save")}</button>
       </form>
@@ -267,19 +282,29 @@ function showEditWalletModal(container, wallet) {
   const close = () => modal.remove();
   modal.querySelector(".modal-close-btn").addEventListener("click", close);
   modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+
+  const balanceInput = modal.querySelector("#edit-wallet-balance-input");
+  modal.querySelector("#set-zero-btn")?.addEventListener("click", () => {
+    if (balanceInput) balanceInput.value = "0";
+  });
+
   modal.querySelector("form").addEventListener("submit", (e) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const typeObj = WALLET_TYPES.find(t => t.type === data.get("type")) || WALLET_TYPES[0];
+    const targetBal = parseFloat(data.get("balance")) || 0;
+
     store.updateWallet({
       id: wallet.id,
       name: data.get("name"),
       type: data.get("type"),
-      balance: parseFloat(data.get("balance")) || 0,
       icon: typeObj.type,
       color: typeObj.color,
     });
+
+    store.setWalletBalance(wallet.id, targetBal);
     close();
+    alerts.success(store.settings.language === 'en' ? 'Wallet updated!' : 'อัปเดตกระเป๋าเงินเรียบร้อยแล้ว');
   });
 }
 

@@ -935,19 +935,32 @@ export const store = {
   },
 
   addWallet(wallet) {
+    const startingAmount = parseFloat(wallet.balance) || 0;
     const newWallet = {
       id: wallet.id || Math.random().toString(36).substring(2, 11),
-      name: wallet.name || "กระเป๋าใหม่",
+      name: wallet.name || (this.settings.language === 'en' ? "New Wallet" : "กระเป๋าใหม่"),
       type: wallet.type || "cash",
       color: wallet.color || "#F5C842",
-      icon: wallet.icon || "💵",
-      balance: parseFloat(wallet.balance) || 0,
+      icon: wallet.icon || "cash",
+      balance: 0,
       isDefault: !!wallet.isDefault,
       currency: wallet.currency || "THB",
       createdAt: new Date(),
     };
     this.wallets.push(newWallet);
-    this.save();
+
+    if (startingAmount > 0) {
+      this.addTransaction({
+        title: this.settings.language === 'en' ? 'Income' : 'รายรับ',
+        amount: startingAmount,
+        isIncome: true,
+        category: "Other",
+        walletId: newWallet.id,
+        date: new Date(),
+      });
+    } else {
+      this.save();
+    }
     return newWallet;
   },
 
@@ -957,9 +970,46 @@ export const store = {
       this.wallets[idx] = {
         ...this.wallets[idx],
         ...updated,
-        balance: parseFloat(updated.balance !== undefined ? updated.balance : this.wallets[idx].balance) || 0,
+        balance: updated.balance !== undefined ? parseFloat(updated.balance) || 0 : (this.wallets[idx].balance || 0),
       };
       this.save();
+    }
+  },
+
+  setWalletBalance(walletId, targetBalance) {
+    const wallet = this.getWallet(walletId);
+    if (!wallet) return;
+
+    const currentBal = this.getWalletBalance(walletId);
+    const target = parseFloat(targetBalance) || 0;
+    const diff = target - currentBal;
+
+    // Reset legacy starting balance so balance is 100% driven by transactions
+    wallet.balance = 0;
+
+    if (Math.abs(diff) < 0.001) {
+      this.save();
+      return;
+    }
+
+    if (diff > 0) {
+      this.addTransaction({
+        title: this.settings.language === 'en' ? 'Income' : 'รายรับ',
+        amount: diff,
+        isIncome: true,
+        category: "Other",
+        walletId: walletId,
+        date: new Date(),
+      });
+    } else {
+      this.addTransaction({
+        title: this.settings.language === 'en' ? 'Balance Adjustment' : 'ปรับลดยอดเงิน',
+        amount: Math.abs(diff),
+        isIncome: false,
+        category: "Other",
+        walletId: walletId,
+        date: new Date(),
+      });
     }
   },
 
