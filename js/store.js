@@ -942,25 +942,13 @@ export const store = {
       type: wallet.type || "cash",
       color: wallet.color || "#F5C842",
       icon: wallet.icon || "cash",
-      balance: 0,
+      balance: startingAmount,
       isDefault: !!wallet.isDefault,
       currency: wallet.currency || "THB",
       createdAt: new Date(),
     };
     this.wallets.push(newWallet);
-
-    if (startingAmount > 0) {
-      this.addTransaction({
-        title: this.settings.language === 'en' ? 'Income' : 'รายรับ',
-        amount: startingAmount,
-        isIncome: true,
-        category: "Other",
-        walletId: newWallet.id,
-        date: new Date(),
-      });
-    } else {
-      this.save();
-    }
+    this.save();
     return newWallet;
   },
 
@@ -980,37 +968,19 @@ export const store = {
     const wallet = this.getWallet(walletId);
     if (!wallet) return;
 
-    const currentBal = this.getWalletBalance(walletId);
     const target = parseFloat(targetBalance) || 0;
-    const diff = target - currentBal;
+    const txs = this.transactions.filter((t) => (t.walletId || 'default') === walletId);
+    let totalIncome = 0;
+    let totalExpense = 0;
+    txs.forEach((t) => {
+      if (t.isIncome) totalIncome += t.amount;
+      else totalExpense += t.amount;
+    });
+    const netTransactions = totalIncome - totalExpense;
 
-    // Reset legacy starting balance so balance is 100% driven by transactions
-    wallet.balance = 0;
-
-    if (Math.abs(diff) < 0.001) {
-      this.save();
-      return;
-    }
-
-    if (diff > 0) {
-      this.addTransaction({
-        title: this.settings.language === 'en' ? 'Income' : 'รายรับ',
-        amount: diff,
-        isIncome: true,
-        category: "Other",
-        walletId: walletId,
-        date: new Date(),
-      });
-    } else {
-      this.addTransaction({
-        title: this.settings.language === 'en' ? 'Balance Adjustment' : 'ปรับลดยอดเงิน',
-        amount: Math.abs(diff),
-        isIncome: false,
-        category: "Other",
-        walletId: walletId,
-        date: new Date(),
-      });
-    }
+    // Direct base balance adjustment: no transaction created
+    wallet.balance = target - netTransactions;
+    this.save();
   },
 
   deleteWallet(id) {

@@ -210,11 +210,11 @@ function showAddWalletModal(container) {
         </div>
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">${store.settings.language === 'en' ? 'Starting Amount' : 'ยอดเงินเริ่มต้น (บันทึกเป็นรายรับ)'}</label>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">${store.settings.language === 'en' ? 'Starting Balance' : 'ยอดเงินตั้งต้น'}</label>
           </div>
           <input name="balance" type="number" step="0.01" value="0" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
           <small style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 3px;">
-            ${store.settings.language === 'en' ? 'Will be added as an income transaction.' : 'จะถูกบันทึกเป็นรายการ "รายรับ" ตามปกติ'}
+            ${store.settings.language === 'en' ? 'Direct starting amount (not added to transaction list).' : 'กำหนดยอดตั้งต้นของกระเป๋า โดยไม่สร้างประวัติรายการ'}
           </small>
         </div>
         <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 14px; background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 800; border: none; border-radius: var(--radius); cursor: pointer;">${t("save")}</button>
@@ -271,7 +271,7 @@ function showEditWalletModal(container, wallet) {
           </div>
           <input id="edit-wallet-balance-input" name="balance" type="number" step="0.01" value="${currentBal.toFixed(2)}" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
           <small style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 3px;">
-            ${store.settings.language === 'en' ? 'Changing balance will record an adjustment transaction.' : 'การแก้ไขตัวเลขจะปรับยอดเงินให้ตรงตามที่ระบุอัตโนมัติ'}
+            ${store.settings.language === 'en' ? 'Adjusts wallet balance directly without creating a transaction.' : 'ปรับยอดเงินคงเหลือโดยตรง ไม่บันทึกลงประวัติธุรกรรม'}
           </small>
         </div>
         <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 14px; background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 800; border: none; border-radius: var(--radius); cursor: pointer;">${t("save")}</button>
