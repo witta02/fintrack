@@ -3,7 +3,7 @@ import { router } from "../router.js";
 import { t } from "../i18n.js";
 import { alerts } from "../utils/alertHelper.js";
 import QRCode from "qrcode";
-import { generatePromptPayPayload, DEFAULT_PROMPTPAY_ID } from "../utils/promptpayQR.js";
+import { generatePromptPayPayload, DEFAULT_PROMPTPAY_ID, downloadQRCodeCard } from "../utils/promptpayQR.js";
 
 export function renderSplitBill(container) {
   const sym = store.getCurrencySymbol();
@@ -239,6 +239,13 @@ export function renderSplitBill(container) {
           <div id="qr-amount-caption" style="font-size: 13px; font-weight: 800; color: var(--gold); margin-top: 10px;">
             ${sym}0.00 / ${language === 'en' ? 'person' : 'คน'}
           </div>
+
+          <div style="margin-top: 12px;">
+            <button id="split-save-qr-btn" style="background: var(--surface); color: var(--text-primary); padding: 8px 16px; border-radius: var(--radius); font-weight: 700; font-size: 12px; border: 1px solid var(--border); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s ease;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>${language === 'en' ? 'Save QR Code' : 'บันทึกรูป QR'}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -423,6 +430,27 @@ function setupSplitBillListeners(container) {
       console.error("QR gen error:", e);
     }
   }
+
+  container.querySelector("#split-save-qr-btn")?.addEventListener("click", async () => {
+    const canvas = container.querySelector("#promptpay-qr-canvas");
+    if (!canvas) return;
+    const base = parseFloat(totalInput.value) || 0;
+    const people = parseInt(peopleInput.value, 10) || 1;
+    const perPerson = base / people;
+    const targetId = promptPayInput?.value.trim() || DEFAULT_PROMPTPAY_ID;
+
+    await downloadQRCodeCard(canvas, {
+      amount: perPerson,
+      promptpayId: targetId,
+      title: language === 'en' ? 'Bill Split Payment' : 'หารค่าใช้จ่าย (Split Bill)',
+      subtitle: language === 'en' ? `Split for ${people} people` : `หารจ่าย ${people} คน`
+    });
+
+    alerts.success(
+      language === 'en' ? 'QR Code Saved!' : 'บันทึกรูป QR แล้ว!',
+      language === 'en' ? 'Saved payment QR image to your device.' : 'บันทึกรูป QR ลงเครื่องเรียบร้อยแล้ว'
+    );
+  });
 
   // Initial calculation
   calculate();

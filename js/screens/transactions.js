@@ -19,9 +19,10 @@ let selectedCategoryFilter = "all";
 let selectedDateFilter = null;
 
 export function renderTransactions(container, params) {
-  if (params?.category) {
-    selectedCategoryFilter = params.category;
-  }
+  selectedCategoryFilter = params?.category || "all";
+  searchQuery = "";
+  activeFilterType = params?.type || "all";
+  selectedDateFilter = params?.date || null;
   const allCategories = [...getExpenseCategories(), ...getIncomeCategories()];
   const uniqueCategories = [];
   const map = new Map();

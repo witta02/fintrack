@@ -3,7 +3,8 @@ import { store } from "../store.js";
 // Preprocesses text to normalize spaces incorrectly inserted between Thai characters by OCR diacritics/segments
 export function normalizeThaiText(text) {
   if (!text) return "";
-  return text.replace(/(?<=[\u0E00-\u0E7F])\s+(?=[\u0E00-\u0E7F])/g, "");
+  // Cross-browser safe capture replacement (compatible with older Safari/WebViews)
+  return text.replace(/([\u0E00-\u0E7F])\s+([\u0E00-\u0E7F])/g, "$1$2");
 }
 
 // Dynamic script loader for Tesseract.js
@@ -604,76 +605,34 @@ export function parseBankSlipAmount(text) {
   text = normalizeThaiText(text);
   const lines = text.split("\n");
 
-  // Strategy 1: Look for final payment amount keywords (ชำระ, สุทธิ, net, paid) to avoid subtotal/discount lines
+  // Strategy 1: Look for explicit amount labels: จำนวนเงิน, ยอดเงิน, ยอดโอน, ยอดชำระ, amount, transfer amount
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].toLowerCase();
-    if (/ชำระ|สุทธิ|net|paid/i.test(line) && !/ธรรม|fee/i.test(line)) {
-      let match =
-        line.match(/(\d+[\.,]\d{2})/) ||
-        line.match(/\b(\d+)\s*(?:บาท|thb|฿|\s|$)/i);
-      if (match) {
-        const val = parseFloat(match[1].replace(",", "."));
-        if (val > 0) return val;
-      }
-
-      // Check next line
-      if (i + 1 < lines.length) {
-        const nextLine = lines[i + 1].trim();
-        match =
-          nextLine.match(/(\d+[\.,]\d{2})/) || nextLine.match(/\b(\d+)\b/);
-        if (match) {
-          const val = parseFloat(match[1].replace(",", "."));
-          if (val > 0) return val;
-        }
-      }
-    }
-  }
-
-  // Strategy 2: Keyword Proximity
-  // Check for amount labels on a line and look for the number on that line or next line
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i].toLowerCase();
-
-    // Truncate line before fee keywords if it contains both amount and fee details (OCR merging)
-    if (line.includes("ธรรม") || line.includes("fee")) {
-      if (/[จจํ][ําา]นวน|ยอด|amount|total|sum/i.test(line)) {
-        const idx = line.includes("ธรรม")
-          ? line.indexOf("ธรรม")
-          : line.indexOf("fee");
-        line = line.substring(0, idx);
-      }
-    }
-
-    // Check for amount keywords (matching both standard and decomposed SARAM AM) and exclude fees
-    const isAmountLabel =
-      /[จจํ][ําา]นวน|ยอด|amount|total|sum/i.test(line) &&
-      !/ธรรม|fee/i.test(line);
+    const isAmountLabel = /(?:[จจํ][ําา]นวนเงิน|[จจํ][ําา]นวน|ยอดเงิน|ยอดโอน|ยอดชำระ|ยอดสุทธิ|transfer\s*amount|amount|total\s*amount)/i.test(line) &&
+      !/(?:ธรรม|fee|vat|ภาษี|โอนเงินสำเร็จ|ทำรายการสำเร็จ|รายการสำเร็จ|บันทึกสลิป)/i.test(line);
 
     if (isAmountLabel) {
-      // Find a decimal number in this line
-      let match =
-        line.match(/(\d+[\.,]\d{2})/) ||
-        line.match(/\b(\d+)\s*(?:บาท|thb|฿|\s|$)/i);
+      let match = line.match(/(\d+[\.,]\d{2})/) || line.match(/\b(\d+)\s*(?:บาท|thb|฿|\s*$)/i);
       if (match) {
         const val = parseFloat(match[1].replace(",", "."));
         if (val > 0) return val;
       }
 
-      // Check next line
+      // Check next line (if not date or fee)
       if (i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
-        match =
-          nextLine.match(/(\d+[\.,]\d{2})/) || nextLine.match(/\b(\d+)\b/);
-        if (match) {
-          const val = parseFloat(match[1].replace(",", "."));
-          if (val > 0) return val;
+        if (!/(?:ธรรม|fee|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(nextLine)) {
+          match = nextLine.match(/(\d+[\.,]\d{2})/) || nextLine.match(/\b(\d+)\s*(?:บาท|thb|฿)/i);
+          if (match) {
+            const val = parseFloat(match[1].replace(",", "."));
+            if (val > 0) return val;
+          }
         }
       }
     }
   }
 
-  // Strategy 3: Decimal Extraction
-  // Find all decimal numbers and pick the first positive one that is not 0.00
+  // Strategy 2: Decimal Extraction avoiding fee lines and time formats
   const decimals = [];
   for (const line of lines) {
     if (/ธรรม|fee/i.test(line)) continue;
@@ -705,11 +664,11 @@ export function parseBankSlipAmount(text) {
     return decimals[0];
   }
 
-  // Strategy 4: Currency Symbol Proximity
+  // Strategy 3: Currency Symbol Proximity
   for (const line of lines) {
     const lowerLine = line.toLowerCase();
     if (/บาท|thb|฿/i.test(lowerLine) && !/ธรรม|fee/i.test(lowerLine)) {
-      const match = line.match(/(\d+[\.,]\d{2})/) || line.match(/\b(\d+)\b/);
+      const match = line.match(/(\d+[\.,]\d{2})/) || line.match(/\b(\d+)\s*(?:บาท|thb|฿)/i);
       if (match) {
         const val = parseFloat(match[1].replace(",", ".")) || 0.0;
         if (val > 0) return val;
@@ -730,8 +689,11 @@ export function detectIfBankSlip(text) {
     "โอนเงินสำเร็จ",
     "รายการสำเร็จ",
     "ทำรายการสำเร็จ",
+    "บันทึกสลิปสำเร็จ",
+    "ชำระเงินสำเร็จ",
     "รหัสอ้างอิง",
     "เลขที่อ้างอิง",
+    "เลขที่รายการ",
     "ค่าธรรมเนียม",
     "พร้อมเพย์",
     "g-wallet",
@@ -746,10 +708,18 @@ export function detectIfBankSlip(text) {
     "กรุงไทย",
     "กรุงเทพ",
     "ttb",
+    "mymo",
+    "ออมสิน",
+    "krungsri",
+    "กรุงศรี",
     "โอนเงิน",
     "ชำระเงิน",
-    "สิทธิ์คนละครึ่ง",
-    "สิทธิ์ไทยช่วยไทย",
+    "successful",
+    "transfer",
+    "transaction",
+    "promptpay",
+    "truemoney",
+    "shopeepay"
   ];
 
   let count = 0;
@@ -759,7 +729,7 @@ export function detectIfBankSlip(text) {
     }
   }
 
-  return count >= 2;
+  return count >= 1;
 }
 
 // Extracts receiver's name from bank/e-wallet slips

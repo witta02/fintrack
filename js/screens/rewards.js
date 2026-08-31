@@ -6,7 +6,7 @@ import { gachaItems } from "./collectibles.js";
 import QRCode from "qrcode";
 import confetti from "canvas-confetti";
 import { validateBankSlip } from "../utils/slipValidator.js";
-import { generatePromptPayPayload, maskPromptPayId, DEFAULT_PROMPTPAY_ID } from "../utils/promptpayQR.js";
+import { generatePromptPayPayload, maskPromptPayId, DEFAULT_PROMPTPAY_ID, downloadQRCodeCard } from "../utils/promptpayQR.js";
 
 export function renderRewards(container) {
   const lang = getLanguage();
@@ -409,23 +409,31 @@ export function showBuyCoinsModal(container, lang = "th", preselectedNeedCoins =
     });
   });
 
-  saveQrBtn?.addEventListener("click", () => {
+  saveQrBtn?.addEventListener("click", async () => {
     if (!canvas) return;
     try {
-      const dataUrl = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.download = `PromptPay_QR_฿${selectedPrice || 0}.png`;
-      link.href = dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      saveQrBtn.disabled = true;
+      const originalText = saveQrBtn.innerHTML;
+      saveQrBtn.innerHTML = `<div class="spinner" style="display:inline-block; vertical-align:middle; width:12px; height:12px; border-width:2px; border-color: currentColor transparent currentColor transparent;"></div> <span>${isEn ? 'Saving...' : 'กำลังบันทึก...'}</span>`;
+
+      await downloadQRCodeCard(canvas, {
+        amount: selectedPrice,
+        promptpayId: promptpayId,
+        title: isEn ? "FinCoins Top-Up" : "เติมเหรียญ FinCoins",
+        subtitle: isEn ? "Scan via any Thai Banking App" : "สแกนจ่ายผ่านแอปธนาคารทุกแห่ง"
+      });
+
+      saveQrBtn.disabled = false;
+      saveQrBtn.innerHTML = originalText;
 
       alerts.success(
-        isEn ? "QR Code Saved!" : "บันทึก QR Code แล้ว!",
-        isEn ? "Image saved to your device. Scan it in your banking app." : "บันทึกรูปภาพแล้ว สามารถนำไปสแกนในแอปธนาคารได้เลย"
+        isEn ? "QR Code Saved!" : "บันทึกรูป QR แล้ว!",
+        isEn ? "Image saved to device. You can now scan it in your banking app." : "บันทึกรูปภาพเรียบร้อย นำไปสแกนในแอปธนาคารได้ทันที"
       );
     } catch (err) {
       console.error("Failed to save QR Code image:", err);
+      saveQrBtn.disabled = false;
+      saveQrBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> <span>${isEn ? 'Save QR Code' : 'บันทึกรูป QR'}</span>`;
       alerts.error(
         isEn ? "Save Failed" : "บันทึกไม่สำเร็จ",
         isEn ? "Unable to download QR code image." : "ไม่สามารถดาวน์โหลดรูปภาพ QR code ได้"

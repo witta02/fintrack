@@ -61,6 +61,10 @@ function getWalletCardGradient(w, index = 0) {
 }
 
 export async function renderDashboard(container) {
+  // Reset filter state
+  activeDateFilter = "all";
+  searchQuery = "";
+
   const sym = store.getCurrencySymbol();
   const wallets = store.getWallets();
   const isEn = store.settings.language === "en";
@@ -84,13 +88,33 @@ export async function renderDashboard(container) {
   const monthInflow = monthTxs.filter(tx => tx.isIncome).reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
   const monthOutflow = monthTxs.filter(tx => !tx.isIncome).reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
 
-  // Sparkline mini bars
-  const sparklineData = [
-    { inPct: 60, outPct: 40 },
-    { inPct: 80, outPct: 30 },
-    { inPct: 70, outPct: 90 },
-    { inPct: 100, outPct: 45 },
-  ];
+  // Real 4-week sparkline aggregation
+  const sparklineData = (() => {
+    const weeks = [];
+    for (let w = 3; w >= 0; w--) {
+      const weekEnd = new Date(now);
+      weekEnd.setDate(now.getDate() - (w * 7));
+      weekEnd.setHours(23, 59, 59, 999);
+      const weekStart = new Date(weekEnd);
+      weekStart.setDate(weekEnd.getDate() - 6);
+      weekStart.setHours(0, 0, 0, 0);
+
+      let weekIn = 0, weekOut = 0;
+      for (const tx of allTxs) {
+        const d = new Date(tx.date);
+        if (d >= weekStart && d <= weekEnd) {
+          if (tx.isIncome) weekIn += parseFloat(tx.amount) || 0;
+          else weekOut += parseFloat(tx.amount) || 0;
+        }
+      }
+      weeks.push({ income: weekIn, expense: weekOut });
+    }
+    const maxVal = Math.max(...weeks.map(w => Math.max(w.income, w.expense)), 1);
+    return weeks.map(w => ({
+      inPct: Math.max(10, Math.round((w.income / maxVal) * 100)),
+      outPct: Math.max(10, Math.round((w.expense / maxVal) * 100)),
+    }));
+  })();
 
   // Total slides = 1 (Total Money Card) + wallets count + 1 (+ Add Wallet Card)
   const totalSlides = 1 + wallets.length + 1;
@@ -312,11 +336,18 @@ export async function renderDashboard(container) {
 
                 <!-- Center: Wallet Balance -->
                 <div style="margin: 14px 0 16px; z-index: 1;">
-                  <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.8; letter-spacing: 0.6px; margin-bottom: 2px;">
-                    ${isEn ? 'Wallet Balance' : 'ยอดเงินคงเหลือ'}
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+                    <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.8; letter-spacing: 0.6px;">
+                      ${isEn ? 'Wallet Balance' : 'ยอดเงินคงเหลือ'}
+                    </div>
+                    ${wBal < 0 ? `
+                      <span style="font-size: 9px; font-weight: 900; background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.4px; text-shadow: none;">
+                        ${isEn ? 'OVERDRAWN' : 'ยอดติดลบ'}
+                      </span>
+                    ` : ''}
                   </div>
-                  <div style="font-size: 34px; font-weight: 900; font-family: var(--font-heading); letter-spacing: -0.6px; text-shadow: 0 2px 4px rgba(0,0,0,0.35);">
-                    ${sym}${wBal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <div style="font-size: 34px; font-weight: 900; font-family: var(--font-heading); letter-spacing: -0.6px; text-shadow: 0 2px 4px rgba(0,0,0,0.35); ${wBal < 0 ? 'color: #fecaca;' : ''}">
+                    ${wBal < 0 ? '-' : ''}${sym}${Math.abs(wBal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
 
@@ -474,6 +505,12 @@ export async function renderDashboard(container) {
             `;
           }).join('')}
         </div>
+        ${feedTxs.length > 5 ? `
+          <button id="dash-feed-more-btn" style="width: 100%; margin-top: 10px; padding: 10px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); color: var(--gold); font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.15s ease;">
+            <span>${isEn ? `View All ${feedTxs.length} Transactions` : `ดูรายการทั้งหมด (${feedTxs.length} รายการ)`}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        ` : ''}
       </div>
     </div>
   `;
@@ -555,6 +592,9 @@ export async function renderDashboard(container) {
 
   // Quick Action Buttons
   container.querySelector("#dash-view-all-tx-btn")?.addEventListener("click", () => {
+    router.navigate("transactions");
+  });
+  container.querySelector("#dash-feed-more-btn")?.addEventListener("click", () => {
     router.navigate("transactions");
   });
   container.querySelector("#quick-savings")?.addEventListener("click", () => {

@@ -4,6 +4,7 @@ import { t } from "../i18n.js";
 import { alerts } from "../utils/alertHelper.js";
 import { supabase } from "../supabase.js";
 import { router } from "../router.js";
+import { showBuyCoinsModal } from "./rewards.js";
 
 export function renderSettings(container) {
   const selectedCurrency = store.getSelectedCurrency();
@@ -165,7 +166,6 @@ export function renderSettings(container) {
         </div>
       </div>
 
-      
       <!-- 2.5 Gamification & Economy -->
       <div class="settings-section-header">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/></svg>
@@ -319,6 +319,11 @@ export function renderSettings(container) {
   container.querySelector("#currency-select")?.addEventListener("change", (e) => {
     store.setSelectedCurrency(e.target.value);
     alerts.success(isEn ? "Currency updated" : "เปลี่ยนสกุลเงินเรียบร้อยแล้ว");
+  });
+
+  // FinCoins Top-Up
+  container.querySelector("#settings-topup-row")?.addEventListener("click", () => {
+    showBuyCoinsModal(container, language);
   });
 
   // Auth & Signout
