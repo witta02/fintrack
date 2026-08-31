@@ -333,6 +333,15 @@ export const store = {
     }
   },
 
+  addXP(amount) {
+    const amt = parseInt(amount) || 0;
+    if (amt > 0) {
+      this.settings.xp = (this.settings.xp || 0) + amt;
+      this.save();
+      this.saveSettingsToCloud();
+    }
+  },
+
   async handleLoginSync(user, options = {}) {
     const { ignoreLocalStorage = false } = options;
     if (!user) return;
@@ -1021,14 +1030,14 @@ export const store = {
   },
 
   addWallet(wallet) {
-    const startingAmount = parseFloat(wallet.balance) || 0;
+    const startingAmount = parseFloat(wallet.balance ?? wallet.initialBalance) || 0;
     const newWallet = {
       id: wallet.id || Math.random().toString(36).substring(2, 11),
       name: wallet.name || (this.settings.language === 'en' ? "New Wallet" : "กระเป๋าใหม่"),
       type: wallet.type || "cash",
       color: wallet.color || "#F5C842",
       icon: wallet.icon || "cash",
-      balance: parseFloat(wallet.balance) || 0,
+      balance: startingAmount,
       isDefault: !!wallet.isDefault,
       currency: wallet.currency || "THB",
       createdAt: new Date(),
@@ -1636,11 +1645,12 @@ export const store = {
       }).then(({ error }) => { if (error) console.error('Supabase addTransaction error:', error); });
     }
 
-    // Trigger browser notifications if enabled/allowed
     this.triggerNotification(
       transaction.isIncome ? i18n("notiSavedIncome") : i18n("notiSavedExpense"),
       `${transaction.title}: ${this.getCurrencySymbol()}${this.toDisplay(transaction.amount).toFixed(2)}`,
     );
+
+    return transaction;
   },
 
   updateTransaction(updated) {
@@ -1700,48 +1710,65 @@ export const store = {
   },
 
   addDownPayment(plan) {
+    if (!this.downPayments) this.downPayments = [];
     const totalAmount = parseFloat(plan.totalAmount) || 0;
     const paidAmount = Math.min(parseFloat(plan.paidAmount) || 0, totalAmount);
-    this.downPayments.push({
-      id: Math.random().toString(36).substring(2, 11),
+    let parsedDueDate = null;
+    if (plan.dueDate) {
+      if (plan.dueDate instanceof Date) parsedDueDate = plan.dueDate;
+      else if (typeof plan.dueDate === "string" && plan.dueDate.includes("T")) parsedDueDate = new Date(plan.dueDate);
+      else parsedDueDate = new Date(plan.dueDate);
+    }
+    const newPlan = {
+      id: plan.id || Math.random().toString(36).substring(2, 11),
       title: plan.title?.trim() || i18n("untitledDownPayment"),
       totalAmount,
       paidAmount,
-      dueDate: plan.dueDate ? new Date(`${plan.dueDate}T12:00:00`) : null,
+      monthlyPayment: parseFloat(plan.monthlyPayment) || 0,
+      dueDate: parsedDueDate,
       createdAt: new Date(),
-    });
+    };
+    this.downPayments.push(newPlan);
     this.save();
+    this.saveSettingsToCloud();
+    return newPlan;
   },
 
-  recordDownPayment(id, amount) {
-    const plan = this.downPayments.find((item) => item.id === id);
-    if (!plan) return;
-    plan.paidAmount = Math.min(plan.totalAmount, plan.paidAmount + (parseFloat(amount) || 0));
+  recordDownPayment(id, amount, walletId = "default") {
+    const plan = (this.downPayments || []).find((item) => String(item.id) === String(id));
+    if (!plan) return false;
+    const payAmt = parseFloat(amount) || 0;
+    plan.paidAmount = Math.min(plan.totalAmount, (plan.paidAmount || 0) + payAmt);
     this.save();
+    this.saveSettingsToCloud();
+    return true;
   },
 
   deleteDownPayment(id) {
-    this.downPayments = this.downPayments.filter((plan) => plan.id !== id);
+    this.downPayments = (this.downPayments || []).filter((plan) => String(plan.id) !== String(id));
     this.save();
+    this.saveSettingsToCloud();
+    return true;
   },
 
   // --- Recurring Rules API ---
   getAllRecurringRules() {
-    return [...this.recurringRules].sort(
+    return [...(this.recurringRules || [])].sort(
       (a, b) => a.nextDueDate - b.nextDueDate,
     );
   },
 
   addRecurringRule(rule) {
+    if (!this.recurringRules) this.recurringRules = [];
     const newRule = {
-      id: Math.random().toString(36).substring(2, 11),
+      id: rule.id || Math.random().toString(36).substring(2, 11),
       title: rule.title || i18n("untitledRecurring"),
       amount: parseFloat(rule.amount) || 0,
       isIncome: !!rule.isIncome,
       category: rule.category || "Other",
       type: rule.type || "monthly", // 'monthly', 'yearly', 'custom'
       customDays: parseInt(rule.customDays) || 30,
-      nextDueDate: rule.nextDueDate ? new Date(rule.nextDueDate) : new Date(),
+      nextDueDate: rule.nextDueDate ? (rule.nextDueDate instanceof Date ? rule.nextDueDate : new Date(rule.nextDueDate)) : new Date(),
       createdAt: new Date(),
       isActive: true,
     };
@@ -1768,6 +1795,8 @@ export const store = {
       i18n("notiRecurringSetTitle"),
       i18n("notiRecurringSetBody", { title: newRule.title }),
     );
+
+    return newRule;
   },
 
   updateRecurringRule(rule) {
@@ -1953,6 +1982,10 @@ export const store = {
   },
 
   // --- Computed Finance metrics ---
+  getSummary() {
+    return this.getFinanceMetrics();
+  },
+
   getFinanceMetrics() {
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -2210,3 +2243,13 @@ export const store = {
     }
   },
 };
+
+if (typeof window !== "undefined") {
+  window.addEventListener("online", () => {
+    if (store.user) {
+      store.syncWithSupabase?.().catch(() => {});
+      store.saveSettingsToCloud?.().catch(() => {});
+    }
+  });
+}
+

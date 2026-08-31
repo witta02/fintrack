@@ -1,3 +1,4 @@
+import { showQuickNumpadModal } from "../components/quickNumpadModal.js";
 import { store } from "../store.js";
 import { router } from "../router.js";
 import { t } from "../i18n.js";
@@ -191,6 +192,11 @@ export async function renderDashboard(container) {
         </div>
 
         <div style="display: flex; gap: 8px; align-items: center;">
+          <button id="dash-fast-numpad-btn" class="icon-btn" title="${isEn ? 'Fast Record (2s)' : 'จดด่วน (2 วิ)'}" style="background: var(--gold-soft); border: 1px solid var(--gold); color: var(--gold); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--radius); transition: all 0.2s ease;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </button>
           <button id="dash-missions-btn" class="icon-btn" title="${isEn ? 'Daily Missions' : 'ภารกิจประจำวัน'}" style="position: relative; background: var(--surface); border: 1px solid ${hasUnclaimedMissions ? 'var(--gold)' : 'var(--border)'}; color: var(--gold); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--radius); transition: all 0.2s ease;">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -533,6 +539,10 @@ export async function renderDashboard(container) {
   }
 
   // Top Bar Actions
+  container.querySelector("#dash-fast-numpad-btn")?.addEventListener("click", () => {
+    showQuickNumpadModal(() => renderDashboard(container));
+  });
+
   container.querySelector("#dash-missions-btn")?.addEventListener("click", () => {
     showDailyMissionsModal(container);
   });

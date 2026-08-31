@@ -177,7 +177,7 @@ export function renderSavings(container, params = null) {
                   m.isClaimed
                     ? `<span style="font-size: 10px; font-weight: 800; color: var(--income);">${isEn ? "Claimed" : "รับแล้ว"}</span>`
                     : m.canClaim
-                    ? `<button class="claim-milestone-btn" data-milestone="${m.pct}" style="background: var(--gold); color: #000; border: none; padding: 4px 8px; border-radius: 999px; font-size: 9.5px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 6px rgba(245,200,66,0.4); animation: pulse 1.5s infinite;">+${m.coins} 🪙</button>`
+                    ? `<button class="claim-milestone-btn" data-milestone="${m.pct}" style="background: var(--gold); color: #000; border: none; padding: 4px 8px; border-radius: 999px; font-size: 9.5px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 6px rgba(245,200,66,0.4); animation: pulse 1.5s infinite;">+${m.coins} ${isEn ? "Coins" : "เหรียญ"}</button>`
                     : `<span style="font-size: 9.5px; font-weight: 700; color: var(--text-muted);">+${m.coins} Coins</span>`
                 }
               </div>
@@ -185,6 +185,21 @@ export function renderSavings(container, params = null) {
             })
             .join("")}
         </div>
+      </div>
+
+      
+      <!-- Compound Interest & Savings Growth Simulator Card -->
+      <div id="savings-open-simulator-btn" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 16px 18px; margin-bottom: 16px; box-shadow: var(--card-shadow); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(52, 211, 153, 0.15); color: var(--income); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <div>
+            <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">${isEn ? "Savings Growth & Compound Simulator" : "จำลองการเติบโต & ดอกเบี้ยทบต้น"}</div>
+            <div style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">${isEn ? "Project wealth growth with monthly savings & APY%" : "คำนวณผลตอบแทนเมื่อออมต่อเนื่องรายเดือน"}</div>
+          </div>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--income);"><path d="m9 18 6-6-6-6"/></svg>
       </div>
 
       <!-- Rewards Shop & Collectibles Banner -->
@@ -222,6 +237,10 @@ export function renderSavings(container, params = null) {
   // Event Listeners
   container.querySelector("#savings-back-btn")?.addEventListener("click", () => {
     router.navigate("dashboard");
+  });
+
+  container.querySelector("#savings-open-simulator-btn")?.addEventListener("click", () => {
+    showCompoundSimulatorModal();
   });
 
   container.querySelector("#savings-open-shop-btn")?.addEventListener("click", () => {
@@ -496,4 +515,124 @@ function showCreateGoalDialog(container) {
     alerts.success(isEn ? "Savings goal created!" : "สร้างเป้าหมายการออมเรียบร้อยแล้ว!");
     renderSavings(container, { goalId: newGoal?.id });
   });
+}
+
+
+function showCompoundSimulatorModal() {
+  const isEn = store.settings.language === "en";
+  const sym = store.getCurrencySymbol();
+
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-dialog" style="max-width: 400px; width: 94%; max-height: 90vh; overflow-y: auto; padding: 22px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); box-shadow: var(--card-shadow);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(52, 211, 153, 0.15); color: var(--income); display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <div>
+            <h3 style="font-size: 15px; font-weight: 900; color: var(--text-primary); margin: 0;">
+              ${isEn ? "Compound Interest Simulator" : "จำลองผลตอบแทนดอกเบี้ยทบต้น"}
+            </h3>
+            <div style="font-size: 10.5px; color: var(--text-secondary);">
+              ${isEn ? "Monthly Contribution Projection" : "คำนวณการเติบโตของเงินออมระยะยาว"}
+            </div>
+          </div>
+        </div>
+        <button class="modal-close-btn" style="background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Result Card -->
+      <div style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.12) 0%, rgba(245, 200, 66, 0.12) 100%); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: var(--radius-xl); padding: 16px; margin-bottom: 16px;">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
+          ${isEn ? "Projected Wealth" : "มูลค่าเงินรวมในอนาคต"}
+        </div>
+        <div id="sim-future-val" style="font-size: 26px; font-weight: 900; color: var(--income); font-family: var(--font-heading); margin: 2px 0 8px;">
+          ${sym}0
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
+          <div>
+            <span style="color: var(--text-secondary);">${isEn ? "Total Principal:" : "เงินต้นที่สะสม:"}</span>
+            <strong id="sim-principal-val" style="display: block; color: var(--text-primary); font-family: var(--font-heading);">${sym}0</strong>
+          </div>
+          <div style="text-align: right;">
+            <span style="color: var(--text-secondary);">${isEn ? "Interest Earned:" : "ดอกเบี้ย/กำไรที่ได้:"}</span>
+            <strong id="sim-interest-val" style="display: block; color: var(--gold); font-family: var(--font-heading);">+${sym}0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inputs -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">
+            ${isEn ? "Initial Starting Balance" : "เงินก้อนเริ่มต้น (บาท)"}
+          </label>
+          <input type="number" id="sim-initial" value="10000" style="width: 100%; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-weight: 800; font-size: 13px;" />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">
+            ${isEn ? "Monthly Deposit Amount" : "ออมเพิ่มทุกเดือน (บาท/เดือน)"}
+          </label>
+          <input type="number" id="sim-monthly" value="3000" style="width: 100%; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-weight: 800; font-size: 13px;" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">
+              ${isEn ? "Time Horizon (Years)" : "ระยะเวลา (ปี)"}
+            </label>
+            <input type="number" id="sim-years" value="3" min="1" max="50" style="width: 100%; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-weight: 800; font-size: 13px;" />
+          </div>
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">
+              ${isEn ? "Expected APY (%)" : "ผลตอบแทน (% ต่อปี)"}
+            </label>
+            <input type="number" id="sim-rate" value="5.5" step="0.5" min="0" max="100" style="width: 100%; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-weight: 800; font-size: 13px;" />
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="modal-close-btn" style="width: 100%; padding: 10px; margin-top: 14px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); font-size: 12px; font-weight: 800; cursor: pointer;">
+        ${isEn ? "Close" : "ปิด"}
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const calculate = () => {
+    const p = Math.max(0, parseFloat(modal.querySelector("#sim-initial").value) || 0);
+    const pmt = Math.max(0, parseFloat(modal.querySelector("#sim-monthly").value) || 0);
+    const y = Math.max(1, parseFloat(modal.querySelector("#sim-years").value) || 1);
+    const r = Math.max(0, parseFloat(modal.querySelector("#sim-rate").value) || 0) / 100;
+
+    const months = y * 12;
+    const monthlyRate = r / 12;
+
+    let fv = p * Math.pow(1 + monthlyRate, months);
+    if (monthlyRate > 0) {
+      fv += pmt * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+    } else {
+      fv += pmt * months;
+    }
+
+    const totalPrincipal = p + (pmt * months);
+    const totalInterest = Math.max(0, fv - totalPrincipal);
+
+    modal.querySelector("#sim-future-val").textContent = `${sym}${Math.round(fv).toLocaleString()}`;
+    modal.querySelector("#sim-principal-val").textContent = `${sym}${Math.round(totalPrincipal).toLocaleString()}`;
+    modal.querySelector("#sim-interest-val").textContent = `+${sym}${Math.round(totalInterest).toLocaleString()}`;
+  };
+
+  modal.querySelectorAll("input").forEach(i => i.addEventListener("input", calculate));
+  calculate();
+
+  const close = () => modal.remove();
+  modal.querySelectorAll(".modal-close-btn").forEach(b => (b.onclick = close));
+  modal.onclick = (e) => { if (e.target === modal) close(); };
 }
