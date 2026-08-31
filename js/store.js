@@ -1128,7 +1128,10 @@ export const store = {
   depositToGoal(goalId, amount, walletId = "default") {
     const goal = (this.savingsGoals || []).find((g) => g.id === goalId);
     const amt = parseFloat(amount);
-    if (!goal || !amt || amt <= 0) return false;
+    if (!goal || !amt || amt <= 0) return { success: false };
+
+    const prevAmount = goal.currentAmount || 0;
+    const targetAmount = Math.max(1, goal.targetAmount || 1);
 
     this.addTransaction({
       title: `ออมเงินเข้า: ${goal.title}`,
@@ -1139,9 +1142,112 @@ export const store = {
       date: new Date(),
     });
 
-    goal.currentAmount = (goal.currentAmount || 0) + amt;
+    goal.currentAmount = prevAmount + amt;
+    const newPct = Math.min(100, Math.floor((goal.currentAmount / targetAmount) * 100));
+
+    // Dynamic Coins & XP Reward
+    // 1 FinCoin per ฿100 saved, 2 XP per ฿50 saved
+    const earnedCoins = Math.max(1, Math.floor(amt / 100));
+    const earnedXP = Math.max(5, Math.floor(amt / 50) * 2);
+
+    this.settings.coins = (this.settings.coins || 0) + earnedCoins;
+    this.settings.totalSavingsCoins = (this.settings.totalSavingsCoins || 0) + earnedCoins;
+    this.settings.xp = (this.settings.xp || 0) + earnedXP;
+
+    // Check Milestone Crossings (25%, 50%, 75%, 100%)
+    if (!this.settings.savingsMilestones) this.settings.savingsMilestones = {};
+    if (!this.settings.savingsMilestones[goalId]) this.settings.savingsMilestones[goalId] = [];
+
+    const milestones = [25, 50, 75, 100];
+    const unlockedMilestones = [];
+
+    milestones.forEach((m) => {
+      if (newPct >= m && !this.settings.savingsMilestones[goalId].includes(m)) {
+        this.settings.savingsMilestones[goalId].push(m);
+        unlockedMilestones.push(m);
+      }
+    });
+
+    this.recalculateXP();
     this.save();
-    return true;
+
+    return {
+      success: true,
+      earnedCoins,
+      earnedXP,
+      unlockedMilestones,
+      newPct,
+    };
+  },
+
+  claimSavingsMilestone(goalId, milestonePct) {
+    if (!this.settings.savingsClaimedMilestones) this.settings.savingsClaimedMilestones = {};
+    if (!this.settings.savingsClaimedMilestones[goalId]) this.settings.savingsClaimedMilestones[goalId] = [];
+
+    if (this.settings.savingsClaimedMilestones[goalId].includes(milestonePct)) {
+      return { success: false, reason: "already_claimed" };
+    }
+
+    const milestoneRewards = {
+      25: { coins: 50, xp: 100, title: "25% Milestone Chest" },
+      50: { coins: 100, xp: 200, title: "50% Halfway Treasure" },
+      75: { coins: 150, xp: 300, title: "75% Vault Bounty" },
+      100: { coins: 300, xp: 500, title: "100% Goal Crusher Jackpot" },
+    };
+
+    const reward = milestoneRewards[milestonePct] || { coins: 50, xp: 100, title: "Milestone Chest" };
+
+    this.settings.savingsClaimedMilestones[goalId].push(milestonePct);
+    this.settings.coins = (this.settings.coins || 0) + reward.coins;
+    this.settings.totalSavingsCoins = (this.settings.totalSavingsCoins || 0) + reward.coins;
+    this.settings.xp = (this.settings.xp || 0) + reward.xp;
+
+    this.recalculateXP();
+    this.save();
+
+    return {
+      success: true,
+      reward,
+    };
+  },
+
+  getSavingsMilestones(goalId) {
+    const goal = (this.savingsGoals || []).find((g) => g.id === goalId);
+    if (!goal) return [];
+
+    const target = Math.max(1, goal.targetAmount || 1);
+    const current = goal.currentAmount || 0;
+    const currentPct = Math.min(100, Math.floor((current / target) * 100));
+
+    const unlocked = this.settings.savingsMilestones?.[goalId] || [];
+    const claimed = this.settings.savingsClaimedMilestones?.[goalId] || [];
+
+    const milestoneRewards = {
+      25: { coins: 50, xp: 100, label: "25%" },
+      50: { coins: 100, xp: 200, label: "50%" },
+      75: { coins: 150, xp: 300, label: "75%" },
+      100: { coins: 300, xp: 500, label: "100%" },
+    };
+
+    return [25, 50, 75, 100].map((pct) => {
+      const isReached = currentPct >= pct || unlocked.includes(pct);
+      const isClaimed = claimed.includes(pct);
+      const canClaim = isReached && !isClaimed;
+
+      return {
+        pct,
+        label: milestoneRewards[pct].label,
+        coins: milestoneRewards[pct].coins,
+        xp: milestoneRewards[pct].xp,
+        isReached,
+        isClaimed,
+        canClaim,
+      };
+    });
+  },
+
+  getTotalSavingsAmount() {
+    return (this.savingsGoals || []).reduce((sum, g) => sum + (parseFloat(g.currentAmount) || 0), 0);
   },
 
   withdrawFromGoal(goalId, amount, walletId = "default") {

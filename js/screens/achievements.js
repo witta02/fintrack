@@ -86,6 +86,51 @@ export function renderAchievements(container) {
     target: 100
   });
 
+  const totalSaved = store.getTotalSavingsAmount();
+  const savingsAchievements = [
+    {
+      id: "savings_1k",
+      icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--income)" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+      title: lang === 'en' ? "Piggy Pioneer (฿1,000)" : "นักออมมือใหม่ (1,000 บาท)",
+      desc: lang === 'en' ? "Accumulate at least ฿1,000 in your savings vaults." : "สะสมเงินในกระปุกออมเงินรวมครบ 1,000 บาท",
+      unlocked: totalSaved >= 1000,
+      progress: Math.min(1000, totalSaved),
+      target: 1000,
+      formatProgress: true
+    },
+    {
+      id: "savings_10k",
+      icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`,
+      title: lang === 'en' ? "Vault Commander (฿10,000)" : "ผู้พิทักษ์ขุมทรัพย์ (10,000 บาท)",
+      desc: lang === 'en' ? "Accumulate at least ฿10,000 in your savings vaults." : "สะสมเงินในกระปุกออมเงินรวมครบ 10,000 บาท",
+      unlocked: totalSaved >= 10000,
+      progress: Math.min(10000, totalSaved),
+      target: 10000,
+      formatProgress: true
+    },
+    {
+      id: "savings_50k",
+      icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+      title: lang === 'en' ? "Wealth Architect (฿50,000)" : "สถาปนิกความมั่งคั่ง (50,000 บาท)",
+      desc: lang === 'en' ? "Accumulate at least ฿50,000 in your savings vaults." : "สะสมเงินในกระปุกออมเงินรวมครบ 50,000 บาท",
+      unlocked: totalSaved >= 50000,
+      progress: Math.min(50000, totalSaved),
+      target: 50000,
+      formatProgress: true
+    },
+    {
+      id: "savings_100k",
+      icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+      title: lang === 'en' ? "Century Titan (฿100,000)" : "ตำนานหลักแสน (100,000 บาท)",
+      desc: lang === 'en' ? "Accumulate at least ฿100,000 in your savings vaults." : "สะสมเงินในกระปุกออมเงินรวมครบ 100,000 บาท",
+      unlocked: totalSaved >= 100000,
+      progress: Math.min(100000, totalSaved),
+      target: 100000,
+      formatProgress: true
+    }
+  ];
+
+  achievements.push(...savingsAchievements);
   achievements.splice(3, 0, ...incomeAchievements);
 
   let html = `

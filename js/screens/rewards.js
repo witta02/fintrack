@@ -22,6 +22,14 @@ export function renderRewards(container) {
       price: 500,
     },
     {
+      id: "emerald",
+      type: "theme",
+      icon: `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+      title: lang === 'en' ? "Emerald Vault Theme" : "ธีมมรกตเพิ่มพูน",
+      desc: lang === 'en' ? "Rich forest green for high-growth savers." : "สีเขียวมรกตสำหรับนักออมเงินตัวจริง",
+      price: 1200,
+    },
+    {
       id: "cyberpunk",
       type: "theme",
       icon: `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 8h6M9 12h6M9 16h6"/></svg>`,
