@@ -165,6 +165,30 @@ export function renderSettings(container) {
         </div>
       </div>
 
+      
+      <!-- 2.5 Gamification & Economy -->
+      <div class="settings-section-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/></svg>
+        ${isEn ? 'FinCoins & Rewards Shop' : 'เหรียญ FinCoins & ร้านค้า'}
+      </div>
+      <div class="settings-card-group">
+        <div id="settings-topup-row" class="settings-item-row settings-item-clickable">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="settings-icon-box" style="background: rgba(245, 200, 66, 0.15); color: var(--gold);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <div>
+              <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">${isEn ? 'Top-Up FinCoins' : 'เติมเหรียญ FinCoins'}</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">${isEn ? 'Buy coins via PromptPay QR & auto-verify slip' : 'สแกนจ่ายพร้อมเพย์ ปลดล็อกธีมและของสะสม'}</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 12px; font-weight: 800; color: var(--gold);">${store.settings.coins || 0} Coins</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted);"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
       <!-- 3. Preferences (Language & Currency) -->
       <div class="settings-section-header">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>

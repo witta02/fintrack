@@ -1,7 +1,8 @@
 import generatePayload from "promptpay-qr";
 import QRCode from "qrcode";
 
-export const DEFAULT_PROMPTPAY_ID = import.meta.env.VITE_PROMPTPAY_ID || "";
+const env = (typeof import.meta !== "undefined" && import.meta.env) ? import.meta.env : (typeof process !== "undefined" ? process.env : {});
+export const DEFAULT_PROMPTPAY_ID = env?.VITE_PROMPTPAY_ID || "";
 
 /**
  * Formats PromptPay ID (Phone or Tax ID) for payload generator.
