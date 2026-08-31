@@ -436,6 +436,50 @@ export const store = {
           usedSlips: mergedUsedSlips,
         };
 
+        // Restore Wallets, Savings Goals, Down Payments, and Category Limits from Cloud
+        const cloudBundle = dbSettings.quests_state?.cloud_vault_bundle;
+        const cloudWallets = (dbSettings.wallets && Array.isArray(dbSettings.wallets) && dbSettings.wallets.length > 0)
+          ? dbSettings.wallets
+          : (cloudBundle?.wallets && Array.isArray(cloudBundle.wallets) && cloudBundle.wallets.length > 0 ? cloudBundle.wallets : null);
+        
+        if (cloudWallets) {
+          this.wallets = cloudWallets;
+          localStorage.setItem("fintrack_wallets", JSON.stringify(this.wallets));
+        }
+
+        const cloudGoals = (dbSettings.savings_goals && Array.isArray(dbSettings.savings_goals))
+          ? dbSettings.savings_goals
+          : (cloudBundle?.savings_goals && Array.isArray(cloudBundle.savings_goals) ? cloudBundle.savings_goals : null);
+        
+        if (cloudGoals) {
+          this.savingsGoals = cloudGoals;
+          localStorage.setItem("fintrack_savings_goals", JSON.stringify(this.savingsGoals));
+        }
+
+        const cloudDownPayments = (dbSettings.down_payments && Array.isArray(dbSettings.down_payments))
+          ? dbSettings.down_payments
+          : (cloudBundle?.down_payments && Array.isArray(cloudBundle.down_payments) ? cloudBundle.down_payments : null);
+        
+        if (cloudDownPayments) {
+          this.downPayments = cloudDownPayments;
+          localStorage.setItem("fintrack_down_payments", JSON.stringify(this.downPayments));
+        }
+
+        if (cloudBundle?.category_limits) {
+          this.categoryLimits = cloudBundle.category_limits;
+          localStorage.setItem("fintrack_category_limits", JSON.stringify(this.categoryLimits));
+        }
+
+        if (cloudBundle?.savings_milestones) {
+          this.settings.savingsMilestones = cloudBundle.savings_milestones;
+        }
+        if (cloudBundle?.savings_claimed_milestones) {
+          this.settings.savingsClaimedMilestones = cloudBundle.savings_claimed_milestones;
+        }
+        if (cloudBundle?.total_savings_coins) {
+          this.settings.totalSavingsCoins = cloudBundle.total_savings_coins;
+        }
+
         // Immediately sync back merged state to cloud database
         await this.saveSettingsToCloud();
       } else {
@@ -600,6 +644,21 @@ export const store = {
   async saveSettingsToCloud() {
     if (this.user) {
       try {
+        const cloudVaultBundle = {
+          wallets: this.wallets || [],
+          savings_goals: this.savingsGoals || [],
+          down_payments: this.downPayments || [],
+          category_limits: this.categoryLimits || {},
+          savings_milestones: this.settings.savingsMilestones || {},
+          savings_claimed_milestones: this.settings.savingsClaimedMilestones || {},
+          total_savings_coins: this.settings.totalSavingsCoins || 0
+        };
+
+        const questsState = {
+          ...(this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] }),
+          cloud_vault_bundle: cloudVaultBundle
+        };
+
         const payload = {
           user_id: this.user.id,
           selected_currency: this.settings.selectedCurrency || 'THB',
@@ -619,7 +678,7 @@ export const store = {
           unlocked_themes: this.settings.unlockedThemes || ["light", "dark"],
           forgiven_transactions: this.settings.forgivenTransactions || [],
           collectibles: this.settings.collectibles || [],
-          quests_state: this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
+          quests_state: questsState,
           used_slips: this.settings.usedSlips || []
         };
         let { error } = await supabase.from('user_profiles').upsert(payload, { onConflict: 'user_id' });

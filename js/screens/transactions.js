@@ -266,12 +266,13 @@ function updateUI(container) {
 
       const groupHeader = document.createElement("div");
       groupHeader.className = "day-group-header";
+      groupHeader.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 12px 4px 8px; margin-top: 6px;";
       
       groupHeader.innerHTML = `
-        <span class="day-group-label">${group.display}</span>
-        <span class="day-group-total">
-          ${dailyIncome > 0 ? `<span class="day-group-income">+${symbol}${formatAmount(dailyIncome)}</span>` : ''}
-          ${dailyExpense > 0 ? `<span class="day-group-expense">-${symbol}${formatAmount(dailyExpense)}</span>` : ''}
+        <span class="day-group-label" style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">${group.display}</span>
+        <span class="day-group-total" style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; font-family: var(--font-heading);">
+          ${dailyIncome > 0 ? `<span class="day-group-income" style="color: var(--income); font-weight: 800;">+${symbol}${formatAmount(dailyIncome)}</span>` : ''}
+          ${dailyExpense > 0 ? `<span class="day-group-expense" style="color: var(--expense); font-weight: 800;">-${symbol}${formatAmount(dailyExpense)}</span>` : ''}
         </span>
       `;
       listContainer.appendChild(groupHeader);
