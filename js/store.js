@@ -1185,9 +1185,19 @@ export const store = {
   },
 
   depositToGoal(goalId, amount, walletId = "default") {
-    const goal = (this.savingsGoals || []).find((g) => g.id === goalId);
+    if (!this.savingsGoals) this.savingsGoals = [];
+    let goal = this.savingsGoals.find((g) => String(g.id) === String(goalId));
+    if (!goal && (goalId === "default" || this.savingsGoals.length === 0)) {
+      goal = this.addSavingsGoal({
+        id: "default",
+        title: this.settings?.language === "en" ? "General Savings" : "เงินออมทั่วไป",
+        targetAmount: 50000,
+        currentAmount: 0,
+        color: "#F5C842",
+      });
+    }
     const amt = parseFloat(amount);
-    if (!goal || !amt || amt <= 0) return { success: false };
+    if (!goal || isNaN(amt) || amt <= 0) return { success: false };
 
     const prevAmount = goal.currentAmount || 0;
     const targetAmount = Math.max(1, goal.targetAmount || 1);
@@ -1271,7 +1281,7 @@ export const store = {
   },
 
   getSavingsMilestones(goalId) {
-    const goal = (this.savingsGoals || []).find((g) => g.id === goalId);
+    const goal = (this.savingsGoals || []).find((g) => String(g.id) === String(goalId));
     if (!goal) return [];
 
     const target = Math.max(1, goal.targetAmount || 1);
@@ -1310,7 +1320,7 @@ export const store = {
   },
 
   withdrawFromGoal(goalId, amount, walletId = "default") {
-    const goal = (this.savingsGoals || []).find((g) => g.id === goalId);
+    const goal = (this.savingsGoals || []).find((g) => String(g.id) === String(goalId));
     const amt = parseFloat(amount);
     if (!goal || !amt || amt <= 0 || (goal.currentAmount || 0) < amt) return false;
 
@@ -1329,7 +1339,7 @@ export const store = {
   },
 
   deleteSavingsGoal(goalId) {
-    this.savingsGoals = (this.savingsGoals || []).filter((g) => g.id !== goalId);
+    this.savingsGoals = (this.savingsGoals || []).filter((g) => String(g.id) !== String(goalId));
     this.save();
     return true;
   },
