@@ -1501,44 +1501,41 @@ export const store = {
     const isEn = this.settings.language === "en";
     const todayStr = new Date().toISOString().split("T")[0];
     const todayTxs = this.getAllTransactions().filter((t) => t.date && t.date.startsWith(todayStr));
-    const hasLoggedToday = todayTxs.length > 0;
-    const hasSaved = (this.savingsGoals || []).some((g) => (g.currentAmount || 0) > 0);
-    const safeSpend = this.getDailySafeToSpend();
-    const todayExpense = todayTxs.filter((t) => !t.isIncome).reduce((s, t) => s + Number(t.amount || 0), 0);
-    const stayedUnderSafe = todayExpense <= (safeSpend.safeDaily || 1000);
+    const hasIncomeToday = todayTxs.some((t) => t.isIncome);
+    const hasSavedToday = todayTxs.some((t) => t.category === "Savings" && !t.isIncome) || (this.savingsGoals || []).some((g) => (g.currentAmount || 0) > 0);
 
     const claimed = this.settings.questsState?.claimed || [];
 
     return [
       {
-        id: "log_today",
-        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`,
-        title: isEn ? "Log Today's Spending" : "บันทึกรายการประจำวัน",
-        desc: isEn ? "Record at least 1 transaction today" : "บันทึกอย่างน้อย 1 รายการวันนี้",
-        rewardXP: 30,
+        id: "daily_login",
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>`,
+        title: isEn ? "Daily Check-in & Login" : "เช็คอินเข้าใช้งานวันนี้",
+        desc: isEn ? "Log in or open FinTrack today" : "เข้าสู่ระบบหรือเปิดแอปวันนี้",
+        rewardXP: 25,
         rewardCoins: 10,
-        completed: hasLoggedToday,
-        claimed: claimed.includes(`log_today_${todayStr}`),
+        completed: true,
+        claimed: claimed.includes(`daily_login_${todayStr}`),
       },
       {
-        id: "stay_safe",
-        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-        title: isEn ? "Stay Under Daily Safe Limit" : "ใช้จ่ายไม่เกินงบปลอดภัย",
-        desc: isEn ? `Spent ${this.getCurrencySymbol()} ${todayExpense.toLocaleString()} / safe limit` : `ใช้ไป ${this.getCurrencySymbol()} ${todayExpense.toLocaleString()} / งบปลอดภัย`,
-        rewardXP: 40,
+        id: "daily_income",
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+        title: isEn ? "Earn Income Today" : "มีรายได้เข้ากระเป๋า",
+        desc: isEn ? "Record at least 1 income transaction today" : "บันทึกรายรับอย่างน้อย 1 รายการวันนี้",
+        rewardXP: 35,
         rewardCoins: 15,
-        completed: stayedUnderSafe,
-        claimed: claimed.includes(`stay_safe_${todayStr}`),
+        completed: hasIncomeToday,
+        claimed: claimed.includes(`daily_income_${todayStr}`),
       },
       {
-        id: "stash_goal",
-        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
-        title: isEn ? "Stash Funds in Savings Vault" : "เก็บเงินเข้ากระปุกเป้าหมาย",
-        desc: isEn ? "Have active deposits in savings goals" : "มีเงินออมสะสมในกระปุกเป้าหมาย",
+        id: "daily_saving",
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+        title: isEn ? "Stash Money in Savings" : "ออมเงินเข้ากระปุกเป้าหมาย",
+        desc: isEn ? "Deposit into any savings vault today" : "ฝากเงินเข้ากระปุกออมเงินวันนี้",
         rewardXP: 50,
         rewardCoins: 20,
-        completed: hasSaved,
-        claimed: claimed.includes(`stash_goal_${todayStr}`),
+        completed: hasSavedToday,
+        claimed: claimed.includes(`daily_saving_${todayStr}`),
       },
     ];
   },

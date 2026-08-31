@@ -69,6 +69,7 @@ export async function renderDashboard(container) {
   const coins = store.settings.coins || 0;
   const dailyQuests = store.getDailyQuests();
   const streak = store.calculateStreak();
+  const hasUnclaimedMissions = dailyQuests.some(q => q.completed && !q.claimed);
 
   // Main Total Balance across ALL wallets
   const totalBalance = store.getTotalBalance();
@@ -171,7 +172,11 @@ export async function renderDashboard(container) {
           <!-- User Avatar Chip -->
           <div style="position: relative; width: 42px; height: 42px; border-radius: 50%; background: var(--gold-soft); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--gold); font-size: 16px; flex-shrink: 0;">
             ${userName.charAt(0).toUpperCase()}
-            <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: var(--income); border-radius: 50%; border: 2px solid var(--card);"></span>
+            ${hasUnclaimedMissions ? `
+              <span style="position: absolute; top: -2px; right: -2px; width: 15px; height: 15px; border-radius: 50%; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid var(--card); font-family: var(--font-heading); box-shadow: 0 0 8px rgba(239,68,68,0.8); animation: pulse 1.5s infinite;">!</span>
+            ` : `
+              <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: var(--income); border-radius: 50%; border: 2px solid var(--card);"></span>
+            `}
           </div>
           <div>
             <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
@@ -185,7 +190,16 @@ export async function renderDashboard(container) {
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button id="dash-missions-btn" class="icon-btn" title="${isEn ? 'Daily Missions' : 'ภารกิจประจำวัน'}" style="position: relative; background: var(--surface); border: 1px solid ${hasUnclaimedMissions ? 'var(--gold)' : 'var(--border)'}; color: var(--gold); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--radius); transition: all 0.2s ease;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            ${hasUnclaimedMissions ? `
+              <span style="position: absolute; top: -3px; right: -3px; width: 16px; height: 16px; border-radius: 50%; background: #ef4444; color: #ffffff; font-size: 10.5px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(239, 68, 68, 0.8); animation: pulse 1.5s infinite; border: 2px solid var(--card); font-family: var(--font-heading);">!</span>
+            ` : ''}
+          </button>
+          
           <button id="dash-settings-btn" class="icon-btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--radius);">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
@@ -383,66 +397,6 @@ export async function renderDashboard(container) {
         </div>
       </div>
 
-      <!-- DAILY MISSIONS (ภารกิจประจำวัน) -->
-      <div class="dash-daily-missions-card" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 18px 16px; margin-bottom: 18px; box-shadow: var(--card-shadow);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="width: 32px; height: 32px; border-radius: 10px; background: var(--gold-soft); color: var(--gold); display: flex; align-items: center; justify-content: center;">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </div>
-            <div>
-              <h3 style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin: 0;">
-                ${isEn ? 'Daily Missions' : 'ภารกิจประจำวัน'}
-              </h3>
-              <span style="font-size: 10.5px; font-weight: 600; color: var(--text-secondary);">
-                ${isEn ? 'Complete missions to earn FinCoins & XP' : 'ทำภารกิจเพื่อรับเหรียญ FinCoins และ XP'}
-              </span>
-            </div>
-          </div>
-          <div style="display: flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--border); padding: 4px 10px; border-radius: 999px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z"/></svg>
-            <span style="font-size: 11px; font-weight: 800; color: var(--text-primary);">${streak} ${isEn ? 'Days' : 'วัน'}</span>
-          </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          ${dailyQuests.map((q) => `
-            <div style="background: var(--surface); border: 1px solid ${q.completed && !q.claimed ? 'var(--gold)' : 'var(--border)'}; border-radius: var(--radius-lg); padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-              <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                <div style="width: 32px; height: 32px; border-radius: 10px; background: ${q.completed ? 'rgba(52, 211, 153, 0.12)' : 'var(--card)'}; color: ${q.completed ? 'var(--income)' : 'var(--text-secondary)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  ${q.icon}
-                </div>
-                <div style="min-width: 0;">
-                  <div style="font-size: 12.5px; font-weight: 800; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                    ${q.title}
-                  </div>
-                  <div style="font-size: 10.5px; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                    ${q.desc} • <span style="color: var(--gold); font-weight: 700;">+${q.rewardCoins} Coins</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                ${q.claimed ? `
-                  <span style="font-size: 11px; font-weight: 800; color: var(--income); display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    ${isEn ? 'Done' : 'สำเร็จ'}
-                  </span>
-                ` : (q.completed ? `
-                  <button class="claim-quest-btn" data-quest-id="${q.id}" style="background: var(--gold); color: #000; border: none; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 8px rgba(245,200,66,0.3); animation: pulse 1.5s infinite; white-space: nowrap;">
-                    ${isEn ? `Claim +${q.rewardCoins}` : `รับ +${q.rewardCoins}`}
-                  </button>
-                ` : `
-                  <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); padding: 4px 8px; border-radius: 999px; white-space: nowrap;">
-                    ${isEn ? 'In Progress' : 'กำลังทำ'}
-                  </span>
-                `)}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
       <!-- RECENT TRANSACTIONS FEED -->
       <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 18px 16px; box-shadow: var(--card-shadow);">
         <!-- Feed Header & Search -->
@@ -575,6 +529,17 @@ export async function renderDashboard(container) {
     });
   }
 
+  // Top Bar Actions
+  container.querySelector("#dash-missions-btn")?.addEventListener("click", () => {
+    showDailyMissionsModal(container);
+  });
+  container.querySelector("#dash-user-avatar-btn")?.addEventListener("click", () => {
+    showDailyMissionsModal(container);
+  });
+  container.querySelector("#dash-settings-btn")?.addEventListener("click", () => {
+    router.navigate("settings");
+  });
+
   // Quick Action Buttons
   container.querySelector("#dash-view-all-tx-btn")?.addEventListener("click", () => {
     router.navigate("transactions");
@@ -590,25 +555,6 @@ export async function renderDashboard(container) {
   });
   container.querySelector("#quick-downpayments")?.addEventListener("click", () => {
     router.navigate("downPayments");
-  });
-
-  // Daily Quests Claim Buttons
-  container.querySelectorAll(".claim-quest-btn").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const qId = btn.getAttribute("data-quest-id");
-      const quest = store.claimDailyQuest(qId);
-      if (quest) {
-        confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
-        alerts.success(
-          isEn ? "Mission Accomplished!" : "ทำภารกิจสำเร็จ!",
-          isEn
-            ? `Claimed +${quest.rewardCoins} FinCoins & +${quest.rewardXP} XP!`
-            : `ได้รับ +${quest.rewardCoins} FinCoins และ +${quest.rewardXP} XP!`
-        );
-        renderDashboard(container);
-      }
-    });
   });
 
   // Filter Buttons
@@ -783,3 +729,111 @@ function showUserMasteryModal(container) {
     router.navigate("collectibles");
   });
 }
+
+function showDailyMissionsModal(container) {
+  const isEn = store.settings.language === "en";
+  const dailyQuests = store.getDailyQuests();
+  const streak = store.calculateStreak();
+
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-dialog" style="max-width: 440px; padding: 22px; border-radius: var(--radius-2xl);">
+      <div class="modal-header" style="margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 12px; background: var(--gold-soft); color: var(--gold); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 16px; font-weight: 800; margin: 0; color: var(--text-primary);">
+              ${isEn ? 'Daily Missions' : 'ภารกิจประจำวัน'}
+            </h3>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+              ${isEn ? 'Complete missions to earn FinCoins & XP' : 'ทำภารกิจเพื่อรับเหรียญ FinCoins และ XP'}
+            </div>
+          </div>
+        </div>
+        <button class="modal-close-btn" style="width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z"/></svg>
+          <span style="font-size: 12px; font-weight: 800; color: var(--text-primary);">${isEn ? 'Daily Streak' : 'สถิติต่อเนื่อง'}:</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <span style="font-size: 12px; font-weight: 900; color: var(--gold);">${streak} ${isEn ? 'Days' : 'วัน'}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z"/></svg>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        ${dailyQuests.map((q) => `
+          <div style="background: var(--card); border: 1px solid ${q.completed && !q.claimed ? 'var(--gold)' : 'var(--border)'}; border-radius: var(--radius-xl); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; box-shadow: ${q.completed && !q.claimed ? '0 2px 10px rgba(245,200,66,0.15)' : 'none'};">
+            <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+              <div style="width: 36px; height: 36px; border-radius: 10px; background: ${q.completed ? 'rgba(52, 211, 153, 0.12)' : 'var(--surface)'}; color: ${q.completed ? 'var(--income)' : 'var(--text-secondary)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                ${q.icon}
+              </div>
+              <div style="min-width: 0;">
+                <div style="font-size: 13px; font-weight: 800; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                  ${q.title}
+                </div>
+                <div style="font-size: 11px; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; margin-top: 2px;">
+                  ${q.desc} • <span style="color: var(--gold); font-weight: 800;">+${q.rewardCoins} Coins</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              ${q.claimed ? `
+                <span style="font-size: 11.5px; font-weight: 800; color: var(--income); display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; background: rgba(52, 211, 153, 0.1); border-radius: 999px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  ${isEn ? 'Done' : 'สำเร็จ'}
+                </span>
+              ` : (q.completed ? `
+                <button class="modal-claim-quest-btn" data-quest-id="${q.id}" style="background: var(--gold); color: #000; border: none; padding: 7px 14px; border-radius: 999px; font-size: 11.5px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 10px rgba(245,200,66,0.35); animation: pulse 1.5s infinite; white-space: nowrap;">
+                  ${isEn ? `Claim +${q.rewardCoins}` : `รับ +${q.rewardCoins}`}
+                </button>
+              ` : `
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); padding: 5px 10px; border-radius: 999px; white-space: nowrap;">
+                  ${isEn ? 'In Progress' : 'กำลังทำ'}
+                </span>
+              `)}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  const close = () => {
+    if (document.body.contains(modal)) document.body.removeChild(modal);
+  };
+  modal.querySelector(".modal-close-btn").onclick = close;
+  modal.onclick = (e) => {
+    if (e.target === modal) close();
+  };
+
+  modal.querySelectorAll(".modal-claim-quest-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const qId = btn.getAttribute("data-quest-id");
+      const quest = store.claimDailyQuest(qId);
+      if (quest) {
+        confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
+        alerts.success(
+          isEn ? "Mission Accomplished!" : "ทำภารกิจสำเร็จ!",
+          isEn
+            ? `Claimed +${quest.rewardCoins} FinCoins & +${quest.rewardXP} XP!`
+            : `ได้รับ +${quest.rewardCoins} FinCoins และ +${quest.rewardXP} XP!`
+        );
+        close();
+        renderDashboard(container);
+      }
+    });
+  });
+}
+
