@@ -1499,8 +1499,17 @@ export const store = {
 
   getDailyQuests() {
     const isEn = this.settings.language === "en";
-    const todayStr = new Date().toISOString().split("T")[0];
-    const todayTxs = this.getAllTransactions().filter((t) => t.date && t.date.startsWith(todayStr));
+    const now = new Date();
+    const todayYear = now.getFullYear();
+    const todayMonth = now.getMonth();
+    const todayDate = now.getDate();
+    const todayStr = `${todayYear}-${String(todayMonth + 1).padStart(2, '0')}-${String(todayDate).padStart(2, '0')}`;
+
+    const todayTxs = this.getAllTransactions().filter((t) => {
+      if (!t || !t.date) return false;
+      const d = new Date(t.date);
+      return !isNaN(d) && d.getFullYear() === todayYear && d.getMonth() === todayMonth && d.getDate() === todayDate;
+    });
     const hasIncomeToday = todayTxs.some((t) => t.isIncome);
     const hasSavedToday = todayTxs.some((t) => t.category === "Savings" && !t.isIncome) || (this.savingsGoals || []).some((g) => (g.currentAmount || 0) > 0);
 
@@ -1541,7 +1550,8 @@ export const store = {
   },
 
   claimDailyQuest(questId) {
-    const todayStr = new Date().toISOString().split("T")[0];
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const key = `${questId}_${todayStr}`;
     if (!this.settings.questsState) this.settings.questsState = { claimed: [] };
     if (!this.settings.questsState.claimed) this.settings.questsState.claimed = [];

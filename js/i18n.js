@@ -1,5 +1,6 @@
 const dictionary = {
   th: {
+    appTitle: "FinTrack — วางแผนและจัดการเงิน",
     installbtn: "ติดตั้งแอป",
     swhtodarktxt: "โหมดกลางคืน",
     chgcurtxt: "แปลงตามอัตราแลกเปลี่ยน",
@@ -285,6 +286,7 @@ const dictionary = {
     successTitle: "สำเร็จแล้ว",
   },
   en: {
+    appTitle: "FinTrack — Smart Finance & Wealth Tracker",
     emptyrecur: "No recurring rules set",
     confirmdel: "Are you sure you want to delete this?",
     clearbtn: "Clear all app settings",
