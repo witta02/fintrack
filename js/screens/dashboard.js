@@ -3,6 +3,7 @@ import { router } from "../router.js";
 import { t } from "../i18n.js";
 import { getCategoryInfo } from "../categories.js";
 import { alerts } from "../utils/alertHelper.js";
+import confetti from "canvas-confetti";
 
 let activeDateFilter = "all"; // "all" | "today"
 let searchQuery = "";
@@ -66,6 +67,8 @@ export async function renderDashboard(container) {
   const level = store.settings.level || 1;
   const xp = store.settings.xp || 0;
   const coins = store.settings.coins || 0;
+  const dailyQuests = store.getDailyQuests();
+  const streak = store.calculateStreak();
 
   // Main Total Balance across ALL wallets
   const totalBalance = store.getTotalBalance();
@@ -341,33 +344,102 @@ export async function renderDashboard(container) {
         </div>
       </div>
 
-      <!-- Quick Utility Action Pills -->
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-        <div id="quick-split-bill" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--card-shadow);">
-          <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(59, 130, 246, 0.12); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <!-- Quick Utility Action Pills (4 Core Pillars) -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 18px;">
+        <div id="quick-savings" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--card-shadow);">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(16, 185, 129, 0.12); color: var(--income); display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           </div>
-          <div style="font-size: 11px; font-weight: 800; color: var(--text-primary); text-align: center;">
-            ${isEn ? 'Split Bill' : 'หารบิล'}
+          <div style="font-size: 10.5px; font-weight: 800; color: var(--text-primary); text-align: center; white-space: nowrap;">
+            ${isEn ? 'Savings' : 'กระปุกออม'}
           </div>
         </div>
 
-        <div id="quick-recurring" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--card-shadow);">
+        <div id="quick-recurring" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--card-shadow);">
           <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(245, 200, 66, 0.12); color: var(--gold); display: flex; align-items: center; justify-content: center;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
           </div>
-          <div style="font-size: 11px; font-weight: 800; color: var(--text-primary); text-align: center;">
+          <div style="font-size: 10.5px; font-weight: 800; color: var(--text-primary); text-align: center; white-space: nowrap;">
             ${isEn ? 'Recurring' : 'บิลประจำ'}
           </div>
         </div>
 
-        <div id="quick-downpayments" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--card-shadow);">
+        <div id="quick-downpayments" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--card-shadow);">
           <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(168, 85, 247, 0.12); color: #a855f7; display: flex; align-items: center; justify-content: center;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
           </div>
-          <div style="font-size: 11px; font-weight: 800; color: var(--text-primary); text-align: center;">
-            ${isEn ? 'Installments' : 'ค่างวด/ดาวน์'}
+          <div style="font-size: 10.5px; font-weight: 800; color: var(--text-primary); text-align: center; white-space: nowrap;">
+            ${isEn ? 'Installment' : 'ค่างวด/ดาวน์'}
           </div>
+        </div>
+
+        <div id="quick-split-bill" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--card-shadow);">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(59, 130, 246, 0.12); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div style="font-size: 10.5px; font-weight: 800; color: var(--text-primary); text-align: center; white-space: nowrap;">
+            ${isEn ? 'Split Bill' : 'หารบิล'}
+          </div>
+        </div>
+      </div>
+
+      <!-- DAILY MISSIONS (ภารกิจประจำวัน) -->
+      <div class="dash-daily-missions-card" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 18px 16px; margin-bottom: 18px; box-shadow: var(--card-shadow);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 32px; height: 32px; border-radius: 10px; background: var(--gold-soft); color: var(--gold); display: flex; align-items: center; justify-content: center;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <h3 style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin: 0;">
+                ${isEn ? 'Daily Missions' : 'ภารกิจประจำวัน'}
+              </h3>
+              <span style="font-size: 10.5px; font-weight: 600; color: var(--text-secondary);">
+                ${isEn ? 'Complete missions to earn FinCoins & XP' : 'ทำภารกิจเพื่อรับเหรียญ FinCoins และ XP'}
+              </span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--border); padding: 4px 10px; border-radius: 999px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z"/></svg>
+            <span style="font-size: 11px; font-weight: 800; color: var(--text-primary);">${streak} ${isEn ? 'Days' : 'วัน'}</span>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          ${dailyQuests.map((q) => `
+            <div style="background: var(--surface); border: 1px solid ${q.completed && !q.claimed ? 'var(--gold)' : 'var(--border)'}; border-radius: var(--radius-lg); padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                <div style="width: 32px; height: 32px; border-radius: 10px; background: ${q.completed ? 'rgba(52, 211, 153, 0.12)' : 'var(--card)'}; color: ${q.completed ? 'var(--income)' : 'var(--text-secondary)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  ${q.icon}
+                </div>
+                <div style="min-width: 0;">
+                  <div style="font-size: 12.5px; font-weight: 800; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                    ${q.title}
+                  </div>
+                  <div style="font-size: 10.5px; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                    ${q.desc} • <span style="color: var(--gold); font-weight: 700;">+${q.rewardCoins} Coins</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                ${q.claimed ? `
+                  <span style="font-size: 11px; font-weight: 800; color: var(--income); display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    ${isEn ? 'Done' : 'สำเร็จ'}
+                  </span>
+                ` : (q.completed ? `
+                  <button class="claim-quest-btn" data-quest-id="${q.id}" style="background: var(--gold); color: #000; border: none; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 8px rgba(245,200,66,0.3); animation: pulse 1.5s infinite; white-space: nowrap;">
+                    ${isEn ? `Claim +${q.rewardCoins}` : `รับ +${q.rewardCoins}`}
+                  </button>
+                ` : `
+                  <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); padding: 4px 8px; border-radius: 999px; white-space: nowrap;">
+                    ${isEn ? 'In Progress' : 'กำลังทำ'}
+                  </span>
+                `)}
+              </div>
+            </div>
+          `).join('')}
         </div>
       </div>
 
@@ -507,6 +579,9 @@ export async function renderDashboard(container) {
   container.querySelector("#dash-view-all-tx-btn")?.addEventListener("click", () => {
     router.navigate("transactions");
   });
+  container.querySelector("#quick-savings")?.addEventListener("click", () => {
+    router.navigate("savings");
+  });
   container.querySelector("#quick-split-bill")?.addEventListener("click", () => {
     router.navigate("splitBill");
   });
@@ -515,6 +590,25 @@ export async function renderDashboard(container) {
   });
   container.querySelector("#quick-downpayments")?.addEventListener("click", () => {
     router.navigate("downPayments");
+  });
+
+  // Daily Quests Claim Buttons
+  container.querySelectorAll(".claim-quest-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const qId = btn.getAttribute("data-quest-id");
+      const quest = store.claimDailyQuest(qId);
+      if (quest) {
+        confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
+        alerts.success(
+          isEn ? "Mission Accomplished!" : "ทำภารกิจสำเร็จ!",
+          isEn
+            ? `Claimed +${quest.rewardCoins} FinCoins & +${quest.rewardXP} XP!`
+            : `ได้รับ +${quest.rewardCoins} FinCoins และ +${quest.rewardXP} XP!`
+        );
+        renderDashboard(container);
+      }
+    });
   });
 
   // Filter Buttons
