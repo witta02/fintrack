@@ -24,11 +24,11 @@ export function renderSettings(container) {
     .join("");
 
   const themeList = [
-    { id: "dark", name: isEn ? 'Dark Pro' : 'มืด Pro', color: '#0d1527', border: '#F5C842' },
-    { id: "light", name: isEn ? 'Light Clean' : 'สว่าง Clean', color: '#ffffff', border: '#cbd5e1' },
+    { id: "dark", name: isEn ? 'Dark Pro' : 'โหมดมืด', color: '#0d1527', border: '#F5C842' },
+    { id: "light", name: isEn ? 'Light Clean' : 'โหมดสว่าง', color: '#ffffff', border: '#cbd5e1' },
     { id: "midnight", name: isEn ? 'Midnight' : 'มิดไนท์', color: '#070b14', border: '#3b82f6' },
     { id: "cyberpunk", name: isEn ? 'Cyberpunk' : 'ไซเบอร์พังก์', color: '#13091f', border: '#ec4899' },
-    { id: "gold", name: isEn ? 'Luxury Gold' : 'ทองหรูหรา', color: '#141108', border: '#eab308' },
+    { id: "gold", name: isEn ? 'Luxury Gold' : 'ทองคำหรูหรา', color: '#141108', border: '#eab308' },
   ];
 
   const renderThemeCard = (theme) => {

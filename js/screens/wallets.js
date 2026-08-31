@@ -138,7 +138,7 @@ function renderWalletCard(wallet, symbol) {
         <div style="flex: 1; min-width: 0;">
           <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
             <h3 style="font-size: 14.5px; font-weight: 800; color: var(--text-primary); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${wallet.name}</h3>
-            ${wallet.isDefault ? `<span style="font-size: 9.5px; font-weight: 800; background: var(--gold-soft); color: var(--gold); border: 1px solid var(--gold); padding: 1px 6px; border-radius: 999px;">⭐ ${isEn ? 'Primary' : 'กระเป๋าหลัก'}</span>` : ''}
+            ${wallet.isDefault ? `<span style="font-size: 9.5px; font-weight: 800; background: var(--gold-soft); color: var(--gold); border: 1px solid var(--gold); padding: 1px 6px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>${isEn ? 'Primary' : 'กระเป๋าหลัก'}</span>` : ''}
           </div>
           <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px;">
             <span style="font-size: 10.5px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">

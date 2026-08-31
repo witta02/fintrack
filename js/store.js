@@ -75,9 +75,9 @@ export const store = {
       this.wallets = JSON.parse(savedWallets);
     } else {
       this.wallets = [
-        { id: "default", name: "เงินสด (Cash)", type: "cash", color: "#F5C842", icon: "cash", balance: 0, isDefault: true, currency: "THB" },
-        { id: "bank_main", name: "บัญชีธนาคาร (Bank)", type: "bank", color: "#3B82F6", icon: "bank", balance: 0, isDefault: false, currency: "THB" },
-        { id: "invest_main", name: "พอร์ตลงทุน (Invest)", type: "investment", color: "#6366F1", icon: "investment", balance: 0, isDefault: false, currency: "THB" },
+        { id: "default", name: "เงินสด", type: "cash", color: "#F5C842", icon: "cash", balance: 0, isDefault: true, currency: "THB" },
+        { id: "bank_main", name: "บัญชีธนาคาร", type: "bank", color: "#3B82F6", icon: "bank", balance: 0, isDefault: false, currency: "THB" },
+        { id: "invest_main", name: "พอร์ตลงทุน", type: "investment", color: "#6366F1", icon: "investment", balance: 0, isDefault: false, currency: "THB" },
       ];
     }
 
@@ -1087,7 +1087,7 @@ export const store = {
   },
 
   getPrimaryWallet() {
-    return this.wallets.find((w) => w.isDefault) || this.wallets[0] || { id: "default", name: "เงินสด (Cash)" };
+    return this.wallets.find((w) => w.isDefault) || this.wallets[0] || { id: "default", name: this.settings.language === "en" ? "Cash" : "เงินสด" };
   },
 
   deleteWallet(id) {

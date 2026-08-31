@@ -182,10 +182,10 @@ export async function renderDashboard(container) {
             <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
               <span>LV.${level}</span>
               <span>•</span>
-              <span style="color: var(--gold);">${coins} Coins</span>
+              <span style="color: var(--gold);">${coins} ${isEn ? 'Coins' : 'เหรียญ'}</span>
             </div>
             <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.2px;">
-              Hello, ${userName}!
+              ${isEn ? 'Hello' : 'สวัสดี'}, ${userName}!
             </div>
           </div>
         </div>
@@ -432,32 +432,35 @@ export async function renderDashboard(container) {
             <div style="text-align: center; padding: 28px 0; color: var(--text-secondary); font-size: 12px; font-weight: 600;">
               ${isEn ? 'No transactions found' : 'ไม่พบรายการใช้จ่าย'}
             </div>
-          ` : feedTxs.slice(0, 15).map(tx => {
+          ` : feedTxs.slice(0, 5).map(tx => {
             const cat = getCategoryInfo(tx.category);
             const primaryW = store.getPrimaryWallet();
             const w = wallets.find(wal => wal.id === tx.walletId) || primaryW || { name: 'Main' };
             const txDate = new Date(tx.date);
-            const timeStr = txDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const timeStr = !isNaN(txDate) ? txDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            let displayTitle = tx.title;
+            if (!displayTitle || displayTitle.toLowerCase().startsWith('category') || displayTitle.toLowerCase() === (tx.category || '').toLowerCase()) {
+              displayTitle = cat?.label || tx.category;
+            }
             return `
               <div class="dash-tx-row" data-id="${tx.id}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); cursor: pointer; transition: background 0.15s ease;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                  <div style="width: 36px; height: 36px; border-radius: 10px; background: ${tx.isIncome ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)'}; color: ${tx.isIncome ? 'var(--income)' : 'var(--expense)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 7px; box-sizing: border-box;">
+                  <div style="width: 36px; height: 36px; border-radius: 10px; background: ${tx.isIncome ? 'rgba(52, 211, 153, 0.15)' : 'rgba(251, 113, 133, 0.15)'}; color: ${tx.isIncome ? 'var(--income)' : 'var(--expense)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 7px; box-sizing: border-box;">
                     ${cat?.svg || '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>'}
                   </div>
                   <div>
                     <div style="font-size: 13px; font-weight: 800; color: var(--text-primary); margin-bottom: 2px;">
-                      ${tx.title || cat?.label || tx.category}
+                      ${displayTitle}
                     </div>
                     <div style="font-size: 10.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
-                      <span>${timeStr}</span>
-                      <span>•</span>
+                      ${timeStr ? `<span>${timeStr}</span><span>•</span>` : ''}
                       <span style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;">${w.name}</span>
                     </div>
                   </div>
                 </div>
 
                 <div style="text-align: right;">
-                  <div style="font-size: 14px; font-weight: 900; color: ${tx.isIncome ? 'var(--income)' : 'var(--text-primary)'}; font-family: var(--font-heading);">
+                  <div style="font-size: 14.5px; font-weight: 900; color: ${tx.isIncome ? 'var(--income)' : 'var(--expense)'}; font-family: var(--font-heading); letter-spacing: -0.3px;">
                     ${tx.isIncome ? '+' : '-'}${sym}${parseFloat(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
@@ -589,21 +592,21 @@ function showAddWalletModal(container) {
     <div class="modal-dialog" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 24px; max-width: 360px; width: 90%; box-shadow: var(--card-shadow);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
         <h3 style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0;">${isEn ? 'Add New Wallet' : 'เพิ่มกระเป๋าใหม่'}</h3>
-        <button class="modal-close-btn" style="background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer;">&times;</button>
+        <button class="modal-close-btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <form id="add-wallet-form" style="display: flex; flex-direction: column; gap: 14px;">
         <div>
           <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${isEn ? 'Wallet Name' : 'ชื่อกระเป๋า'}</label>
-          <input name="name" required placeholder="${isEn ? 'e.g. Bank Account / Cash' : 'เช่น ธนาคาร / เงินสด'}" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px;" />
+          <input name="name" required placeholder="${isEn ? 'e.g. Bank Account, Cash' : 'เช่น บัญชีธนาคาร, เงินสด'}" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px;" />
         </div>
         <div>
           <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${isEn ? 'Wallet Type' : 'ประเภทกระเป๋า'}</label>
           <select name="type" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px;">
-            <option value="bank">${isEn ? 'Bank Account' : 'บัญชีธนาคาร (Bank)'}</option>
-            <option value="cash">${isEn ? 'Cash' : 'เงินสด (Cash)'}</option>
-            <option value="savings">${isEn ? 'Savings Vault' : 'เงินออม (Savings)'}</option>
-            <option value="credit">${isEn ? 'Credit Card' : 'บัตรเครดิต (Credit)'}</option>
-            <option value="investment">${isEn ? 'Investment' : 'พอร์ตลงทุน (Invest)'}</option>
+            <option value="bank">${isEn ? 'Bank Account' : 'บัญชีธนาคาร'}</option>
+            <option value="cash">${isEn ? 'Cash' : 'เงินสด'}</option>
+            <option value="savings">${isEn ? 'Savings Vault' : 'เงินออม'}</option>
+            <option value="credit">${isEn ? 'Credit Card' : 'บัตรเครดิต'}</option>
+            <option value="investment">${isEn ? 'Investment' : 'พอร์ตลงทุน'}</option>
           </select>
         </div>
         <div>

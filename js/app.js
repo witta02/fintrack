@@ -205,10 +205,13 @@ export function updateStaticLabels() {
     dashboard: t("navDashboard"),
     transactions: t("navTransactions"),
     addTransaction: t("navAdd"),
-    planner: "Planner",
+    reports: t("navReports"),
+    savings: t("navSavings"),
+    wallets: t("navWallets"),
     recurring: t("navRecurring"),
-    downPayments: t("downPaymentTitle"),
     settings: t("navSettings"),
+    planner: "Planner",
+    downPayments: t("downPaymentTitle"),
   };
 
   document.querySelectorAll("[data-screen]").forEach((btn) => {

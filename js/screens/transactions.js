@@ -52,7 +52,7 @@ export function renderTransactions(container, params) {
         <div style="position: relative;">
           <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" id="search-input" placeholder="${t("searchPlaceholder")}" value="${escapeHTML(searchQuery)}" style="padding-left: 42px; padding-right: 36px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); width: 100%; height: 44px; font-size: 14px; color: var(--text-primary);" />
-          ${searchQuery ? '<button id="clear-search-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--border); color: var(--text-primary); border: none; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer;">&times;</button>' : ""}
+          ${searchQuery ? '<button id="clear-search-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--border); color: var(--text-primary); border: none; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' : ""}
         </div>
       </div>
 
@@ -74,7 +74,7 @@ export function renderTransactions(container, params) {
         </div>
         <div style="flex: 1; min-width: 120px; position: relative;">
           <input type="text" id="date-filter-input" placeholder="${t("selectDate")}" style="padding: 10px 14px; font-size: 13px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); width: 100%;" />
-          <button id="clear-date-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--border); color: var(--text-primary); border: none; border-radius: 50%; width: 20px; height: 20px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 2;">&times;</button>
+          <button id="clear-date-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--border); color: var(--text-primary); border: none; border-radius: 50%; width: 20px; height: 20px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 2;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
       </div>
 
