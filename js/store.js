@@ -962,9 +962,10 @@ export const store = {
   },
 
   addWallet(wallet) {
+    const startingAmount = parseFloat(wallet.balance) || 0;
     const newWallet = {
       id: wallet.id || Math.random().toString(36).substring(2, 11),
-      name: wallet.name || "กระเป๋าใหม่",
+      name: wallet.name || (this.settings.language === 'en' ? "New Wallet" : "กระเป๋าใหม่"),
       type: wallet.type || "cash",
       color: wallet.color || "#F5C842",
       icon: wallet.icon || "cash",
