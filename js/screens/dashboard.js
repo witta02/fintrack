@@ -375,9 +375,15 @@ export async function renderDashboard(container) {
       <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 18px 16px; box-shadow: var(--card-shadow);">
         <!-- Feed Header & Search -->
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-          <h2 style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0;">
-            ${isEn ? 'Recent Transactions' : 'รายการล่าสุด'}
-          </h2>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h2 style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0;">
+              ${isEn ? 'Recent Transactions' : 'รายการล่าสุด'}
+            </h2>
+            <button id="dash-view-all-tx-btn" style="background: var(--surface); border: 1px solid var(--border); padding: 3px 8px; border-radius: 999px; color: var(--gold); font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 2px;">
+              <span>${isEn ? 'View All' : 'ดูทั้งหมด'}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
           <div style="display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); padding: 2px; border-radius: 999px;">
             <button class="tx-filter-pill ${activeDateFilter === 'all' ? 'active' : ''}" data-filter="all" style="padding: 4px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 800; border: none; cursor: pointer; background: ${activeDateFilter === 'all' ? 'var(--gold)' : 'transparent'}; color: ${activeDateFilter === 'all' ? '#000' : 'var(--text-secondary)'};">
               ${isEn ? 'All' : 'ทั้งหมด'}
@@ -498,6 +504,9 @@ export async function renderDashboard(container) {
   }
 
   // Quick Action Buttons
+  container.querySelector("#dash-view-all-tx-btn")?.addEventListener("click", () => {
+    router.navigate("transactions");
+  });
   container.querySelector("#quick-split-bill")?.addEventListener("click", () => {
     router.navigate("splitBill");
   });
