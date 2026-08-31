@@ -328,7 +328,7 @@ export function renderSettings(container) {
 
   // Auth & Signout
   container.querySelector("#open-auth-btn")?.addEventListener("click", () => {
-    showAuthModal(container);
+    router.navigate("auth");
   });
 
   container.querySelector("#signout-btn")?.addEventListener("click", async () => {
@@ -388,89 +388,6 @@ export function renderSettings(container) {
       }
     );
   });
-}
-
-function showAuthModal(container) {
-  const isEn = store.settings.language === "en";
-  const modal = document.createElement("div");
-  modal.className = "modal-overlay";
-  modal.innerHTML = `
-    <div class="modal-dialog" style="max-width: 360px; width: 90%; padding: 24px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); box-shadow: var(--card-shadow);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin: 0;">
-          ${isEn ? 'Login' : 'เข้าสู่ระบบ'}
-        </h3>
-        <button class="modal-close-btn" style="background: none; border: none; color: var(--text-secondary); font-size: 22px; cursor: pointer;">&times;</button>
-      </div>
-
-      <form id="auth-form" style="display: flex; flex-direction: column; gap: 12px;">
-        <div>
-          <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">${isEn ? 'Email' : 'อีเมล'}</label>
-          <input type="email" id="auth-email" required placeholder="user@example.com" style="width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px; font-weight: 600;" />
-        </div>
-        <div>
-          <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">${isEn ? 'Password' : 'รหัสผ่าน'}</label>
-          <input type="password" id="auth-password" required placeholder="••••••••" style="width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px; font-weight: 600;" />
-        </div>
-
-        <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 12px; border-radius: var(--radius); background: var(--gold); color: #000; font-weight: 800; font-size: 13px; border: none; cursor: pointer; box-shadow: var(--btn-shadow);">
-          ${isEn ? 'Login' : 'เข้าสู่ระบบ'}
-        </button>
-
-        <div style="text-align: center; margin-top: 8px;">
-          <button type="button" id="auth-forgot-password-btn" style="background: none; border: none; color: var(--gold); font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: underline; padding: 4px;">
-            ${isEn ? 'Forgot password? Click here' : 'ลืมรหัสผ่าน? คลิกที่นี่'}
-          </button>
-        </div>
-      </form>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  const close = () => modal.remove();
-  modal.querySelector(".modal-close-btn").onclick = close;
-  modal.onclick = (e) => { if (e.target === modal) close(); };
-
-  modal.querySelector("#auth-forgot-password-btn")?.addEventListener("click", async () => {
-    close();
-    const email = await alerts.promptForgotPassword();
-    if (email) {
-      try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin
-        });
-        if (error) throw error;
-        alerts.success(isEn ? "Password reset link sent! Check your email." : "ส่งลิงก์รีเซ็ตรหัสผ่านแล้ว! กรุณาตรวจสอบอีเมลของคุณ");
-      } catch (err) {
-        alerts.error(isEn ? "Failed to send reset link" : "ไม่สามารถส่งลิงก์รีเซ็ตรหัสผ่านได้", err.message);
-      }
-    }
-  });
-
-  modal.querySelector("#auth-form").onsubmit = async (e) => {
-    e.preventDefault();
-    const email = modal.querySelector("#auth-email").value.trim();
-    const password = modal.querySelector("#auth-password").value;
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        // Try sign up if not found
-        const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({ email, password });
-        if (signUpErr) throw signUpErr;
-        store.setUser(signUpData.user);
-        alerts.success(isEn ? "Registration successful!" : "ลงทะเบียนสำเร็จ!");
-      } else {
-        store.setUser(data.user);
-        alerts.success(isEn ? "Signed in successfully!" : "เข้าสู่ระบบสำเร็จ!");
-      }
-      close();
-      renderSettings(container);
-    } catch (err) {
-      alerts.error(isEn ? "Authentication Error" : "เกิดข้อผิดพลาดในการเข้าสู่ระบบ", err.message);
-    }
-  };
 }
 
 function showChangePasswordModal() {
