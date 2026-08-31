@@ -1239,6 +1239,7 @@ export const store = {
 
     this.recalculateXP();
     this.save();
+    this.saveSettingsToCloud();
 
     return {
       success: true,
@@ -1273,6 +1274,7 @@ export const store = {
 
     this.recalculateXP();
     this.save();
+    this.saveSettingsToCloud();
 
     return {
       success: true,
@@ -1335,12 +1337,14 @@ export const store = {
 
     goal.currentAmount = Math.max(0, (goal.currentAmount || 0) - amt);
     this.save();
+    this.saveSettingsToCloud();
     return true;
   },
 
   deleteSavingsGoal(goalId) {
     this.savingsGoals = (this.savingsGoals || []).filter((g) => String(g.id) !== String(goalId));
     this.save();
+    this.saveSettingsToCloud();
     return true;
   },
 
