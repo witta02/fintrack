@@ -47,14 +47,14 @@
   --violet-glow:      rgba(124, 92, 252, 0.25);
 
   /* Semantic */
-  --income:           #10B981;
-  --income-dark:      #059669;
-  --income-soft:      rgba(16, 185, 129, 0.12);
-  --income-glow:      rgba(16, 185, 129, 0.22);
-  --expense:          #F43F5E;
-  --expense-dark:     #E11D48;
-  --expense-soft:     rgba(244, 63, 94, 0.12);
-  --expense-glow:     rgba(244, 63, 94, 0.22);
+  --income:           #34D399;
+  --income-dark:      #10B981;
+  --income-soft:      rgba(52, 211, 153, 0.15);
+  --income-glow:      rgba(52, 211, 153, 0.28);
+  --expense:          #FB7185;
+  --expense-dark:     #F43F5E;
+  --expense-soft:     rgba(251, 113, 133, 0.15);
+  --expense-glow:     rgba(251, 113, 133, 0.28);
 
   /* Categories */
   --cat-food:          #E5A93C;
@@ -1689,24 +1689,30 @@ hr, .section-divider {
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
-  padding: 10px 8px !important;
-  border-radius: var(--radius) !important;
+  padding: 12px 14px !important;
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-xl) !important;
   transition: all var(--transition-fast) !important;
   cursor: pointer !important;
-  margin-bottom: 2px !important;
+  margin-bottom: 8px !important;
   width: 100% !important;
   box-sizing: border-box !important;
   position: relative !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
 }
 .tx-tile-30:hover, .transaction-tile:hover {
   background: var(--surface-hover) !important;
+  border-color: var(--border-strong) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
 }
 .tx-cat-icon, .cat-icon {
-  width: 40px !important;
-  height: 40px !important;
+  width: 42px !important;
+  height: 42px !important;
   border-radius: 12px !important;
-  background: var(--input-bg) !important;
-  box-shadow: var(--neo-inset) !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1718,34 +1724,42 @@ hr, .section-divider {
   min-width: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 2px !important;
+  gap: 3px !important;
   text-align: left !important;
 }
 .tx-tile-title, .tile-title {
-  font-size: 13.5px !important;
-  font-weight: 700 !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
   color: var(--text-primary) !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
+  letter-spacing: -0.2px !important;
 }
 .tx-tile-category, .tile-meta {
-  font-size: 11px !important;
+  font-size: 11.5px !important;
   color: var(--text-secondary) !important;
   display: flex !important;
   align-items: center !important;
-  gap: 5px !important;
+  gap: 6px !important;
   white-space: nowrap !important;
 }
 .tx-tile-amount, .tile-amount {
-  font-size: 14.5px !important;
-  font-weight: 800 !important;
+  font-size: 15.5px !important;
+  font-weight: 900 !important;
   flex-shrink: 0 !important;
   font-family: var(--font-heading) !important;
   text-align: right !important;
+  letter-spacing: -0.3px !important;
 }
-.tx-tile-amount.income, .tile-amount.income { color: var(--income) !important; }
-.tx-tile-amount.expense, .tile-amount.expense { color: var(--expense) !important; }
+.tx-tile-amount.income, .tile-amount.income {
+  color: var(--income) !important;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.2) !important;
+}
+.tx-tile-amount.expense, .tile-amount.expense {
+  color: var(--expense) !important;
+  text-shadow: 0 0 10px rgba(251, 113, 133, 0.2) !important;
+}
 .tile-delete {
   background: transparent !important;
   border: none !important;
@@ -3447,36 +3461,40 @@ hr, .section-divider {
 }
 
 /* Day Group Header Styles in Transaction Feed */
+/* Day Group Header Styles in Transaction Feed */
 .day-group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 4px 8px;
-  margin-top: 6px;
+  padding: 16px 4px 10px;
+  margin-top: 10px;
 }
 
 .day-group-label {
-  font-size: 13.5px;
-  font-weight: 800;
+  font-size: 14.5px;
+  font-weight: 900;
   color: var(--text-primary);
+  letter-spacing: -0.2px;
 }
 
 .day-group-total {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 800;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 900;
   font-family: var(--font-heading);
 }
 
 .day-group-income {
   color: var(--income) !important;
-  font-weight: 800;
+  font-weight: 900;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.25);
 }
 
 .day-group-expense {
   color: var(--expense) !important;
-  font-weight: 800;
+  font-weight: 900;
+  text-shadow: 0 0 10px rgba(251, 113, 133, 0.25);
 }
 

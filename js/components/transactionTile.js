@@ -22,6 +22,11 @@ export function createTransactionTile(
 
   const amountSign = transaction.isIncome ? "+" : "-";
 
+  let cleanTitle = transaction.title;
+  if (!cleanTitle || cleanTitle.toLowerCase().startsWith("category") || cleanTitle.toLowerCase() === (transaction.category || "").toLowerCase()) {
+    cleanTitle = cat.label;
+  }
+
   const tile = document.createElement("div");
   tile.className = "transaction-tile";
   tile.dataset.id = transaction.id;
@@ -30,18 +35,18 @@ export function createTransactionTile(
   tile.style.setProperty("--accent-color", cat.color);
 
   tile.innerHTML = `
-    <div class="cat-icon" style="background: ${cat.color}18; color: ${cat.color}; border-color: ${cat.color}28;">
+    <div class="cat-icon" style="background: ${cat.color}22; color: ${cat.color}; border: 1px solid ${cat.color}35;">
       <span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${cat.svg || cat.emoji}</span>
     </div>
     <div class="tile-info">
-      <div class="tile-title">${escapeHTML(transaction.title || cat.label || '')}</div>
+      <div class="tile-title">${escapeHTML(cleanTitle || cat.label || '')}</div>
       <div class="tile-meta">
-        <span style="color: ${cat.color}; font-weight: 600; font-size: 10px;">${cat.label}</span>
-        <span style="opacity: 0.3;">•</span>
-        <span>${dateStr}</span>
+        <span style="color: ${cat.color}; font-weight: 700; font-size: 11px;">${cat.label}</span>
+        <span style="opacity: 0.35;">•</span>
+        <span style="color: var(--text-secondary); font-size: 11px;">${dateStr}</span>
       </div>
     </div>
-    <div class="tile-amount ${transaction.isIncome ? "income" : "expense"}">
+    <div class="tile-amount ${transaction.isIncome ? "income" : "expense"}" style="font-size: 15px; font-weight: 900; letter-spacing: -0.3px;">
       ${amountSign}${symbol}${displayAmount}
     </div>
     <button class="tile-delete" title="${t("deleteTransaction")}" aria-label="${t("deleteTransaction")}">
