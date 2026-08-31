@@ -1,5 +1,6 @@
 import jsQR from "jsqr";
 import { runLocalOCR, detectIfBankSlip, parseBankSlipAmount } from "./ocrParser.js";
+import { store } from "../store.js";
 
 /**
  * Parses payment amount from EMVCo QR code string (Tag 54)
@@ -68,6 +69,7 @@ export function parseOCRRefNumber(text) {
  * and verifies that the transfer amount matches the expected price (if specified).
  */
 export async function validateBankSlip(file, options = {}, statusCb) {
+  const isEn = store.settings.language === "en";
   let expectedAmount = null;
   let statusCallback = statusCb;
 
@@ -81,11 +83,11 @@ export async function validateBankSlip(file, options = {}, statusCb) {
   }
 
   if (!file || !file.type.startsWith("image/")) {
-    return { isValid: false, reason: "Please upload an image file. / กรุณาอัปโหลดไฟล์รูปภาพ" };
+    return { isValid: false, reason: isEn ? "Please upload an image file." : "กรุณาอัปโหลดไฟล์รูปภาพ" };
   }
 
   // 1. Scan for Bank Slip Mini QR / PromptPay QR code using jsQR
-  statusCallback?.("Scanning image for Bank Slip QR... / กำลังสแกน QR Code สลิป...");
+  statusCallback?.(isEn ? "Scanning bank slip..." : "กำลังสแกนสลิปธนาคาร...");
   const qrResult = await scanQRFromImage(file);
 
   let detectedAmount = null;
@@ -102,7 +104,7 @@ export async function validateBankSlip(file, options = {}, statusCb) {
 
   // 2. If QR scan didn't find valid QR or didn't detect amount, run OCR
   if (!isValidSlip || (expectedAmount != null && detectedAmount == null)) {
-    statusCallback?.("Scanning slip text & amount with OCR... / กำลังอ่านข้อความสลิป...");
+    statusCallback?.(isEn ? "Reading slip details..." : "กำลังอ่านรายละเอียดสลิป...");
     try {
       const rawText = await runLocalOCR(file, statusCallback);
       if (rawText) {
@@ -124,7 +126,9 @@ export async function validateBankSlip(file, options = {}, statusCb) {
   if (!isValidSlip) {
     return {
       isValid: false,
-      reason: "Invalid slip! Image does not contain a valid bank slip QR code or transfer details. / สลิปไม่ถูกต้อง! ไม่พบ QR Code หรือรายละเอียดการโอนเงินของสลิปธนาคาร"
+      reason: isEn
+        ? "Invalid slip. No bank transfer details or QR code found."
+        : "สลิปไม่ถูกต้อง หรือไม่พบรายละเอียดการโอนเงินของธนาคาร"
     };
   }
 
@@ -136,7 +140,9 @@ export async function validateBankSlip(file, options = {}, statusCb) {
       if (diff > 0.50 && Math.round(detectedAmount) !== Math.round(expectedAmount)) {
         return {
           isValid: false,
-          reason: `Transfer amount (฿${detectedAmount.toFixed(2)}) does not match required price (฿${expectedAmount.toFixed(2)})! / ยอดเงินสลิป (฿${detectedAmount.toFixed(2)}) ไม่ตรงกับราคาแพ็กเกจ (฿${expectedAmount.toFixed(2)})!`,
+          reason: isEn
+            ? `Transfer amount (${detectedAmount.toFixed(2)}) does not match required price (${expectedAmount.toFixed(2)})`
+            : `ยอดเงินในสลิป (${detectedAmount.toFixed(2)}) ไม่ตรงกับยอดที่กำหนด (${expectedAmount.toFixed(2)})`,
           detectedAmount,
           expectedAmount,
           qrData,
@@ -156,8 +162,8 @@ export async function validateBankSlip(file, options = {}, statusCb) {
   return {
     isValid: true,
     reason: detectedAmount
-      ? `Valid Thai Bank Transfer Slip (฿${detectedAmount.toFixed(2)}) verified! / ยืนยันสลิปโอนเงินสำเร็จ (฿${detectedAmount.toFixed(2)})`
-      : "Valid Thai Bank Transfer Slip verified! / ยืนยันสลิปโอนเงินสำเร็จ",
+      ? (isEn ? `Bank transfer verified (฿${detectedAmount.toFixed(2)})` : `ยืนยันสลิปโอนเงินสำเร็จ (฿${detectedAmount.toFixed(2)})`)
+      : (isEn ? "Bank transfer verified successfully" : "ยืนยันสลิปโอนเงินสำเร็จ"),
     detectedAmount,
     qrData,
     ref,

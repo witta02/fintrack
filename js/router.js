@@ -13,10 +13,10 @@ import { renderAchievements } from "./screens/achievements.js";
 import { renderRewards } from "./screens/rewards.js";
 import { renderCollectibles } from "./screens/collectibles.js";
 import { renderWallets } from "./screens/wallets.js";
-import { renderPortfolio } from "./screens/portfolio.js";
+import { renderSavings } from "./screens/savings.js";
+import { renderReports } from "./screens/reports.js";
 let currentScreen = "dashboard";
 let currentParams = null;
-
 
 const screens = {
   auth: renderAuth,
@@ -24,6 +24,7 @@ const screens = {
   dashboard: renderDashboard,
   transactions: renderTransactions,
   addTransaction: renderAddTransaction,
+  add: renderAddTransaction,
   recurring: renderRecurring,
   settings: renderSettings,
   planner: renderPlanner,
@@ -33,7 +34,8 @@ const screens = {
   rewards: renderRewards,
   collectibles: renderCollectibles,
   wallets: renderWallets,
-  portfolio: renderPortfolio,
+  savings: renderSavings,
+  reports: renderReports,
 };
 
 export const router = {
@@ -57,11 +59,6 @@ export const router = {
     // If screen not found, do nothing
     if (!screens[cleanKey]) {
       console.error(`Screen "${cleanKey}" not found.`);
-      return;
-    }
-
-    if (cleanKey === "portfolio" && !store.settings.isTraderMode) {
-      this.navigate("dashboard");
       return;
     }
 

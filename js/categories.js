@@ -17,22 +17,22 @@ export const categoryColors = {
 };
 
 const baseExpenseCategories = [
-  { name: "Food", icon: "lucide-utensils", emoji: "🍔", i18nKey: "categoryFood" },
-  { name: "Transport", icon: "lucide-car", emoji: "🚗", i18nKey: "categoryTransport" },
-  { name: "Shopping", icon: "lucide-shopping-bag", emoji: "🛍️", i18nKey: "categoryShopping" },
-  { name: "Bills", icon: "lucide-receipt", emoji: "🧾", i18nKey: "categoryBills" },
-  { name: "Entertainment", icon: "lucide-film", emoji: "🎬", i18nKey: "categoryEntertainment" },
-  { name: "Health", icon: "lucide-heart", emoji: "🏥", i18nKey: "categoryHealth" },
-  { name: "Education", icon: "lucide-graduation-cap", emoji: "🎓", i18nKey: "categoryEducation" },
-  { name: "Travel", icon: "lucide-plane", emoji: "✈️", i18nKey: "categoryTravel" },
-  { name: "Other", icon: "lucide-grid", emoji: "📦", i18nKey: "categoryOther" },
+  { name: "Food", icon: "lucide-utensils", emoji: "", i18nKey: "categoryFood" },
+  { name: "Transport", icon: "lucide-car", emoji: "", i18nKey: "categoryTransport" },
+  { name: "Shopping", icon: "lucide-shopping-bag", emoji: "", i18nKey: "categoryShopping" },
+  { name: "Bills", icon: "lucide-receipt", emoji: "", i18nKey: "categoryBills" },
+  { name: "Entertainment", icon: "lucide-film", emoji: "", i18nKey: "categoryEntertainment" },
+  { name: "Health", icon: "lucide-heart", emoji: "", i18nKey: "categoryHealth" },
+  { name: "Education", icon: "lucide-graduation-cap", emoji: "", i18nKey: "categoryEducation" },
+  { name: "Travel", icon: "lucide-plane", emoji: "", i18nKey: "categoryTravel" },
+  { name: "Other", icon: "lucide-grid", emoji: "", i18nKey: "categoryOther" },
 ];
 
 const baseIncomeCategories = [
-  { name: "Salary", icon: "lucide-wallet", emoji: "💰", i18nKey: "categorySalary" },
-  { name: "Investment", icon: "lucide-trending-up", emoji: "📈", i18nKey: "categoryInvestment" },
-  { name: "Gift", icon: "lucide-gift", emoji: "🎁", i18nKey: "categoryGift" },
-  { name: "Other", icon: "lucide-grid", emoji: "➕", i18nKey: "categoryOther" },
+  { name: "Salary", icon: "lucide-wallet", emoji: "", i18nKey: "categorySalary" },
+  { name: "Investment", icon: "lucide-trending-up", emoji: "", i18nKey: "categoryInvestment" },
+  { name: "Gift", icon: "lucide-gift", emoji: "", i18nKey: "categoryGift" },
+  { name: "Other", icon: "lucide-grid", emoji: "", i18nKey: "categoryOther" },
 ];
 
 export function getExpenseCategories() {
@@ -54,16 +54,43 @@ export function getIncomeCategories() {
 }
 
 export function getCategoryInfo(name) {
+  if (!name) name = "Other";
+
+  // Normalize if key is like "categoryFood" -> "Food"
+  let cleanName = name;
+  if (cleanName.startsWith("category") && cleanName.length > 8) {
+    cleanName = cleanName.substring(8);
+  }
+
+  const normalizedMap = {
+    food: "Food",
+    transport: "Transport",
+    shopping: "Shopping",
+    bills: "Bills",
+    entertainment: "Entertainment",
+    health: "Health",
+    education: "Education",
+    investment: "Investment",
+    gift: "Gift",
+    travel: "Travel",
+    other: "Other",
+    salary: "Salary",
+    bonus: "Bonus",
+    freelance: "Freelance",
+    interest: "Interest",
+  };
+  const standardName = normalizedMap[cleanName.toLowerCase()] || cleanName;
+
   const all = [...getExpenseCategories(), ...getIncomeCategories()];
-  const cat = all.find((c) => c.name === name);
+  const cat = all.find((c) => c.name.toLowerCase() === standardName.toLowerCase());
   if (cat && cat.isCustom) {
     return {
-      name: name,
-      label: cat.label,
-      icon: "lucide-grid", // Fallback for custom
+      name: standardName,
+      label: cat.label || standardName,
+      icon: "lucide-grid",
       emoji: cat.emoji,
       svg: null,
-      color: cat.color,
+      color: cat.color || "#FFB800",
       isCustom: true
     };
   }
@@ -81,15 +108,19 @@ export function getCategoryInfo(name) {
     Gift: "categoryGift",
     Travel: "categoryTravel",
     Other: "categoryOther",
+    Bonus: "categoryBonus",
+    Freelance: "categoryFreelance",
+    Interest: "categoryInterest",
   };
 
+  const key = i18nKeyMap[standardName] || "categoryOther";
   return {
-    name: name,
-    label: t(i18nKeyMap[name] || "categoryOther"),
+    name: standardName,
+    label: t(key),
     icon: cat ? cat.icon : "lucide-grid",
-    emoji: cat ? cat.emoji : "📦",
-    svg: getCategorySvg(name),
-    color: categoryColors[name] || "#FFB800",
+    emoji: cat ? cat.emoji : "",
+    svg: getCategorySvg(standardName),
+    color: categoryColors[standardName] || "#FFB800",
   };
 }
 

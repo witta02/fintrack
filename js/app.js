@@ -21,9 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
   router.init();
   updateStaticLabels();
 
-  store.subscribe(() => {
-    updateTraderModeVisibility();
-  });
 
   const urlParams = new URLSearchParams(window.location.search);
   const screenParam = urlParams.get("screen");
@@ -157,6 +154,37 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+  // Global Clipboard Image / Slip Paste Listener (Ctrl+V anywhere)
+  window.addEventListener("paste", async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          alerts.success(
+            store.settings.language === "en"
+              ? "Image pasted from clipboard! Scanning slip..."
+              : "วางรูปสลิปจากคลิปบอร์ดแล้ว! กำลังประมวลผล..."
+          );
+          router.navigate("addTransaction");
+          setTimeout(() => {
+            const fileInput = document.getElementById("scan-receipt-file-input");
+            if (fileInput) {
+              const dataTransfer = new DataTransfer();
+              dataTransfer.items.add(file);
+              fileInput.files = dataTransfer.files;
+              fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+          }, 300);
+          break;
+        }
+      }
+    }
+  });
 });
 
 export function updateStaticLabels() {
@@ -187,14 +215,5 @@ export function updateStaticLabels() {
     const screen = btn.getAttribute("data-screen");
     const label = btn.querySelector("span");
     if (label && labels[screen]) label.textContent = labels[screen];
-  });
-
-  updateTraderModeVisibility();
-}
-
-export function updateTraderModeVisibility() {
-  const isTrader = !!store.settings.isTraderMode;
-  document.querySelectorAll('[data-screen="portfolio"]').forEach((el) => {
-    el.style.display = isTrader ? "flex" : "none";
   });
 }

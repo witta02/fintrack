@@ -17,13 +17,14 @@ import {
   parseBankSlipReceiver,
 } from "../utils/ocrParser.js";
 import { alerts } from "../utils/alertHelper.js";
+import { evaluateMathExpression } from "../utils/tickerHelper.js";
 
 let isIncome = false; // default to Expense
 let selectedCategory = "Food";
 let editingTransactionId = null;
 
 export function renderAddTransaction(container, params) {
-  editingTransactionId = params?.transactionId || null;
+  editingTransactionId = params?.transactionId || params?.editId || null;
   let transaction = null;
 
   if (editingTransactionId) {
@@ -59,7 +60,7 @@ export function renderAddTransaction(container, params) {
   }
 
   container.innerHTML = `
-    <div class="screen screen-enter" style="padding: 0 16px 24px;">
+    <div class="screen screen-enter" style="padding: 0 16px 100px;">
       <!-- Header -->
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 16px;">
         <button id="cancel-btn" class="icon-btn" title="${t("cancel")}" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text-primary);">
@@ -98,81 +99,96 @@ export function renderAddTransaction(container, params) {
           <button type="button" class="add-tx-tab ${isIncome ? "active income" : ""}" id="switch-income">${t("income")}</button>
         </div>
 
-        <!-- Big Amount Card -->
-        <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 20px 16px; margin-bottom: 20px; text-align: center;">
-          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px;">
-            ${t("amount")} (${store.getCurrencySymbol()})
-          </div>
-          <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-            <span style="font-size: 28px; font-weight: 800; color: var(--text-secondary);">${store.getCurrencySymbol()}</span>
-            <input 
-              type="number" 
-              step="0.01" 
-              inputmode="decimal"
-              id="amount" 
-              placeholder="0.00" 
-              required 
-              autofocus
-              class="amount-input-field" 
-              value="${displayAmount}"
-              style="font-size: 40px; font-weight: 900; text-align: left; background: transparent; border: none; outline: none; width: 220px; color: var(--text-primary); font-family: var(--font-heading);"
-            />
+        <!-- Big Amount Double-Bezel Card with Quick Chips -->
+        <div class="bezel-card" style="margin-bottom: 16px;">
+          <div class="bezel-inner" style="padding: 16px; text-align: center;">
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary); margin-bottom: 6px;">
+              ${t("amount")} (${store.getCurrencySymbol()})
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 4px;">
+              <span style="font-size: 26px; font-weight: 800; color: var(--text-secondary);">${store.getCurrencySymbol()}</span>
+              <input 
+                type="text" 
+                inputmode="decimal"
+                id="amount" 
+                placeholder="0.00" 
+                required 
+                autofocus
+                class="amount-input-field" 
+                value="${displayAmount}"
+                style="font-size: 38px; font-weight: 900; text-align: left; background: transparent; border: none; outline: none; width: 220px; color: var(--text-primary); font-family: var(--font-heading);"
+              />
+            </div>
+            <div id="math-eval-preview" style="font-size: 13px; font-weight: 800; color: var(--gold); min-height: 18px; margin-bottom: 8px;"></div>
+            <!-- Quick Amount Chips -->
+            <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+              <button type="button" class="quick-chip add-amt-chip" data-add="50">+50</button>
+              <button type="button" class="quick-chip add-amt-chip" data-add="100">+100</button>
+              <button type="button" class="quick-chip add-amt-chip" data-add="500">+500</button>
+              <button type="button" class="quick-chip add-amt-chip" data-add="1000">+1,000</button>
+            </div>
           </div>
         </div>
 
         <!-- Title / Note -->
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">${t("title")}</label>
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">${t("title")}</label>
           <input 
             type="text" 
             id="title" 
             placeholder="${t("titlePlaceholder")}" 
             value="${escapeHTML(displayTitle)}"
-            style="width: 100%; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); font-size: 14px; color: var(--text-primary);"
+            style="width: 100%; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); font-size: 13.5px; color: var(--text-primary);"
           />
         </div>
 
         <!-- Wallet & Date Row -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
           <div>
-            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">${store.settings.language === 'en' ? 'Wallet' : 'กระเป๋าเงิน'}</label>
-            <select id="transaction-wallet-select" style="width: 100%; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); font-size: 13px; color: var(--text-primary);">
-              ${store.getWallets().map(w => `<option value="${w.id}" ${transaction?.walletId === w.id ? 'selected' : ''}>${w.name}</option>`).join('')}
+            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">${store.settings.language === 'en' ? 'Wallet' : 'กระเป๋าเงิน'}</label>
+            <select id="transaction-wallet-select" style="width: 100%; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; color: var(--text-primary);">
+              ${store.getWallets().map(w => {
+                const isSelected = transaction ? (transaction.walletId === w.id) : (w.id === store.getPrimaryWallet().id);
+                return `<option value="${w.id}" ${isSelected ? 'selected' : ''}>${w.name}${w.isDefault ? ' (Primary)' : ''}</option>`;
+              }).join('')}
             </select>
           </div>
           <div>
-            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">${t("dateTime")}</label>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">${t("dateTime")}</label>
             <input 
               type="datetime-local" 
               id="date" 
               required 
               value="${formattedDate}"
-              style="width: 100%; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); font-size: 13px; color: var(--text-primary);"
+              style="width: 100%; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; color: var(--text-primary);"
             />
           </div>
         </div>
 
         <!-- Category Grid -->
-        <div style="margin-bottom: 24px;">
-          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px;">${t("category")}</label>
+        <div style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">${t("category")}</label>
+            <span style="font-size: 11px; color: var(--gold); font-weight: 700;">${store.settings.language === 'en' ? 'Select Category' : 'เลือกหมวดหมู่'}</span>
+          </div>
           <div id="category-selector-container" class="category-grid-30">
             <!-- Rendered dynamically -->
           </div>
         </div>
 
         <!-- Submit & Delete Buttons -->
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <button type="submit" class="btn-primary" style="width: 100%; padding: 16px; font-size: 15px; font-weight: 800; border-radius: var(--radius-lg); background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: var(--shadow-gold);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            ${t("saveTransaction")}
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 14px; font-size: 14.5px; font-weight: 800; border-radius: var(--radius); background: var(--gold); color: #000; border: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>${t("saveTransaction")}</span>
           </button>
           
           ${
             editingTransactionId
               ? `
-            <button type="button" id="delete-trans-btn" style="width: 100%; padding: 14px; background: rgba(248, 81, 73, 0.1); color: #F85149; border: 1px solid rgba(248, 81, 73, 0.25); border-radius: var(--radius-lg); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-              ${t("deleteThis")}
+            <button type="button" id="delete-trans-btn" style="width: 100%; padding: 12px; background: rgba(248, 81, 73, 0.1); color: #F85149; border: 1px solid rgba(248, 81, 73, 0.25); border-radius: var(--radius); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              <span>${t("deleteThis")}</span>
             </button>
           `
               : ""
@@ -209,8 +225,8 @@ function renderCategoryPicker(container) {
     }
 
     item.innerHTML = `
-      <div style="width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: ${info.color}20; color: ${info.color}; font-size: 18px;">
-        ${info.svg ? `<span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${info.svg}</span>` : '📦'}
+      <div style="width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: ${info.color}20; color: ${info.color};">
+        <span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${info.svg || ''}</span>
       </div>
       <div class="category-grid-label" style="${isSelected ? `color: ${info.color}; font-weight: 800;` : ''}">${info.label}</div>
     `;
@@ -372,6 +388,37 @@ function setupFormListeners(container) {
     });
   }
 
+  // Math Expression & Quick Chips listeners
+  const amtInput = container.querySelector("#amount");
+  const mathPreview = container.querySelector("#math-eval-preview");
+
+  amtInput?.addEventListener("input", () => {
+    const val = amtInput.value.trim();
+    if (val.includes('+') || val.includes('-') || val.includes('*') || val.includes('/')) {
+      const evaluated = evaluateMathExpression(val);
+      if (evaluated !== null && evaluated > 0) {
+        mathPreview.textContent = `= ${store.getCurrencySymbol()}${evaluated.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      } else {
+        mathPreview.textContent = '';
+      }
+    } else {
+      mathPreview.textContent = '';
+    }
+  });
+
+  container.querySelectorAll(".add-amt-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const addVal = parseFloat(chip.getAttribute("data-add")) || 0;
+      let currentVal = parseFloat(amtInput?.value) || 0;
+      if (isNaN(currentVal)) currentVal = 0;
+      const nextVal = currentVal + addVal;
+      if (amtInput) {
+        amtInput.value = nextVal.toFixed(2);
+        mathPreview.textContent = '';
+      }
+    });
+  });
+
   form?.addEventListener("submit", (e) => {
     e.preventDefault();
 
@@ -381,7 +428,17 @@ function setupFormListeners(container) {
       rawTitle = catInfo ? catInfo.label : selectedCategory;
     }
     const titleVal = rawTitle;
-    const amountVal = parseFloat(container.querySelector("#amount")?.value || "0");
+    
+    // Evaluate if expression or standard number
+    let rawAmountStr = container.querySelector("#amount")?.value || "0";
+    let amountVal = parseFloat(rawAmountStr);
+    if (rawAmountStr.includes('+') || rawAmountStr.includes('-') || rawAmountStr.includes('*') || rawAmountStr.includes('/')) {
+      const evaluated = evaluateMathExpression(rawAmountStr);
+      if (evaluated !== null && evaluated > 0) {
+        amountVal = evaluated;
+      }
+    }
+
     const rawDate = container.querySelector("#date")?.value;
     const parsedDate = rawDate ? new Date(rawDate) : new Date();
     const dateVal = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;

@@ -19,7 +19,7 @@ export function showCustomCategoryModal(onSave) {
         <input type="text" id="new-cat-name" placeholder="${lang === 'en' ? 'Category Name' : 'ชื่อหมวดหมู่'}" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); font-size: 14px;">
         
         <div style="display: flex; gap: 10px;">
-          <input type="text" id="new-cat-emoji" placeholder="Emoji 🎨" style="width: 80px; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); font-size: 14px; text-align: center;">
+          <input type="text" id="new-cat-emoji" placeholder="${lang === 'en' ? 'Short tag' : 'แท็กย่อ'}" style="width: 80px; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); font-size: 14px; text-align: center;">
           <input type="color" id="new-cat-color" value="#BC8CFF" style="flex: 1; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; padding: 0;">
           <select id="new-cat-type" style="flex: 2; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); font-size: 14px;">
             <option value="expense">${t('expense')}</option>
@@ -128,7 +128,7 @@ export function showCustomCategoryModal(onSave) {
 
   modal.querySelector("#add-custom-cat-btn").addEventListener("click", () => {
     const name = modal.querySelector("#new-cat-name").value.trim();
-    const emoji = modal.querySelector("#new-cat-emoji").value.trim() || '📦';
+    const emoji = modal.querySelector("#new-cat-emoji").value.trim();
     const color = modal.querySelector("#new-cat-color").value;
     const type = modal.querySelector("#new-cat-type").value;
     

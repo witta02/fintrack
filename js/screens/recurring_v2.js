@@ -11,22 +11,27 @@ import { t, locale } from "../i18n.js";
 
 export function renderRecurring(container) {
   container.innerHTML = `
-    <div class="screen screen-enter" style="padding: 0 16px 24px;">
+    <div class="screen screen-enter" style="padding: 0 16px 100px;">
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 16px;">
-        <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">${t("recurringTitle")}</h1>
-        <button id="add-recurring-btn" class="icon-btn" title="${t("navAdd")}" style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--gold), var(--amber)); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--shadow-gold);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="recurring-back-btn" class="icon-btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--radius);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">${t("recurringTitle")}</h1>
+        </div>
+        <button id="add-recurring-btn" class="icon-btn" title="${t("navAdd")}" style="width: 38px; height: 38px; border-radius: var(--radius); background: var(--gold); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--btn-shadow);">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
 
-    <div class="info-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(124, 92, 252, 0.15) 0%, rgba(124, 92, 252, 0.05) 100%); border: 1px solid rgba(124, 92, 252, 0.3); border-radius: 16px; padding: 18px; box-shadow: 0 8px 32px rgba(124, 92, 252, 0.05); backdrop-filter: blur(10px); transition: transform 0.3s ease;">
-      <div style="display: flex; gap: 14px; align-items: flex-start;">
-        <div style="color: var(--violet); background: var(--violet-soft); padding: 10px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px var(--violet-glow);">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: pulse 2.5s infinite;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+    <div class="bezel-card" style="margin-bottom: 18px;">
+      <div class="bezel-inner" style="display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px;">
+        <div style="color: var(--violet); background: var(--violet-soft); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
         </div>
         <div style="flex: 1;">
-          <h4 style="margin: 0 0 6px 0; font-weight: 700; font-size: 15px; color: var(--text-primary); letter-spacing: -0.2px;">${t("recurringSubtitle")}</h4>
-          <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">${t("recurringSubtitleDesc")}</p>
+          <h4 style="margin: 0 0 4px 0; font-weight: 800; font-size: 13.5px; color: var(--text-primary);">${t("recurringSubtitle")}</h4>
+          <p style="margin: 0; font-size: 11.5px; color: var(--text-secondary); line-height: 1.4;">${t("recurringSubtitleDesc")}</p>
         </div>
       </div>
     </div>
@@ -83,6 +88,12 @@ export function renderRecurring(container) {
 }
 
 function setupEventListeners(container) {
+  container
+    .querySelector("#recurring-back-btn")
+    ?.addEventListener("click", () => {
+      router.navigate("dashboard");
+    });
+
   container
     .querySelector("#add-recurring-btn")
     .addEventListener("click", () => {

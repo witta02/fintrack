@@ -5,3 +5,5 @@ dist
 *.local
 *.traineddata
 /scratch
+.agents
+skills-lock.json

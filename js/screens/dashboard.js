@@ -1,397 +1,682 @@
 import { store } from "../store.js";
 import { router } from "../router.js";
-import { t, getMonthNames } from "../i18n.js";
-import { calculatePortfolioStats } from "../utils/stockQuotes.js";
-import { getWalletIconSvg } from "./wallets.js";
+import { t } from "../i18n.js";
+import { getCategoryInfo } from "../categories.js";
+import { alerts } from "../utils/alertHelper.js";
 
-// Category config: emoji + color for each category
-const CAT_CONFIG = {
-  'Food':          { emoji: '🍜', color: '#FF6B6B' },
-  'Transport':     { emoji: '🚗', color: '#4ECDC4' },
-  'Shopping':      { emoji: '🛍️', color: '#A855F7' },
-  'Bills':         { emoji: '💡', color: '#3B82F6' },
-  'Health':        { emoji: '💊', color: '#10B981' },
-  'Entertainment': { emoji: '🎮', color: '#F59E0B' },
-  'Education':     { emoji: '📚', color: '#EC4899' },
-  'Travel':        { emoji: '✈️', color: '#14B8A6' },
-  'Salary':        { emoji: '💰', color: '#34D399' },
-  'Investment':    { emoji: '📈', color: '#6366F1' },
-  'Transfer':      { emoji: '🔁', color: '#8B5CF6' },
-  'Other':         { emoji: '📦', color: '#8896B0' },
-};
+let activeDateFilter = "all"; // "all" | "today"
+let searchQuery = "";
 
-function getCatConfig(category) {
-  if (!category) return CAT_CONFIG['Other'];
-  const key = Object.keys(CAT_CONFIG).find(k =>
-    k.toLowerCase() === category.toLowerCase()
-  );
-  return CAT_CONFIG[key] || { emoji: '📦', color: '#8896B0' };
+function getWalletIcon(type = 'cash') {
+  const t = (type || 'cash').toLowerCase();
+  if (t === 'bank') {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18"/><line x1="10" x2="10" y1="18"/><line x1="14" x2="14" y1="18"/><line x1="18" x2="18" y1="18"/><polygon points="12 2 20 7 4 7"/><line x1="2" x2="22" y1="18" y2="18"/></svg>`;
+  }
+  if (t === 'savings') {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="3"/><circle cx="12" cy="12" r="4"/><line x1="12" x2="12" y1="8" y2="10"/><line x1="12" x2="12" y1="14" y2="16"/><line x1="8" x2="10" y1="12" y2="12"/><line x1="14" x2="16" y1="12" y2="12"/></svg>`;
+  }
+  if (t === 'investment') {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`;
+  }
+  if (t === 'credit') {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`;
+  }
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>`;
 }
 
-function fmt(amount) {
-  return store.getCurrencySymbol() + store.toDisplay(amount).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+function getWalletCardGradient(w, index = 0) {
+  const type = (w.type || 'cash').toLowerCase();
+  const c = (w.color || '').toLowerCase();
 
-let dashMonth = new Date().getMonth();
-let dashYear  = new Date().getFullYear();
-let activeWalletId = "all";
+  if (type === 'bank' || c.includes('3b82f6') || c.includes('blue')) {
+    return 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%)';
+  }
+  if (type === 'savings' || c.includes('ea580c') || c.includes('orange') || c.includes('f97316')) {
+    return 'linear-gradient(135deg, #7c2d12 0%, #c2410c 50%, #ea580c 100%)';
+  }
+  if (type === 'credit' || c.includes('ef4444') || c.includes('red') || c.includes('e11d48')) {
+    return 'linear-gradient(135deg, #881337 0%, #be123c 50%, #e11d48 100%)';
+  }
+  if (type === 'investment' || c.includes('6366f1') || c.includes('violet') || c.includes('8b5cf6') || c.includes('7c3aed')) {
+    return 'linear-gradient(135deg, #4c1d95 0%, #6d28d9 50%, #7c3aed 100%)';
+  }
+  if (c.includes('10b981') || c.includes('green') || c.includes('059669')) {
+    return 'linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%)';
+  }
+  if (c.includes('f59e0b') || c.includes('gold') || c.includes('d97706')) {
+    return 'linear-gradient(135deg, #78350f 0%, #b45309 50%, #d97706 100%)';
+  }
+
+  // Fallback palette
+  const gradients = [
+    'linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%)',
+    'linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%)',
+    'linear-gradient(135deg, #7c2d12 0%, #c2410c 50%, #ea580c 100%)',
+    'linear-gradient(135deg, #4c1d95 0%, #6d28d9 50%, #7c3aed 100%)',
+    'linear-gradient(135deg, #78350f 0%, #b45309 50%, #d97706 100%)',
+  ];
+  return gradients[index % gradients.length];
+}
 
 export async function renderDashboard(container) {
   const sym = store.getCurrencySymbol();
-  const level = store.settings.level || 1;
-  const userInitial = store.user ? store.user.email.charAt(0).toUpperCase() : null;
   const wallets = store.getWallets();
-  const isTraderMode = store.settings.isTraderMode;
-  const portfolio = store.getPortfolio();
-  const portfolioStats = isTraderMode ? await calculatePortfolioStats(portfolio.holdings || []) : null;
+  const isEn = store.settings.language === "en";
+  const userName = store.user?.user_metadata?.full_name || store.user?.email?.split('@')[0] || (isEn ? 'FinTracker' : 'ผู้ใช้งาน');
+  const level = store.settings.level || 1;
+  const xp = store.settings.xp || 0;
+  const coins = store.settings.coins || 0;
 
-  const greetingData = (() => {
-    const h = new Date().getHours();
-    if (h < 12) return { text: store.settings.language === 'en' ? 'Good morning' : 'สวัสดีตอนเช้า', emoji: '🌅' };
-    if (h < 17) return { text: store.settings.language === 'en' ? 'Good afternoon' : 'สวัสดีตอนบ่าย', emoji: '☀️' };
-    if (h < 21) return { text: store.settings.language === 'en' ? 'Good evening' : 'สวัสดีตอนเย็น', emoji: '🌇' };
-    return { text: store.settings.language === 'en' ? 'Good night' : 'สวัสดีตอนดึก', emoji: '🌙' };
-  })();
+  // Main Total Balance across ALL wallets
+  const totalBalance = store.getTotalBalance();
 
-  container.innerHTML = `
-    <div class="screen screen-enter" style="padding: 0 16px 8px;">
+  // Inflow & Outflow for current month
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const allTxs = store.getAllTransactions();
+  const monthTxs = allTxs.filter(tx => new Date(tx.date) >= monthStart);
 
-      <!-- Top Bar -->
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 10px;">
-        <div>
-          <div style="font-size: 11px; color: var(--text-secondary); display:flex; align-items:center; gap:5px;">
-            <span>${greetingData.text}</span>
+  const monthInflow = monthTxs.filter(tx => tx.isIncome).reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
+  const monthOutflow = monthTxs.filter(tx => !tx.isIncome).reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
+
+  // Sparkline mini bars
+  const sparklineData = [
+    { inPct: 60, outPct: 40 },
+    { inPct: 80, outPct: 30 },
+    { inPct: 70, outPct: 90 },
+    { inPct: 100, outPct: 45 },
+  ];
+
+  // Total slides = 1 (Total Money Card) + wallets count + 1 (+ Add Wallet Card)
+  const totalSlides = 1 + wallets.length + 1;
+
+  // Filtered Transactions for Feed
+  let feedTxs = allTxs.filter(tx => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = (tx.title || '').toLowerCase().includes(q);
+      const matchCat = (tx.category || '').toLowerCase().includes(q);
+      const matchNotes = (tx.notes || '').toLowerCase().includes(q);
+      if (!matchTitle && !matchCat && !matchNotes) return false;
+    }
+    if (activeDateFilter === "today") {
+      const txDate = new Date(tx.date);
+      return txDate.toDateString() === now.toDateString();
+    }
+    return true;
+  });
+
+  const html = `
+    <style>
+      .hero-carousel-track {
+        display: flex;
+        gap: 14px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        border-radius: var(--radius-2xl);
+        padding-bottom: 2px;
+      }
+      .hero-carousel-track::-webkit-scrollbar {
+        display: none;
+      }
+      .hero-slide-card {
+        width: 100%;
+        min-width: 100%;
+        box-sizing: border-box;
+        scroll-snap-align: center;
+        border-radius: var(--radius-2xl);
+        padding: 20px 22px;
+        min-height: 168px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.2s ease;
+      }
+      .wallet-hero-slide::before {
+        content: "";
+        position: absolute;
+        bottom: -40px;
+        right: -30px;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 70%);
+        pointer-events: none;
+      }
+      .wallet-hero-slide::after {
+        content: "";
+        position: absolute;
+        top: -40px;
+        left: -30px;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 70%);
+        pointer-events: none;
+      }
+    </style>
+
+    <div class="screen screen-enter dashboard-screen-wrap" style="padding: 0 16px 100px;">
+      <!-- Top Greeting Bar -->
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 0 14px;">
+        <div id="dash-user-avatar-btn" style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+          <!-- User Avatar Chip -->
+          <div style="position: relative; width: 42px; height: 42px; border-radius: 50%; background: var(--gold-soft); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--gold); font-size: 16px; flex-shrink: 0;">
+            ${userName.charAt(0).toUpperCase()}
+            <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: var(--income); border-radius: 50%; border: 2px solid var(--card);"></span>
           </div>
-          <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-top: 1px; color: var(--text-primary);">FinTrack <span style="font-size: 13px; color: var(--gold); font-weight: 800;">3.0</span></h1>
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
+              <span>LV.${level}</span>
+              <span>•</span>
+              <span style="color: var(--gold);">${coins} Coins</span>
+            </div>
+            <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.2px;">
+              Hello, ${userName}!
+            </div>
+          </div>
         </div>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <button id="wallets-quick-btn" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Wallets">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold);"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-            <span style="font-size: 11.5px; font-weight: 700; color: var(--text-primary);">${wallets.length}</span>
+
+        <div style="display: flex; gap: 8px;">
+          <button id="dash-settings-btn" class="icon-btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--radius);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
-          <button id="gamification-modal-btn" style="background: rgba(245,200,66,0.12); border: 1px solid rgba(245,200,66,0.25); border-radius: 12px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-            <span style="font-size: 12px; font-weight: 800; color: var(--gold);">Lv.${level}</span>
-          </button>
-          ${userInitial ? `<div class="user-pill"><div class="user-pill-avatar">${userInitial}</div>${store.user.email.split('@')[0]}</div>` : ''}
         </div>
       </div>
 
-      <!-- Wallet Selector Chips (Horizontal Bar) -->
-      <div style="display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;">
-        <button class="wallet-chip ${activeWalletId === 'all' ? 'active' : ''}" data-wallet="all" style="flex-shrink: 0; padding: 6px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700; border: 1px solid ${activeWalletId === 'all' ? 'var(--gold)' : 'var(--border)'}; background: ${activeWalletId === 'all' ? 'var(--gold-soft)' : 'var(--surface)'}; color: ${activeWalletId === 'all' ? 'var(--gold)' : 'var(--text-secondary)'}; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-          ${store.settings.language === 'en' ? 'All Wallets' : 'ทุกกระเป๋า'}
-        </button>
-        ${wallets.map(w => `
-          <button class="wallet-chip ${activeWalletId === w.id ? 'active' : ''}" data-wallet="${w.id}" style="flex-shrink: 0; padding: 6px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700; border: 1px solid ${activeWalletId === w.id ? (w.color || 'var(--gold)') : 'var(--border)'}; background: ${activeWalletId === w.id ? `${w.color}20` : 'var(--surface)'}; color: ${activeWalletId === w.id ? (w.color || 'var(--gold)') : 'var(--text-secondary)'}; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-            ${getWalletIconSvg(w.type, 13)}
-            <span>${w.name}</span>
-          </button>
-        `).join('')}
-        <button id="add-wallet-chip" style="flex-shrink: 0; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; border: 1px dashed var(--border); background: transparent; color: var(--text-muted); cursor: pointer;">
-          + ${store.settings.language === 'en' ? 'Manage' : 'จัดการ'}
-        </button>
-      </div>
+      <!-- FULL-WIDTH SLIDING HERO CAROUSEL -->
+      <div style="margin-bottom: 20px;">
+        <!-- The Carousel Track -->
+        <div id="dash-hero-carousel" class="hero-carousel-track">
+          
+          <!-- SLIDE 0: MAIN TOTAL BALANCE CARD -->
+          <div class="hero-slide-card" data-slide-index="0" style="background: var(--card); border: 1px solid var(--border);">
+            <!-- Top Row: Title & Manage Button -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <div style="font-size: 11.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px;">
+                ${isEn ? 'Total Balance' : 'ยอดเงินรวมทุกกระเป๋า'}
+              </div>
+              <button id="hero-manage-wallets-btn" style="background: var(--surface); border: 1px solid var(--border); padding: 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; color: var(--gold); cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                <span>${isEn ? 'Manage' : 'จัดการ'}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
 
-      <!-- Hero Balance Card -->
-      <div class="hero-balance-card" id="hero-balance-card">
-        <div class="hero-balance-label" id="hero-balance-label">${store.settings.language === 'en' ? 'Total Balance' : 'ยอดเงินรวม'}</div>
-        <div class="hero-balance-amount" id="hero-balance-amount">${sym}0.00</div>
-        <div class="hero-balance-row">
-          <div class="hero-stat">
-            <div class="hero-stat-label income">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-              ${store.settings.language === 'en' ? 'Income' : 'รายรับ'}
+            <!-- Center: Grand Total Balance -->
+            <div id="dash-total-balance" style="font-size: 34px; font-weight: 900; color: var(--text-primary); font-family: var(--font-heading); letter-spacing: -0.8px; margin: 4px 0 16px;">
+              ${sym} ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <div class="hero-stat-value" id="hero-income-amount">${sym}0.00</div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-label expense">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-              ${store.settings.language === 'en' ? 'Expenses' : 'รายจ่าย'}
-            </div>
-            <div class="hero-stat-value" id="hero-expense-amount">${sym}0.00</div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Trader Mode Portfolio Card (if enabled) -->
-      ${isTraderMode && portfolioStats ? `
-        <div id="trader-widget-card" style="background: linear-gradient(135deg, #0d1527 0%, #151e36 100%); border: 1px solid rgba(99,102,241,0.3); border-radius: var(--radius-xl); padding: 18px; margin-bottom: 16px; position: relative; cursor: pointer; box-shadow: 0 4px 20px rgba(99,102,241,0.12);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="font-size: 14px;">📈</span>
-              <span style="font-size: 12px; font-weight: 800; color: #fff;">${store.settings.language === 'en' ? 'Stock Portfolio' : 'พอร์ตลงทุน (Trader)'}</span>
-              <span style="font-size: 9px; font-weight: 800; background: rgba(99,102,241,0.25); color: #818cf8; padding: 1px 6px; border-radius: 999px;">LIVE</span>
+            <!-- Bottom Row: Inflow, Outflow & Sparkline -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 1px solid var(--border);">
+              <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 7px;">
+                  <div style="width: 24px; height: 24px; border-radius: 6px; background: rgba(16, 185, 129, 0.12); color: var(--income); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900;">
+                    ▲
+                  </div>
+                  <div>
+                    <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">${isEn ? 'Income' : 'รายรับ'}</div>
+                    <div style="font-size: 13px; font-weight: 800; color: var(--income);">${sym}${monthInflow.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 7px;">
+                  <div style="width: 24px; height: 24px; border-radius: 6px; background: rgba(239, 68, 68, 0.12); color: var(--expense); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900;">
+                    ▼
+                  </div>
+                  <div>
+                    <div style="font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">${isEn ? 'Expense' : 'รายจ่าย'}</div>
+                    <div style="font-size: 13px; font-weight: 800; color: var(--expense);">${sym}${monthOutflow.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sparkline Bars -->
+              <div style="display: flex; align-items: flex-end; gap: 3.5px; height: 24px;">
+                ${sparklineData.map(d => `
+                  <div style="display: flex; gap: 2px; align-items: flex-end; height: 100%;">
+                    <div style="width: 3.5px; height: ${Math.round((d.inPct / 100) * 20)}px; background: var(--income); border-radius: 999px;"></div>
+                    <div style="width: 3.5px; height: ${Math.round((d.outPct / 100) * 20)}px; background: var(--expense); border-radius: 999px;"></div>
+                  </div>
+                `).join('')}
+              </div>
             </div>
-            <span style="font-size: 11px; font-weight: 700; color: #818cf8;">${store.settings.language === 'en' ? 'View Details →' : 'ดูพอร์ต →'}</span>
           </div>
-          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+
+          <!-- SLIDE 1..N: AUTHENTIC PERSONAL FINANCE WALLET CARDS -->
+          ${wallets.map((w, idx) => {
+            const wBal = store.getWalletBalance(w.id);
+            const grad = getWalletCardGradient(w, idx);
+            const iconSvg = getWalletIcon(w.type);
+            const typeLabel = w.type ? w.type.toUpperCase() : 'WALLET';
+
+            return `
+              <div class="hero-slide-card wallet-hero-slide" data-slide-index="${idx + 1}" data-wallet-id="${w.id}" style="background: ${grad}; color: #FFFFFF; cursor: pointer;">
+                <!-- Top Row: Icon + Wallet Name & Type Badge -->
+                <div style="display: flex; align-items: center; justify-content: space-between; z-index: 1;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 32px; height: 32px; border-radius: 10px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+                      ${iconSvg}
+                    </div>
+                    <div>
+                      <div style="font-size: 15px; font-weight: 900; letter-spacing: -0.2px; text-shadow: 0 1px 2px rgba(0,0,0,0.3); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        ${w.name}
+                      </div>
+                      <div style="font-size: 9.5px; font-weight: 800; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px;">
+                        ${typeLabel}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Right: Status / Currency Badge -->
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    ${w.isDefault ? `
+                      <span style="font-size: 10px; font-weight: 800; background: rgba(245, 200, 66, 0.25); color: #F5C842; border: 1px solid rgba(245, 200, 66, 0.4); padding: 3px 8px; border-radius: 999px; text-transform: uppercase;">
+                        ${isEn ? 'Primary' : 'กระเป๋าหลัก'}
+                      </span>
+                    ` : `
+                      <span style="font-size: 10px; font-weight: 800; background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 999px; text-transform: uppercase;">
+                        ${w.currency || 'THB'}
+                      </span>
+                    `}
+                  </div>
+                </div>
+
+                <!-- Center: Wallet Balance -->
+                <div style="margin: 14px 0 16px; z-index: 1;">
+                  <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.8; letter-spacing: 0.6px; margin-bottom: 2px;">
+                    ${isEn ? 'Wallet Balance' : 'ยอดเงินคงเหลือ'}
+                  </div>
+                  <div style="font-size: 34px; font-weight: 900; font-family: var(--font-heading); letter-spacing: -0.6px; text-shadow: 0 2px 4px rgba(0,0,0,0.35);">
+                    ${sym}${wBal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                </div>
+
+                <!-- Bottom Row: Status Indicator & Manage Action -->
+                <div style="display: flex; align-items: center; justify-content: space-between; z-index: 1; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.15);">
+                  <div style="font-size: 11px; font-weight: 700; opacity: 0.9; display: flex; align-items: center; gap: 6px;">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+                    <span>${w.isDefault ? (isEn ? 'Primary Account' : 'กระเป๋าหลัก') : (isEn ? 'Active' : 'พร้อมใช้งาน')}</span>
+                  </div>
+
+                  <div style="font-size: 11px; font-weight: 800; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 999px; display: flex; align-items: center; gap: 4px;">
+                    <span>${isEn ? 'Manage' : 'จัดการ'}</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+
+          <!-- FINAL SLIDE: + ADD WALLET CARD -->
+          <div id="dash-add-wallet-slide" class="hero-slide-card" data-slide-index="${wallets.length + 1}" style="background: var(--surface); border: 2px dashed var(--border); box-shadow: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; cursor: pointer; text-align: center;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--gold-soft); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; color: var(--gold);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </div>
             <div>
-              <div style="font-size: 20px; font-weight: 900; color: #fff; font-family: var(--font-heading);">
-                ฿${portfolioStats.totalValueTHB.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin-bottom: 2px;">
+                ${isEn ? 'Add New Wallet' : 'เพิ่มกระเป๋าใหม่'}
               </div>
-              <div style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">
-                ≈ $${portfolioStats.totalValueUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
-              </div>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-size: 13px; font-weight: 800; color: ${portfolioStats.totalPLTHB >= 0 ? 'var(--income)' : 'var(--expense)'};">
-                ${portfolioStats.totalPLTHB >= 0 ? '+' : ''}${portfolioStats.totalPLPct.toFixed(2)}%
-              </div>
-              <div style="font-size: 10px; color: var(--text-secondary);">
-                ${portfolioStats.holdings.length} ${store.settings.language === 'en' ? 'positions' : 'สินทรัพย์'}
+              <div style="font-size: 11px; color: var(--text-secondary);">
+                ${isEn ? 'Tap here to create a new bank, cash, or savings wallet' : 'แตะเพื่อสร้างกระเป๋าเงินสด บัญชีธนาคาร หรือเงินออม'}
               </div>
             </div>
           </div>
-        </div>
-      ` : ''}
 
-      <!-- Month Navigator -->
-      <div class="month-nav">
-        <button class="month-nav-btn" id="month-prev">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div class="month-nav-label" id="month-nav-label">-</div>
-        <button class="month-nav-btn" id="month-next">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
+        </div>
+
+        <!-- CAROUSEL PAGINATION DOTS -->
+        <div id="dash-hero-dots" style="display: flex; gap: 6px; margin-top: 10px; align-items: center; justify-content: center;">
+          ${Array.from({ length: totalSlides }).map((_, i) => `
+            <div class="dash-hero-dot ${i === 0 ? 'active' : ''}" data-dot-index="${i}" style="width: ${i === 0 ? '16px' : '6px'}; height: 6px; border-radius: 999px; background: ${i === 0 ? 'var(--gold)' : 'var(--border)'}; transition: all 0.25s ease; cursor: pointer;"></div>
+          `).join('')}
+        </div>
       </div>
 
-      <!-- Ring Chart Card -->
-      <div class="ring-chart-card">
-        <div class="ring-chart-card-title">${store.settings.language === 'en' ? 'Spending by Category' : 'ค่าใช้จ่ายตามหมวด'}</div>
-        <div class="ring-chart-wrap">
-          <div class="ring-chart-canvas-wrap">
-            <canvas id="ring-chart-canvas" width="130" height="130"></canvas>
-            <div class="ring-chart-center-label">
-              <div class="ring-chart-center-amount" id="ring-center-amount">${sym}0</div>
-              <div class="ring-chart-center-sub">${store.settings.language === 'en' ? 'spent' : 'ใช้ไป'}</div>
-            </div>
+      <!-- Quick Utility Action Pills -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+        <div id="quick-split-bill" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--card-shadow);">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(59, 130, 246, 0.12); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-          <div class="ring-legend" id="ring-legend"></div>
+          <div style="font-size: 11px; font-weight: 800; color: var(--text-primary); text-align: center;">
+            ${isEn ? 'Split Bill' : 'หารบิล'}
+          </div>
+        </div>
+
+        <div id="quick-recurring" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--card-shadow);">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(245, 200, 66, 0.12); color: var(--gold); display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          </div>
+          <div style="font-size: 11px; font-weight: 800; color: var(--text-primary); text-align: center;">
+            ${isEn ? 'Recurring' : 'บิลประจำ'}
+          </div>
+        </div>
+
+        <div id="quick-downpayments" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--card-shadow);">
+          <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(168, 85, 247, 0.12); color: #a855f7; display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </div>
+          <div style="font-size: 11px; font-weight: 800; color: var(--text-primary); text-align: center;">
+            ${isEn ? 'Installments' : 'ค่างวด/ดาวน์'}
+          </div>
         </div>
       </div>
 
-      <!-- Category Breakdown -->
-      <div class="category-breakdown-card">
-        <div class="ring-chart-card-title" style="margin-bottom:12px;">${store.settings.language === 'en' ? 'Top Categories' : 'หมวดหมู่หลัก'}</div>
-        <div id="category-breakdown-list"></div>
-      </div>
-
-      <!-- Recent Transactions -->
-      <div style="margin-bottom: 4px;">
-        <div class="recent-header">
-          <div class="recent-title">${store.settings.language === 'en' ? 'Recent' : 'รายการล่าสุด'}</div>
-          <button class="recent-see-all" id="view-all-btn">${store.settings.language === 'en' ? 'See all' : 'ดูทั้งหมด'} →</button>
+      <!-- RECENT TRANSACTIONS FEED -->
+      <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 18px 16px; box-shadow: var(--card-shadow);">
+        <!-- Feed Header & Search -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <h2 style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0;">
+            ${isEn ? 'Recent Transactions' : 'รายการล่าสุด'}
+          </h2>
+          <div style="display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); padding: 2px; border-radius: 999px;">
+            <button class="tx-filter-pill ${activeDateFilter === 'all' ? 'active' : ''}" data-filter="all" style="padding: 4px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 800; border: none; cursor: pointer; background: ${activeDateFilter === 'all' ? 'var(--gold)' : 'transparent'}; color: ${activeDateFilter === 'all' ? '#000' : 'var(--text-secondary)'};">
+              ${isEn ? 'All' : 'ทั้งหมด'}
+            </button>
+            <button class="tx-filter-pill ${activeDateFilter === 'today' ? 'active' : ''}" data-filter="today" style="padding: 4px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 800; border: none; cursor: pointer; background: ${activeDateFilter === 'today' ? 'var(--gold)' : 'transparent'}; color: ${activeDateFilter === 'today' ? '#000' : 'var(--text-secondary)'};">
+              ${isEn ? 'Today' : 'วันนี้'}
+            </button>
+          </div>
         </div>
-        <div id="recent-tx-list"></div>
-      </div>
 
+        <!-- Search Input -->
+        <div style="position: relative; margin-bottom: 12px;">
+          <input id="dash-tx-search" type="text" placeholder="${isEn ? 'Search transactions...' : 'ค้นหารายการ...'}" value="${searchQuery}" style="width: 100%; padding: 8px 12px 8px 34px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 12px;" />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+
+        <!-- Transactions List -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          ${feedTxs.length === 0 ? `
+            <div style="text-align: center; padding: 28px 0; color: var(--text-secondary); font-size: 12px; font-weight: 600;">
+              ${isEn ? 'No transactions found' : 'ไม่พบรายการใช้จ่าย'}
+            </div>
+          ` : feedTxs.slice(0, 15).map(tx => {
+            const cat = getCategoryInfo(tx.category);
+            const primaryW = store.getPrimaryWallet();
+            const w = wallets.find(wal => wal.id === tx.walletId) || primaryW || { name: 'Main' };
+            const txDate = new Date(tx.date);
+            const timeStr = txDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `
+              <div class="dash-tx-row" data-id="${tx.id}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); cursor: pointer; transition: background 0.15s ease;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 36px; height: 36px; border-radius: 10px; background: ${tx.isIncome ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)'}; color: ${tx.isIncome ? 'var(--income)' : 'var(--expense)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 7px; box-sizing: border-box;">
+                    ${cat?.svg || '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>'}
+                  </div>
+                  <div>
+                    <div style="font-size: 13px; font-weight: 800; color: var(--text-primary); margin-bottom: 2px;">
+                      ${tx.title || cat?.label || tx.category}
+                    </div>
+                    <div style="font-size: 10.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                      <span>${timeStr}</span>
+                      <span>•</span>
+                      <span style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;">${w.name}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="text-align: right;">
+                  <div style="font-size: 14px; font-weight: 900; color: ${tx.isIncome ? 'var(--income)' : 'var(--text-primary)'}; font-family: var(--font-heading);">
+                    ${tx.isIncome ? '+' : '-'}${sym}${parseFloat(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
     </div>
   `;
 
-  setupDashboardEvents(container);
-  updateDashboard(container);
+  container.innerHTML = html;
 
-  const unsub = store.subscribe(() => {
-    if (document.getElementById('hero-balance-amount')) {
-      updateDashboard(container);
-    } else {
-      unsub();
-    }
-  });
-}
-
-function setupDashboardEvents(container) {
-  container.querySelector('#month-prev')?.addEventListener('click', () => {
-    dashMonth--;
-    if (dashMonth < 0) { dashMonth = 11; dashYear--; }
-    updateDashboard(container);
-  });
-  container.querySelector('#month-next')?.addEventListener('click', () => {
-    dashMonth++;
-    if (dashMonth > 11) { dashMonth = 0; dashYear++; }
-    updateDashboard(container);
-  });
-  container.querySelector('#view-all-btn')?.addEventListener('click', () => {
-    router.navigate('transactions');
-  });
-  container.querySelector('#gamification-modal-btn')?.addEventListener('click', () => {
-    router.navigate('achievements');
-  });
-  container.querySelector('#wallets-quick-btn')?.addEventListener('click', () => {
-    router.navigate('wallets');
-  });
-  container.querySelector('#add-wallet-chip')?.addEventListener('click', () => {
-    router.navigate('wallets');
-  });
-  container.querySelector('#trader-widget-card')?.addEventListener('click', () => {
-    router.navigate('portfolio');
+  // Event Listeners
+  // Avatar Mastery Hub
+  container.querySelector("#dash-user-avatar-btn")?.addEventListener("click", () => {
+    showUserMasteryModal(container);
   });
 
-  // Wallet chips click
-  container.querySelectorAll(".wallet-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      activeWalletId = chip.getAttribute("data-wallet");
+  // Settings Navigation
+  container.querySelector("#dash-settings-btn")?.addEventListener("click", () => {
+    router.navigate("settings");
+  });
+
+  // Manage Wallets Button
+  container.querySelector("#hero-manage-wallets-btn")?.addEventListener("click", () => {
+    router.navigate("wallets");
+  });
+
+  // Add Wallet Slide Button
+  container.querySelector("#dash-add-wallet-slide")?.addEventListener("click", () => {
+    showAddWalletModal(container);
+  });
+
+  // Clicking Wallet Cards
+  container.querySelectorAll(".hero-slide-card[data-wallet-id]").forEach(card => {
+    card.addEventListener("click", () => {
+      router.navigate("wallets");
+    });
+  });
+
+  // Carousel Pagination Dots Sync
+  const carousel = container.querySelector("#dash-hero-carousel");
+  const dots = container.querySelectorAll(".dash-hero-dot");
+  if (carousel && dots.length > 0) {
+    carousel.addEventListener("scroll", () => {
+      const slideWidth = carousel.clientWidth + 14; // card width + gap
+      const activeIdx = Math.min(dots.length - 1, Math.max(0, Math.round(carousel.scrollLeft / slideWidth)));
+      dots.forEach((dot, idx) => {
+        if (idx === activeIdx) {
+          dot.style.width = "16px";
+          dot.style.background = "var(--gold)";
+        } else {
+          dot.style.width = "6px";
+          dot.style.background = "var(--border)";
+        }
+      });
+    }, { passive: true });
+
+    dots.forEach(dot => {
+      dot.addEventListener("click", () => {
+        const idx = parseInt(dot.getAttribute("data-dot-index"), 10);
+        const slideWidth = carousel.clientWidth + 14;
+        carousel.scrollTo({
+          left: idx * slideWidth,
+          behavior: "smooth"
+        });
+      });
+    });
+  }
+
+  // Quick Action Buttons
+  container.querySelector("#quick-split-bill")?.addEventListener("click", () => {
+    router.navigate("splitBill");
+  });
+  container.querySelector("#quick-recurring")?.addEventListener("click", () => {
+    router.navigate("recurring");
+  });
+  container.querySelector("#quick-downpayments")?.addEventListener("click", () => {
+    router.navigate("downPayments");
+  });
+
+  // Filter Buttons
+  container.querySelectorAll(".tx-filter-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeDateFilter = btn.getAttribute("data-filter");
       renderDashboard(container);
     });
   });
+
+  // Search Input
+  const searchInput = container.querySelector("#dash-tx-search");
+  searchInput?.addEventListener("input", (e) => {
+    searchQuery = e.target.value;
+    renderDashboard(container);
+  });
+
+  // Transaction row click to edit
+  container.querySelectorAll(".dash-tx-row").forEach(row => {
+    row.addEventListener("click", () => {
+      const id = row.getAttribute("data-id");
+      router.navigate("add", { editId: id });
+    });
+  });
 }
 
-function updateDashboard(container) {
-  const allTxs    = store.getAllTransactions(activeWalletId);
-  const monthTxs  = allTxs.filter(tx => {
-    const d = new Date(tx.date);
-    return d.getMonth() === dashMonth && d.getFullYear() === dashYear;
-  });
+function showAddWalletModal(container) {
+  const isEn = store.settings.language === "en";
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-dialog" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 24px; max-width: 360px; width: 90%; box-shadow: var(--card-shadow);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <h3 style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0;">${isEn ? 'Add New Wallet' : 'เพิ่มกระเป๋าใหม่'}</h3>
+        <button class="modal-close-btn" style="background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer;">&times;</button>
+      </div>
+      <form id="add-wallet-form" style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${isEn ? 'Wallet Name' : 'ชื่อกระเป๋า'}</label>
+          <input name="name" required placeholder="${isEn ? 'e.g. Bank Account / Cash' : 'เช่น ธนาคาร / เงินสด'}" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px;" />
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${isEn ? 'Wallet Type' : 'ประเภทกระเป๋า'}</label>
+          <select name="type" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px;">
+            <option value="bank">${isEn ? 'Bank Account' : 'บัญชีธนาคาร (Bank)'}</option>
+            <option value="cash">${isEn ? 'Cash' : 'เงินสด (Cash)'}</option>
+            <option value="savings">${isEn ? 'Savings Vault' : 'เงินออม (Savings)'}</option>
+            <option value="credit">${isEn ? 'Credit Card' : 'บัตรเครดิต (Credit)'}</option>
+            <option value="investment">${isEn ? 'Investment' : 'พอร์ตลงทุน (Invest)'}</option>
+          </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${isEn ? 'Starting Balance' : 'ยอดเงินตั้งต้น'}</label>
+          <input name="balance" type="number" step="0.01" value="0" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px;" />
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 12px; background: var(--gold); color: #000; font-weight: 800; border: none; border-radius: var(--radius); cursor: pointer; box-shadow: var(--btn-shadow);">
+          ${isEn ? 'Save Wallet' : 'บันทึกกระเป๋า'}
+        </button>
+      </form>
+    </div>
+  `;
 
-  let balance = 0;
-  if (activeWalletId === 'all') {
-    let totalBal = 0;
-    store.getWallets().forEach(w => {
-      totalBal += store.getWalletBalance(w.id);
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.querySelector(".modal-close-btn").onclick = close;
+  modal.onclick = (e) => { if (e.target === modal) close(); };
+
+  modal.querySelector("#add-wallet-form").onsubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const name = formData.get("name").trim();
+    const type = formData.get("type");
+    const balance = parseFloat(formData.get("balance")) || 0;
+
+    store.addWallet({
+      name,
+      type,
+      balance,
     });
-    balance = totalBal;
-  } else {
-    balance = store.getWalletBalance(activeWalletId);
-  }
 
-  const monthIncome  = monthTxs.filter(t => t.isIncome).reduce((s, t) => s + t.amount, 0);
-  const monthExpense = monthTxs.filter(t => !t.isIncome).reduce((s, t) => s + t.amount, 0);
+    alerts.success(isEn ? 'Wallet added successfully!' : 'เพิ่มกระเป๋าเรียบร้อยแล้ว');
+    close();
+    renderDashboard(container);
+  };
+}
 
-  // Update hero card
-  const heroAmt = document.getElementById('hero-balance-amount');
-  const heroInc = document.getElementById('hero-income-amount');
-  const heroExp = document.getElementById('hero-expense-amount');
-  const heroLbl = document.getElementById('hero-balance-label');
+function showUserMasteryModal(container) {
+  const isEn = store.settings.language === "en";
+  const user = store.user;
+  const level = store.settings.level || 1;
+  const xp = store.settings.xp || 0;
+  const coins = store.settings.coins || 0;
+  const nextLevelXP = level * 200;
+  const xpPct = Math.min(100, Math.round((xp % 200) / 2));
 
-  if (heroLbl) {
-    if (activeWalletId === 'all') {
-      heroLbl.textContent = store.settings.language === 'en' ? 'Total Balance' : 'ยอดเงินรวม';
-    } else {
-      const w = store.getWallet(activeWalletId);
-      heroLbl.textContent = `${w ? w.name : ''} Balance`;
-    }
-  }
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-dialog" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 24px; max-width: 380px; width: 92%; box-shadow: var(--card-shadow);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 46px; height: 46px; border-radius: 50%; background: var(--gold-soft); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--gold); font-size: 18px;">
+            ${user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
+          </div>
+          <div>
+            <div style="font-size: 16px; font-weight: 800; color: var(--text-primary);">
+              ${user ? (user.user_metadata?.full_name || user.email.split('@')[0]) : 'User'}
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary);">
+              Level ${level} • ${coins} FinCoins
+            </div>
+          </div>
+        </div>
+        <button class="modal-close-btn" style="background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer;">&times;</button>
+      </div>
 
-  if (heroAmt) heroAmt.textContent = fmt(balance);
-  if (heroInc) heroInc.textContent = fmt(monthIncome);
-  if (heroExp) heroExp.textContent = fmt(monthExpense);
+      <!-- XP Progress -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 14px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 6px;">
+          <span style="color: var(--text-secondary);">Level ${level}</span>
+          <span style="color: var(--gold);">${xp} / ${nextLevelXP} XP</span>
+        </div>
+        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden;">
+          <div style="width: ${xpPct}%; height: 100%; background: var(--gold); border-radius: 999px; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
 
-  // Month label
-  const months = getMonthNames();
-  const monthLabel = document.getElementById('month-nav-label');
-  if (monthLabel) monthLabel.textContent = `${months[dashMonth]} ${dashYear}`;
+      <!-- Quick Hub Links -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div id="modal-achievements-btn" style="padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--text-primary);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            <span>${isEn ? 'Achievements & Badges' : 'ความสำเร็จ & เหรียญรางวัล'}</span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted);"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
 
-  // Category data
-  const expenseTxs = monthTxs.filter(t => !t.isIncome);
-  const catMap = {};
-  expenseTxs.forEach(tx => {
-    const cat = tx.category || 'Other';
-    catMap[cat] = (catMap[cat] || 0) + tx.amount;
+        <div id="modal-rewards-btn" style="padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--text-primary);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2.5"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+            <span>${isEn ? 'Rewards Shop & Gacha' : 'ร้านค้าของรางวัล & กาชา'}</span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted);"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+
+        <div id="modal-collectibles-btn" style="padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--text-primary);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            <span>${isEn ? 'Collectibles & Boosts' : 'ของสะสม & บัฟพลัง'}</span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted);"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.querySelector(".modal-close-btn").onclick = close;
+  modal.onclick = (e) => { if (e.target === modal) close(); };
+
+  modal.querySelector("#modal-achievements-btn")?.addEventListener("click", () => {
+    close();
+    router.navigate("achievements");
   });
-  const catEntries = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  const catTotal   = catEntries.reduce((s, [, v]) => s + v, 0);
-
-  // Ring chart
-  const ringCanvas = document.getElementById('ring-chart-canvas');
-  const ringCenter = document.getElementById('ring-center-amount');
-  const ringLegend = document.getElementById('ring-legend');
-  if (ringCenter) ringCenter.textContent = fmt(monthExpense);
-
-  if (ringCanvas && catEntries.length > 0) {
-    const ctx = ringCanvas.getContext('2d');
-    const colors = catEntries.map(([cat]) => getCatConfig(cat).color);
-    const values = catEntries.map(([, v]) => v);
-
-    ctx.clearRect(0, 0, 130, 130);
-    const cx = 65, cy = 65, r = 55, inner = 36;
-    let start = -Math.PI / 2;
-    const gap = 0.03;
-    values.forEach((val, i) => {
-      const slice = (val / catTotal) * (Math.PI * 2) - gap;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, start, start + slice);
-      ctx.arc(cx, cy, inner, start + slice, start, true);
-      ctx.closePath();
-      ctx.fillStyle = colors[i];
-      ctx.fill();
-      start += slice + gap;
-    });
-  } else if (ringCanvas) {
-    const ctx = ringCanvas.getContext('2d');
-    ctx.clearRect(0, 0, 130, 130);
-    ctx.beginPath();
-    ctx.arc(65, 65, 55, 0, Math.PI * 2);
-    ctx.arc(65, 65, 36, 0, Math.PI * 2, true);
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    ctx.fill();
-  }
-
-  if (ringLegend) {
-    ringLegend.innerHTML = catEntries.slice(0, 4).map(([cat, val]) => {
-      const cfg = getCatConfig(cat);
-      const pct = catTotal > 0 ? Math.round((val / catTotal) * 100) : 0;
-      return `
-        <div class="ring-legend-item">
-          <div class="ring-legend-dot" style="background:${cfg.color}"></div>
-          <span class="ring-legend-name">${cat}</span>
-          <span class="ring-legend-pct">${pct}%</span>
-        </div>`;
-    }).join('');
-  }
-
-  // Category breakdown list
-  const breakdownList = document.getElementById('category-breakdown-list');
-  if (breakdownList) {
-    if (catEntries.length === 0) {
-      breakdownList.innerHTML = `<div style="text-align:center; padding: 20px 0; color: var(--text-muted); font-size:13px;">${store.settings.language === 'en' ? 'No expenses this month' : 'ยังไม่มีรายจ่ายเดือนนี้'} 🎉</div>`;
-    } else {
-      breakdownList.innerHTML = catEntries.map(([cat, val]) => {
-        const cfg = getCatConfig(cat);
-        const pct = catTotal > 0 ? (val / catTotal) * 100 : 0;
-        return `
-          <div class="category-row">
-            <div class="category-icon-pill" style="background:${cfg.color}22;">${cfg.emoji}</div>
-            <div style="flex:1; min-width:0;">
-              <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                <span class="category-row-name">${cat}</span>
-                <span class="category-row-amount">${fmt(val)}</span>
-              </div>
-              <div class="category-row-bar-wrap">
-                <div class="category-row-bar" style="width:${pct.toFixed(1)}%; background:${cfg.color};"></div>
-              </div>
-            </div>
-          </div>`;
-      }).join('');
-    }
-  }
-
-  // Recent transactions (last 5)
-  const recentList = document.getElementById('recent-tx-list');
-  if (recentList) {
-    const recent = [...allTxs].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
-    if (recent.length === 0) {
-      recentList.innerHTML = `<div style="text-align:center; padding:24px 0; color:var(--text-muted); font-size:13px;">${store.settings.language === 'en' ? 'No transactions yet' : 'ยังไม่มีรายการ'}</div>`;
-    } else {
-      recentList.innerHTML = recent.map(tx => {
-        const cfg = getCatConfig(tx.category);
-        const d = new Date(tx.date);
-        const dateStr = d.toLocaleDateString(store.settings.language === 'en' ? 'en-GB' : 'th-TH', { day: 'numeric', month: 'short' });
-        return `
-          <div class="tx-tile-30">
-            <div class="tx-cat-icon" style="background:${cfg.color}22;">${cfg.emoji}</div>
-            <div class="tx-tile-body">
-              <div class="tx-tile-title">${tx.title}</div>
-              <div class="tx-tile-category">${tx.category} · ${dateStr}</div>
-            </div>
-            <div class="tx-tile-amount ${tx.isIncome ? 'income' : 'expense'}">
-              ${tx.isIncome ? '+' : '-'}${fmt(tx.amount)}
-            </div>
-          </div>`;
-      }).join('');
-    }
-  }
+  modal.querySelector("#modal-rewards-btn")?.addEventListener("click", () => {
+    close();
+    router.navigate("rewards");
+  });
+  modal.querySelector("#modal-collectibles-btn")?.addEventListener("click", () => {
+    close();
+    router.navigate("collectibles");
+  });
 }

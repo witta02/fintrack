@@ -18,7 +18,10 @@ let activeFilterType = "all"; // 'all', 'income', 'expense'
 let selectedCategoryFilter = "all";
 let selectedDateFilter = null;
 
-export function renderTransactions(container) {
+export function renderTransactions(container, params) {
+  if (params?.category) {
+    selectedCategoryFilter = params.category;
+  }
   const allCategories = [...getExpenseCategories(), ...getIncomeCategories()];
   const uniqueCategories = [];
   const map = new Map();
@@ -30,16 +33,16 @@ export function renderTransactions(container) {
   }
 
   container.innerHTML = `
-    <div class="screen screen-enter" style="padding: 0 16px 24px;">
+    <div class="screen screen-enter" style="padding: 0 16px 100px;">
       <!-- Header -->
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 16px;">
         <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">${t("transactionsTitle")}</h1>
         <div style="display: flex; gap: 8px;">
-          <button id="export-btn" class="icon-btn" title="Export" style="width: 40px; height: 40px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-primary);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <button id="export-btn" class="icon-btn" title="Export" style="width: 38px; height: 38px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-primary);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           </button>
-          <button id="add-trans-btn" class="icon-btn" style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--gold), var(--amber)); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--shadow-gold);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <button id="add-trans-btn" class="icon-btn" style="width: 38px; height: 38px; border-radius: var(--radius); background: var(--gold); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--btn-shadow);">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
       </div>
@@ -82,8 +85,15 @@ export function renderTransactions(container) {
         <button class="add-tx-tab ${activeFilterType === "expense" ? "active expense" : ""}" data-type="expense">${t("expense")}</button>
       </div>
 
-      <div style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; padding: 0 2px;" id="results-count">
-        ${t("foundItems", { count: 0 })}
+      <!-- Total Summary Headline (Reference Style) -->
+      <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; padding: 0 4px;">
+        <div style="font-size: 16px; font-weight: 900; font-family: var(--font-heading); color: var(--text-primary);">
+          <span style="font-size: 13px; color: var(--text-secondary); font-weight: 700;">${store.settings.language === 'en' ? 'Total:' : 'ยอดรวม:'} </span>
+          <span id="transactions-total-sum">${store.getCurrencySymbol()}0.00</span>
+        </div>
+        <div style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary);" id="results-count">
+          ${t("foundItems", { count: 0 })}
+        </div>
       </div>
 
       <div id="transactions-full-list">
@@ -206,10 +216,23 @@ function updateUI(container) {
     resultsEl.textContent = t("foundItems", { count: list.length });
   }
 
+  const totalSum = list.reduce((sum, tx) => {
+    return sum + (tx.isIncome ? Number(tx.amount) : -Number(tx.amount));
+  }, 0);
+
+  const totalSumEl = container.querySelector("#transactions-total-sum");
+  if (totalSumEl) {
+    const formatted = Number(store.toDisplay(Math.abs(totalSum))).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalSumEl.textContent = `${totalSum < 0 ? '-' : (totalSum > 0 ? '+' : '')}${symbol}${formatted}`;
+    totalSumEl.style.color = totalSum < 0 ? 'var(--expense)' : (totalSum > 0 ? 'var(--income)' : 'var(--text-primary)');
+  }
+
   if (list.length === 0) {
     listContainer.innerHTML = `
       <div style="text-align: center; padding: 48px 20px; color: var(--text-secondary);">
-        <div style="font-size: 36px; margin-bottom: 12px;">🔍</div>
+        <div style="width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
         <p style="font-size: 14px; font-weight: 600;">${t("noSearchResults")}</p>
       </div>
     `;

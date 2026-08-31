@@ -34,7 +34,7 @@ export function createTransactionTile(
       <span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${cat.svg || cat.emoji}</span>
     </div>
     <div class="tile-info">
-      <div class="tile-title">${escapeHTML(transaction.title)}</div>
+      <div class="tile-title">${escapeHTML(transaction.title || cat.label || '')}</div>
       <div class="tile-meta">
         <span style="color: ${cat.color}; font-weight: 600; font-size: 10px;">${cat.label}</span>
         <span style="opacity: 0.3;">•</span>

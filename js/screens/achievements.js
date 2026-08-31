@@ -7,21 +7,17 @@ export function renderAchievements(container) {
   const level = store.settings.level || 1;
   const transactions = store.getAllTransactions();
   
-  // Calculate total income
   const totalIncome = transactions
     .filter(tx => tx.isIncome)
     .reduce((sum, tx) => sum + (tx.amount || 0), 0);
     
-  // Calculate streaks (unique days)
   const uniqueDays = new Set(transactions.map(tx => new Date(tx.date).toDateString())).size;
-  
-  // Calculate transaction count
   const txCount = transactions.length;
 
   const achievements = [
     {
       id: "first_step",
-      icon: "🌟",
+      icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>`,
       title: t("achieveFirstStepTitle"),
       desc: t("achieveFirstStepDesc"),
       unlocked: txCount >= 1,
@@ -30,7 +26,7 @@ export function renderAchievements(container) {
     },
     {
       id: "streak_7",
-      icon: "🔥",
+      icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z"/></svg>`,
       title: t("achieveStreak7Title"),
       desc: t("achieveStreak7Desc"),
       unlocked: uniqueDays >= 7,
@@ -39,7 +35,7 @@ export function renderAchievements(container) {
     },
     {
       id: "level_10",
-      icon: "🎖️",
+      icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>`,
       title: t("achieveLevel10Title"),
       desc: t("achieveLevel10Desc"),
       unlocked: level >= 10,
@@ -55,7 +51,6 @@ export function renderAchievements(container) {
 
   const getMilestoneName = (val) => {
     if (lang === 'en') return t('achieveMilestoneReach', { amount: val.toLocaleString() });
-    // Thai naming convention
     if (val >= 1000000) return `${val / 1000000} ล้าน`;
     if (val >= 100000) {
       const w = val / 100000;
@@ -66,21 +61,13 @@ export function renderAchievements(container) {
     return `${val}`;
   };
 
-  const getMilestoneIcon = (val) => {
-    if (val >= 1000000) return "🏦";
-    if (val >= 500000) return "🏢";
-    if (val >= 100000) return "💼";
-    if (val >= 50000) return "💎";
-    if (val >= 15000) return "👑";
-    if (val >= 10000) return "🤑";
-    if (val >= 5000) return "💰";
-    if (val >= 1000) return "💸";
-    return "💵";
+  const getMilestoneIcon = () => {
+    return `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/></svg>`;
   };
 
   const incomeAchievements = milestones.map(m => ({
     id: `income_${m}`,
-    icon: getMilestoneIcon(m),
+    icon: getMilestoneIcon(),
     title: getMilestoneName(m),
     desc: t('achieveIncomeMilestoneDesc', { amount: m.toLocaleString() }),
     unlocked: totalIncome >= m,
@@ -91,7 +78,7 @@ export function renderAchievements(container) {
 
   achievements.push({
     id: "tx_100",
-    icon: "📊",
+    icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>`,
     title: t("achieveTx100Title"),
     desc: t("achieveTx100Desc"),
     unlocked: txCount >= 100,
@@ -99,23 +86,22 @@ export function renderAchievements(container) {
     target: 100
   });
 
-  achievements.splice(3, 0, ...incomeAchievements); // Insert right after level_10
+  achievements.splice(3, 0, ...incomeAchievements);
 
   let html = `
-    <div class="screen screen-enter" style="padding: 0 16px 24px;">
+    <div class="screen screen-enter" style="padding: 0 16px 100px;">
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 16px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <button class="back-btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button class="back-btn icon-btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--radius);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <h1 style="font-size: 22px; font-weight: 900; color: var(--text-primary); margin: 0;">${t('trophyRoom')}</h1>
+          <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">${lang === 'en' ? 'Achievements' : 'เหรียญตราความสำเร็จ'}</h1>
         </div>
-        <div style="display: flex; align-items: center; gap: 6px; background: rgba(245,200,66,0.15); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(245,200,66,0.25);">
-          <span style="font-size: 15px;">🪙</span>
-          <span style="font-weight: 800; color: var(--gold); font-size: 13px;">${store.settings.coins || 0}</span>
+        <div style="display: flex; align-items: center; gap: 6px; background: var(--gold-soft); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--gold);">
+          <span style="font-weight: 800; color: var(--gold); font-size: 12.5px;">${store.settings.coins || 0} Coins</span>
         </div>
       </div>
-      <div class="achievements-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; padding-bottom: 20px;">
+      <div class="achievements-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 12px; padding-bottom: 20px;">
   `;
 
   achievements.forEach(a => {
@@ -125,31 +111,33 @@ export function renderAchievements(container) {
     const rewardAmt = a.id.startsWith('income_') ? (a.target >= 50000 ? (a.target >= 1000000 ? 1000 : 500) : 50) : 100;
     
     const claimBtnHTML = (isUnlocked && !isClaimed) ? `
-      <button class="claim-btn" data-id="${a.id}" data-reward="${rewardAmt}" style="margin-top: 8px; width: 100%; padding: 6px; background: var(--gold); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 4px;">
-        ${t('claimReward')} +${rewardAmt} 🪙
+      <button class="claim-btn btn-primary" data-id="${a.id}" data-reward="${rewardAmt}" style="margin-top: 8px; width: 100%; padding: 6px; font-size: 11px; font-weight: 800; border-radius: var(--radius-xs); background: var(--gold); color: var(--btn-text-primary); border: none; cursor: pointer;">
+        ${lang === 'en' ? 'Claim' : 'รับรางวัล'} +${rewardAmt} Coins
       </button>
     ` : (isClaimed ? `
-      <div style="margin-top: 8px; width: 100%; text-align: center; font-size: 11px; color: var(--gold); font-weight: 700;">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg> ${t('rewardClaimed')}
+      <div style="margin-top: 8px; width: 100%; text-align: center; font-size: 10.5px; color: var(--gold); font-weight: 800;">
+        ${lang === 'en' ? 'Claimed' : 'รับแล้ว'}
       </div>
     ` : '');
 
     html += `
-      <div class="achievement-card ${isUnlocked ? 'unlocked' : 'locked'}" style="background: ${isUnlocked ? 'var(--card)' : 'var(--surface)'}; border: 1px solid ${isUnlocked ? (isClaimed ? 'var(--border)' : 'var(--gold)') : 'var(--border)'}; border-radius: 16px; padding: 16px; text-align: center; opacity: ${isUnlocked ? '1' : '0.6'}; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: ${isUnlocked && !isClaimed ? 'var(--shadow-gold)' : 'none'};">
-        <div style="font-size: 42px; line-height: 1; filter: ${isUnlocked ? 'none' : 'grayscale(100%)'};">
-          ${a.icon}
-        </div>
-        <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${a.title}</div>
-        <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.3; min-height: 28px;">${a.desc}</div>
-        
-        <div style="width: 100%; margin-top: auto;">
-          <div style="font-size: 10px; font-weight: 700; color: ${isUnlocked ? 'var(--gold)' : 'var(--text-muted)'}; margin-bottom: 4px; text-align: right;">
-            ${a.formatProgress ? a.progress.toLocaleString() : Math.floor(a.progress)} / ${a.formatProgress ? a.target.toLocaleString() : a.target}
+      <div class="bezel-card achievement-card ${isUnlocked ? 'unlocked' : 'locked'}" style="opacity: ${isUnlocked ? '1' : '0.6'};">
+        <div class="bezel-inner" style="padding: 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; box-sizing: border-box;">
+          <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--surface); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);">
+            ${a.icon}
           </div>
-          <div style="height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; overflow: hidden;">
-            <div style="height: 100%; width: ${progressPercent}%; background: ${isUnlocked ? 'linear-gradient(90deg, var(--gold), var(--amber))' : 'var(--border-strong)'}; border-radius: 3px;"></div>
+          <div style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">${a.title}</div>
+          <div style="font-size: 10.5px; color: var(--text-secondary); line-height: 1.3; min-height: 26px;">${a.desc}</div>
+          
+          <div style="width: 100%; margin-top: auto;">
+            <div style="font-size: 9.5px; font-weight: 800; color: ${isUnlocked ? 'var(--gold)' : 'var(--text-muted)'}; margin-bottom: 4px; text-align: right;">
+              ${a.formatProgress ? a.progress.toLocaleString() : Math.floor(a.progress)} / ${a.formatProgress ? a.target.toLocaleString() : a.target}
+            </div>
+            <div style="height: 5px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 3px; overflow: hidden;">
+              <div style="height: 100%; width: ${progressPercent}%; background: ${isUnlocked ? 'var(--gold)' : 'var(--border-strong)'}; border-radius: 3px;"></div>
+            </div>
+            ${claimBtnHTML}
           </div>
-          ${claimBtnHTML}
         </div>
       </div>
     `;
@@ -175,7 +163,6 @@ export function renderAchievements(container) {
       }
       store.save();
       
-      // Re-render
       renderAchievements(container);
     });
   });

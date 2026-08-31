@@ -18,47 +18,59 @@ export function getWalletIconSvg(type, size = 20) {
   return icon.replace(/width="20"/, `width="${size}"`).replace(/height="20"/, `height="${size}"`);
 }
 
+export function getWalletTypes() {
+  const isEn = store.settings.language === 'en';
+  return [
+    { type: "cash", label: isEn ? "Cash" : "เงินสด", color: "#F5C842" },
+    { type: "bank", label: isEn ? "Bank Account" : "บัญชีธนาคาร", color: "#3B82F6" },
+    { type: "savings", label: isEn ? "Savings Vault" : "เงินออม", color: "#10B981" },
+    { type: "credit", label: isEn ? "Credit Card" : "บัตรเครดิต", color: "#EF4444" },
+    { type: "investment", label: isEn ? "Investment" : "พอร์ตลงทุน", color: "#6366F1" },
+    { type: "crypto", label: isEn ? "Crypto" : "คริปโต", color: "#F59E0B" },
+  ];
+}
+
 export const WALLET_TYPES = [
-  { type: "cash", label: "เงินสด (Cash)", color: "#F5C842" },
-  { type: "bank", label: "บัญชีธนาคาร (Bank)", color: "#3B82F6" },
-  { type: "savings", label: "เงินออม (Savings)", color: "#10B981" },
-  { type: "credit", label: "บัตรเครดิต (Credit)", color: "#EF4444" },
-  { type: "investment", label: "พอร์ตลงทุน (Invest)", color: "#6366F1" },
-  { type: "crypto", label: "คริปโต (Crypto)", color: "#F59E0B" },
+  { type: "cash", label: "เงินสด", color: "#F5C842" },
+  { type: "bank", label: "บัญชีธนาคาร", color: "#3B82F6" },
+  { type: "savings", label: "เงินออม", color: "#10B981" },
+  { type: "credit", label: "บัตรเครดิต", color: "#EF4444" },
+  { type: "investment", label: "พอร์ตลงทุน", color: "#6366F1" },
+  { type: "crypto", label: "คริปโต", color: "#F59E0B" },
 ];
 
 export function renderWallets(container) {
   container.innerHTML = `
-    <div class="screen screen-enter" style="padding: 0 16px 28px;">
+    <div class="screen screen-enter" style="padding: 0 16px 100px;">
       <!-- Header -->
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 16px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <button id="back-btn" class="icon-btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="back-btn" class="icon-btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--radius);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
           <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">${store.settings.language === 'en' ? 'Wallets' : 'กระเป๋าเงิน'}</h1>
         </div>
         <div style="display: flex; gap: 8px;">
-          <button id="quick-transfer-btn" class="icon-btn" title="Transfer Funds" style="width: 40px; height: 40px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--violet);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          <button id="quick-transfer-btn" class="icon-btn" title="Transfer Funds" style="width: 38px; height: 38px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--violet);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
           </button>
-          <button id="add-wallet-btn" class="icon-btn" title="Add Wallet" style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--gold), var(--amber)); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--shadow-gold);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <button id="add-wallet-btn" class="icon-btn" title="Add Wallet" style="width: 38px; height: 38px; border-radius: var(--radius); background: var(--gold); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--btn-shadow);">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
       </div>
 
-      <!-- Hero Total Balance Card -->
-      <div style="background: var(--balance-bg); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 22px; margin-bottom: 20px; position: relative; overflow: hidden;">
-        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 6px;">
-          ${store.settings.language === 'en' ? 'Total Across All Wallets' : 'ยอดรวมทุกกระเป๋า'}
-        </div>
-        <div id="wallets-hero-balance" style="font-size: 34px; font-weight: 900; color: var(--balance-text); font-family: var(--font-heading); margin-bottom: 12px;">
-          0.00
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <button id="hero-transfer-btn" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      <!-- Hero Total Balance Double-Bezel Card -->
+      <div class="bezel-card" style="margin-bottom: 16px;">
+        <div class="bezel-inner" style="padding: 18px 16px;">
+          <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary); margin-bottom: 6px;">
+            ${store.settings.language === 'en' ? 'Total Across All Wallets' : 'ยอดเงินรวมทุกกระเป๋า'}
+          </div>
+          <div id="wallets-hero-balance" style="font-size: 32px; font-weight: 900; letter-spacing: -0.6px; color: var(--balance-text); font-family: var(--font-heading); margin-bottom: 12px;">
+            0.00
+          </div>
+          <button id="hero-transfer-btn" class="btn-primary" style="padding: 10px 14px; font-size: 12.5px; border-radius: var(--radius-sm); width: 100%;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
             ${store.settings.language === 'en' ? 'Transfer Funds' : 'โอนเงินระหว่างกระเป๋า'}
           </button>
         </div>
@@ -66,7 +78,7 @@ export function renderWallets(container) {
 
       <!-- Wallet List -->
       <div id="wallets-section-header" style="font-size: 13px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding: 0 4px;">
-        ${store.settings.language === 'en' ? 'Your Wallets' : 'กระเป๋าเงินของคุณ'}
+        ${store.settings.language === 'en' ? 'Your Wallets' : 'กระเป๋าตังค์ทั้งหมดของคุณ'}
       </div>
 
       <div id="wallets-grid" style="display: flex; flex-direction: column; gap: 12px;">
@@ -115,34 +127,44 @@ function updateWalletsUI(container) {
 function renderWalletCard(wallet, symbol) {
   const currentBal = store.getWalletBalance(wallet.id);
   const color = wallet.color || '#F5C842';
+  const isEn = store.settings.language === 'en';
 
   return `
-    <div class="wallet-pocket-card" data-wallet-id="${wallet.id}" style="background: var(--card); border: 1px solid var(--border); border-left: 4px solid ${color}; border-radius: var(--radius-xl); padding: 18px; display: flex; align-items: center; gap: 14px; transition: all var(--transition);">
-      <div style="width: 46px; height: 46px; border-radius: 14px; background: ${color}20; color: ${color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-        ${getWalletIconSvg(wallet.type, 22)}
-      </div>
-      <div style="flex: 1; min-width: 0;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <h3 style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${wallet.name}</h3>
-          ${wallet.isDefault ? `<span style="font-size: 9px; font-weight: 700; background: var(--gold-soft); color: var(--gold); border: 1px solid var(--gold-glow); padding: 1px 6px; border-radius: 999px;">หลัก</span>` : ''}
+    <div class="bezel-card wallet-pocket-card" data-wallet-id="${wallet.id}">
+      <div class="bezel-inner" style="display: flex; align-items: center; gap: 12px; border-left: 3.5px solid ${color}; padding: 14px 16px;">
+        <div style="width: 42px; height: 42px; border-radius: 12px; background: ${color}18; color: ${color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          ${getWalletIconSvg(wallet.type, 20)}
         </div>
-        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px; text-transform: uppercase; font-weight: 600;">
-          ${wallet.type} · ${wallet.currency || 'THB'}
+        <div style="flex: 1; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <h3 style="font-size: 14.5px; font-weight: 800; color: var(--text-primary); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${wallet.name}</h3>
+            ${wallet.isDefault ? `<span style="font-size: 9.5px; font-weight: 800; background: var(--gold-soft); color: var(--gold); border: 1px solid var(--gold); padding: 1px 6px; border-radius: 999px;">⭐ ${isEn ? 'Primary' : 'กระเป๋าหลัก'}</span>` : ''}
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px;">
+            <span style="font-size: 10.5px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">
+              ${wallet.type} · ${wallet.currency || 'THB'}
+            </span>
+            ${!wallet.isDefault ? `
+              <button class="wallet-make-primary-btn" data-make-primary-id="${wallet.id}" style="background: none; border: none; font-size: 10.5px; color: var(--gold); font-weight: 700; cursor: pointer; padding: 0; text-decoration: underline;">
+                ${isEn ? 'Make Primary' : 'ตั้งเป็นหลัก'}
+              </button>
+            ` : ''}
+          </div>
         </div>
-      </div>
-      <div style="text-align: right; flex-shrink: 0;">
-        <div style="font-size: 16px; font-weight: 900; color: ${currentBal >= 0 ? 'var(--text-primary)' : 'var(--expense)'}; font-family: var(--font-heading);">
-          ${symbol}${store.toDisplay(currentBal).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </div>
-        <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px;">
-          <button class="wallet-action-btn edit" data-edit-id="${wallet.id}" title="Edit" style="background: var(--surface); border: 1px solid var(--border); width: 26px; height: 26px; border-radius: 6px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          ${!wallet.isDefault ? `
-            <button class="wallet-action-btn delete" data-delete-id="${wallet.id}" title="Delete" style="background: var(--surface); border: 1px solid var(--border); width: 26px; height: 26px; border-radius: 6px; color: var(--expense); cursor: pointer; display: flex; align-items: center; justify-content: center;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg>
+        <div style="text-align: right; flex-shrink: 0;">
+          <div style="font-size: 15px; font-weight: 900; color: ${currentBal >= 0 ? 'var(--text-primary)' : 'var(--expense)'}; font-family: var(--font-heading);">
+            ${symbol}${store.toDisplay(currentBal).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px;">
+            <button class="wallet-action-btn edit" data-edit-id="${wallet.id}" title="Edit / Set Balance" style="background: var(--surface); border: 1px solid var(--border); width: 26px; height: 26px; border-radius: 6px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-          ` : ''}
+            ${!wallet.isDefault ? `
+              <button class="wallet-action-btn delete" data-delete-id="${wallet.id}" title="Delete" style="background: var(--surface); border: 1px solid var(--border); width: 26px; height: 26px; border-radius: 6px; color: var(--expense); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg>
+              </button>
+            ` : ''}
+          </div>
         </div>
       </div>
     </div>
@@ -151,7 +173,7 @@ function renderWalletCard(wallet, symbol) {
 
 function setupWalletStaticListeners(container) {
   container.querySelector("#back-btn")?.addEventListener("click", () => {
-    router.navigate("settings");
+    router.navigate("dashboard");
   });
 
   const openTransfer = () => showTransferModal(container);
@@ -164,13 +186,22 @@ function setupWalletStaticListeners(container) {
 }
 
 function attachWalletCardListeners(container) {
+  container.querySelectorAll("[data-make-primary-id]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute("data-make-primary-id");
+      store.setPrimaryWallet(id);
+      alerts.success(store.settings.language === 'en' ? 'Set as primary wallet!' : 'ตั้งเป็นกระเป๋าหลักเรียบร้อยแล้ว ⭐');
+    };
+  });
+
   container.querySelectorAll("[data-delete-id]").forEach((btn) => {
     btn.onclick = async (e) => {
       e.stopPropagation();
       const id = btn.getAttribute("data-delete-id");
       const isConfirmed = await alerts.confirmDelete(
         store.settings.language === 'en' ? 'Delete Wallet?' : 'ต้องการลบกระเป๋านี้?',
-        store.settings.language === 'en' ? 'Transactions will be moved to default wallet.' : 'รายการทั้งหมดจะถูกย้ายไปกระเป๋าหลัก'
+        store.settings.language === 'en' ? 'Transactions will be moved to primary wallet.' : 'รายการทั้งหมดจะถูกย้ายไปกระเป๋าหลัก'
       );
       if (isConfirmed) {
         store.deleteWallet(id);
@@ -200,19 +231,33 @@ function showAddWalletModal(container) {
       <form id="add-wallet-form" style="display: flex; flex-direction: column; gap: 14px;">
         <div>
           <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${store.settings.language === 'en' ? 'Wallet Name' : 'ชื่อกระเป๋า'}</label>
-          <input name="name" required placeholder="เช่น ธนาคารกสิกร / พอร์ต Dime" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
+          <input name="name" required placeholder="เช่น ธนาคารกสิกร / เงินสด" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
         </div>
         <div>
           <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${store.settings.language === 'en' ? 'Wallet Type' : 'ประเภทกระเป๋า'}</label>
           <select name="type" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);">
-            ${WALLET_TYPES.map(t => `<option value="${t.type}">${t.label}</option>`).join('')}
+            ${getWalletTypes().map(t => `<option value="${t.type}" style="background: var(--card); color: var(--text-primary);">${t.label}</option>`).join('')}
           </select>
         </div>
         <div>
-          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${store.settings.language === 'en' ? 'Starting Balance' : 'ยอดเงินเริ่มต้น'}</label>
-          <input name="balance" type="number" step="0.01" value="0" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">${store.settings.language === 'en' ? 'Starting Balance' : 'ยอดเงินตั้งต้น'}</label>
+            <button type="button" id="add-set-zero-btn" style="background: rgba(239, 68, 68, 0.1); color: var(--expense); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 800; cursor: pointer;">
+              ${store.settings.language === 'en' ? 'Set to 0' : 'ตั้งเป็น 0 ฿'}
+            </button>
+          </div>
+          <input id="add-wallet-balance-input" name="balance" type="number" step="0.01" value="0" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
+          <small style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 3px;">
+            ${store.settings.language === 'en' ? 'Direct starting amount (not added to transaction list).' : 'กำหนดยอดตั้งต้นของกระเป๋า โดยไม่สร้างประวัติรายการ'}
+          </small>
         </div>
-        <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 14px; background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 800; border: none; border-radius: var(--radius); cursor: pointer;">${t("save")}</button>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+          <input type="checkbox" id="add-is-primary" name="isPrimary" style="width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer;" />
+          <label for="add-is-primary" style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); cursor: pointer;">
+            ${store.settings.language === 'en' ? 'Set as Primary Wallet' : 'ตั้งเป็นกระเป๋าหลัก'}
+          </label>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 14px; background: var(--gold); color: #000; font-weight: 800; border: none; border-radius: var(--radius); cursor: pointer;">${t("save")}</button>
       </form>
     </div>
   `;
@@ -220,22 +265,38 @@ function showAddWalletModal(container) {
   const close = () => modal.remove();
   modal.querySelector(".modal-close-btn").addEventListener("click", close);
   modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+
+  modal.querySelector("#add-set-zero-btn")?.addEventListener("click", () => {
+    const input = modal.querySelector("#add-wallet-balance-input");
+    if (input) input.value = "0";
+  });
+
   modal.querySelector("form").addEventListener("submit", (e) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
-    const typeObj = WALLET_TYPES.find(t => t.type === data.get("type")) || WALLET_TYPES[0];
-    store.addWallet({
+    const types = getWalletTypes();
+    const typeObj = types.find(t => t.type === data.get("type")) || types[0];
+    const isPrimary = data.get("isPrimary") === "on";
+
+    const newW = store.addWallet({
       name: data.get("name"),
       type: data.get("type"),
       balance: parseFloat(data.get("balance")) || 0,
       icon: typeObj.type,
       color: typeObj.color,
     });
+
+    if (isPrimary && newW) {
+      store.setPrimaryWallet(newW.id);
+    }
+
     close();
+    alerts.success(store.settings.language === 'en' ? 'Wallet created!' : 'สร้างกระเป๋าเงินเรียบร้อยแล้ว');
   });
 }
 
 function showEditWalletModal(container, wallet) {
+  const currentBal = store.getWalletBalance(wallet.id);
   const modal = document.createElement("div");
   modal.className = "modal-overlay";
   modal.innerHTML = `
@@ -252,14 +313,28 @@ function showEditWalletModal(container, wallet) {
         <div>
           <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${store.settings.language === 'en' ? 'Wallet Type' : 'ประเภทกระเป๋า'}</label>
           <select name="type" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);">
-            ${WALLET_TYPES.map(t => `<option value="${t.type}" ${wallet.type === t.type ? 'selected' : ''}>${t.label}</option>`).join('')}
+            ${getWalletTypes().map(t => `<option value="${t.type}" style="background: var(--card); color: var(--text-primary);" ${wallet.type === t.type ? 'selected' : ''}>${t.label}</option>`).join('')}
           </select>
         </div>
         <div>
-          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">${store.settings.language === 'en' ? 'Initial Balance' : 'ยอดเงินเริ่มต้น'}</label>
-          <input name="balance" type="number" step="0.01" value="${wallet.balance || 0}" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">${store.settings.language === 'en' ? 'Current Balance' : 'ยอดเงินในกระเป๋า (ปรับยอด)'}</label>
+            <button type="button" id="set-zero-btn" style="background: rgba(239, 68, 68, 0.12); color: var(--expense); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 800; cursor: pointer;">
+              ${store.settings.language === 'en' ? 'Set to 0' : 'ตั้งเป็น 0 ฿'}
+            </button>
+          </div>
+          <input id="edit-wallet-balance-input" name="balance" type="number" step="0.01" value="${currentBal.toFixed(2)}" style="width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary);" />
+          <small style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 3px;">
+            ${store.settings.language === 'en' ? 'Adjusts balance directly without creating a transaction.' : 'ปรับยอดเงินคงเหลือโดยตรง ไม่บันทึกลงประวัติธุรกรรม'}
+          </small>
         </div>
-        <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 14px; background: linear-gradient(135deg, var(--gold), var(--amber)); color: #000; font-weight: 800; border: none; border-radius: var(--radius); cursor: pointer;">${t("save")}</button>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+          <input type="checkbox" id="edit-is-primary" name="isPrimary" ${wallet.isDefault ? 'checked disabled' : ''} style="width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer;" />
+          <label for="edit-is-primary" style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); cursor: pointer;">
+            ${wallet.isDefault ? (store.settings.language === 'en' ? 'This is the Primary Wallet' : 'กระเป๋านี้เป็นกระเป๋าหลักอยู่แล้ว') : (store.settings.language === 'en' ? 'Set as Primary Wallet' : 'ตั้งเป็นกระเป๋าหลัก')}
+          </label>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 6px; padding: 14px; background: var(--gold); color: #000; font-weight: 800; border: none; border-radius: var(--radius); cursor: pointer;">${t("save")}</button>
       </form>
     </div>
   `;
@@ -267,19 +342,35 @@ function showEditWalletModal(container, wallet) {
   const close = () => modal.remove();
   modal.querySelector(".modal-close-btn").addEventListener("click", close);
   modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+
+  const balanceInput = modal.querySelector("#edit-wallet-balance-input");
+  modal.querySelector("#set-zero-btn")?.addEventListener("click", () => {
+    if (balanceInput) balanceInput.value = "0";
+  });
+
   modal.querySelector("form").addEventListener("submit", (e) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const typeObj = WALLET_TYPES.find(t => t.type === data.get("type")) || WALLET_TYPES[0];
+    const targetBal = parseFloat(data.get("balance")) || 0;
+    const isPrimary = data.get("isPrimary") === "on";
+
     store.updateWallet({
       id: wallet.id,
       name: data.get("name"),
       type: data.get("type"),
-      balance: parseFloat(data.get("balance")) || 0,
       icon: typeObj.type,
       color: typeObj.color,
     });
+
+    store.setWalletBalance(wallet.id, targetBal);
+
+    if (isPrimary) {
+      store.setPrimaryWallet(wallet.id);
+    }
+
     close();
+    alerts.success(store.settings.language === 'en' ? 'Wallet updated!' : 'อัปเดตกระเป๋าเงินเรียบร้อยแล้ว');
   });
 }
 

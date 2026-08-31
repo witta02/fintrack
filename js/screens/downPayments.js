@@ -8,34 +8,40 @@ const money = (amount) =>
 
 export function renderDownPayments(container) {
   container.innerHTML = `
-    <div class="screen screen-enter down-payment-screen" style="padding: 0 16px 24px;">
+    <div class="screen screen-enter down-payment-screen" style="padding: 0 16px 100px;">
       <!-- Header -->
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 16px;">
-        <div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="downpayments-back-btn" class="icon-btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--radius);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
           <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">${t("downPaymentTitle")}</h1>
         </div>
-        <button id="add-down-payment" class="icon-btn" title="${t("downPaymentAdd")}" style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--gold), var(--amber)); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--shadow-gold);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <button id="add-down-payment" class="icon-btn" title="${t("downPaymentAdd")}" style="width: 38px; height: 38px; border-radius: var(--radius); background: var(--gold); border: none; display: flex; align-items: center; justify-content: center; color: #000; box-shadow: var(--btn-shadow);">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
 
-      <!-- Hero Summary Card -->
-      <div style="background: var(--balance-bg); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 20px; margin-bottom: 20px;">
-        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 4px;">
-          ${t("downPaymentOutstanding")}
-        </div>
-        <div id="down-payment-total-hero" style="font-size: 32px; font-weight: 900; color: var(--balance-text); font-family: var(--font-heading); margin-bottom: 6px;">
-          0.00
-        </div>
-        <div id="down-payment-status-text" style="font-size: 12px; color: var(--text-secondary);">
+      <!-- Hero Summary Double-Bezel Card -->
+      <div class="bezel-card" style="margin-bottom: 18px;">
+        <div class="bezel-inner" style="padding: 18px 16px;">
+          <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary); margin-bottom: 4px;">
+            ${t("downPaymentOutstanding")}
+          </div>
+          <div id="down-payment-total-hero" style="font-size: 32px; font-weight: 900; letter-spacing: -0.6px; color: var(--balance-text); font-family: var(--font-heading); margin-bottom: 6px;">
+            0.00
+          </div>
+          <div id="down-payment-status-text" style="font-size: 11.5px; color: var(--text-secondary); font-weight: 600;">
+          </div>
         </div>
       </div>
 
       <!-- Plan list -->
-      <div id="down-payment-list" style="display: flex; flex-direction: column; gap: 14px;">
+      <div id="down-payment-list" style="display: flex; flex-direction: column; gap: 12px;">
       </div>
     </div>`;
 
+  container.querySelector("#downpayments-back-btn")?.addEventListener("click", () => router.navigate("dashboard"));
   container.querySelector("#add-down-payment")?.addEventListener("click", () => showAddDialog(container));
   updateDownPaymentsUI(container);
 
@@ -76,33 +82,35 @@ function planCard(plan) {
     : t("downPaymentNoDate");
 
   return `
-    <article class="card ${complete ? "is-complete" : ""}" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 18px; position: relative;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-        <div>
-          <h2 style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0;">${escapeHtml(plan.title)}</h2>
-          <span style="font-size: 11.5px; font-weight: 600; color: ${complete ? 'var(--income)' : 'var(--gold)'}; background: ${complete ? 'rgba(52, 211, 153, 0.12)' : 'rgba(245, 200, 66, 0.12)'}; padding: 2px 8px; border-radius: 999px;">
-            ${complete ? t("downPaymentComplete") : t("downPaymentRemaining", { amount: money(remaining) })}
-          </span>
+    <article class="bezel-card ${complete ? "is-complete" : ""}">
+      <div class="bezel-inner" style="padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+          <div>
+            <h2 style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0;">${escapeHtml(plan.title)}</h2>
+            <span style="font-size: 11px; font-weight: 700; color: ${complete ? 'var(--income)' : 'var(--gold)'}; background: ${complete ? 'var(--income-soft)' : 'var(--gold-soft)'}; border: 1px solid ${complete ? 'var(--income)' : 'var(--gold)'}; padding: 2px 8px; border-radius: 999px;">
+              ${complete ? t("downPaymentComplete") : t("downPaymentRemaining", { amount: money(remaining) })}
+            </span>
+          </div>
+          <button class="payment-delete" data-delete-plan="${plan.id}" aria-label="${t("deleteThis")}" style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 2px 6px;">×</button>
         </div>
-        <button class="payment-delete" data-delete-plan="${plan.id}" aria-label="${t("deleteThis")}" style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 2px 6px;">×</button>
-      </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
-        <span style="font-size: 18px; font-weight: 900; color: var(--text-primary);">${money(plan.paidAmount)}</span>
-        <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">/ ${money(plan.totalAmount)}</span>
-      </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+          <span style="font-size: 17px; font-weight: 900; color: var(--text-primary); font-family: var(--font-heading);">${money(plan.paidAmount)}</span>
+          <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">/ ${money(plan.totalAmount)}</span>
+        </div>
 
-      <!-- Progress bar -->
-      <div style="width: 100%; height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; margin-bottom: 10px;">
-        <div style="width: ${percentage}%; height: 100%; background: linear-gradient(90deg, var(--gold), var(--amber)); border-radius: 3px; transition: width 0.4s ease;"></div>
-      </div>
+        <!-- Progress bar -->
+        <div style="width: 100%; height: 6px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 10px;">
+          <div style="width: ${percentage}%; height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.4s ease;"></div>
+        </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-secondary); margin-bottom: ${complete ? '0' : '14px'};">
-        <span>${t("downPaymentPaid")} ${percentage.toFixed(0)}%</span>
-        <span>${complete ? `✓ ${t("downPaymentComplete")}` : t("downPaymentReminder", { date: due })}</span>
-      </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-secondary); margin-bottom: ${complete ? '0' : '12px'}; font-weight: 600;">
+          <span>${t("downPaymentPaid")} ${percentage.toFixed(0)}%</span>
+          <span>${complete ? t("downPaymentComplete") : t("downPaymentReminder", { date: due })}</span>
+        </div>
 
-      ${complete ? "" : `<button class="payment-add-btn btn-primary" data-add-payment="${plan.id}" data-remaining="${remaining}" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 700; border-radius: var(--radius); background: var(--surface); color: var(--gold); border: 1px solid var(--border); cursor: pointer; transition: all var(--transition);">${t("downPaymentAddPayment")}</button>`}
+        ${complete ? "" : `<button class="payment-add-btn btn-primary" data-add-payment="${plan.id}" data-remaining="${remaining}" style="width: 100%; padding: 10px; font-size: 12.5px; font-weight: 800; border-radius: var(--radius-sm);">${t("downPaymentAddPayment")}</button>`}
+      </div>
     </article>
   `;
 }
@@ -110,7 +118,9 @@ function planCard(plan) {
 function emptyState() {
   return `
     <div style="text-align: center; padding: 48px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);">
-      <div style="font-size: 36px; margin-bottom: 12px;">🧾</div>
+      <div style="width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
+      </div>
       <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">${t("downPaymentEmpty")}</h3>
       <p style="font-size: 12px; color: var(--text-secondary);">${t("downPaymentEmptyHint")}</p>
     </div>

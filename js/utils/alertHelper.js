@@ -1,6 +1,91 @@
 import Swal from "sweetalert2";
 import { store } from "../store.js";
 
+export function formatFriendlyError(error, lang = store.settings.language || "th") {
+  if (!error) return "";
+  const rawMsg = typeof error === "string" ? error : (error.message || error.details || error.hint || String(error));
+  const msg = (rawMsg || "").toLowerCase();
+
+  if (lang === "th") {
+    if (msg.includes("invalid login credentials") || msg.includes("invalid credentials") || msg.includes("invalid_grant")) {
+      return "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
+    }
+    if (msg.includes("user already registered") || msg.includes("user_already_exists") || (msg.includes("422") && msg.includes("signup"))) {
+      return "อีเมลนี้มีผู้ใช้งานแล้ว กรุณาเข้าสู่ระบบด้วยรหัสผ่านของคุณ";
+    }
+    if (msg.includes("password should be at least 6 characters") || msg.includes("password must be")) {
+      return "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร";
+    }
+    if (msg.includes("email not confirmed") || msg.includes("email_not_confirmed")) {
+      return "กรุณายืนยันอีเมลในกล่องจดหมายของคุณก่อนเข้าสู่ระบบ";
+    }
+    if (msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("network request failed")) {
+      return "ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง";
+    }
+    if (msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("over_email_send_rate_limit")) {
+      return "ส่งคำขอบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง";
+    }
+    if (msg.includes("jwt expired") || msg.includes("session expired") || msg.includes("token is expired")) {
+      return "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง";
+    }
+    if (msg.includes("pgrst") || msg.includes("schema cache") || msg.includes("column") || msg.includes("syntax error") || msg.includes("database")) {
+      return "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง";
+    }
+    if (msg.includes("is not a function") || msg.includes("typeerror") || msg.includes("cannot read properties")) {
+      return "เกิดข้อผิดพลาดในการประมวลผล กรุณารีเฟรชหน้าจอแล้วลองใหม่";
+    }
+    if (msg.includes("category name is required")) {
+      return "กรุณากรอกชื่อหมวดหมู่";
+    }
+    if (msg.includes("category already exists")) {
+      return "มีหมวดหมู่นี้อยู่แล้ว";
+    }
+    if (msg.includes("no qr") || msg.includes("no receipt")) {
+      return "ไม่พบ QR Code หรือใบเสร็จที่อ่านได้ กรุณาใช้ภาพที่ชัดเจนขึ้น";
+    }
+    if (rawMsg.startsWith("ข้อผิดพลาด") || rawMsg.startsWith("เกิดข้อผิดพลาด") || rawMsg.startsWith("กรุณา") || rawMsg.startsWith("ไม่พบ") || rawMsg.startsWith("จำนวน") || rawMsg.startsWith("ยอดเงิน") || rawMsg.startsWith("ไม่รองรับ") || rawMsg.startsWith("อีเมล")) {
+      return rawMsg;
+    }
+    return "เกิดข้อผิดพลาดในการทำรายการ กรุณาลองใหม่อีกครั้ง";
+  } else {
+    // English
+    if (msg.includes("invalid login credentials") || msg.includes("invalid credentials") || msg.includes("invalid_grant")) {
+      return "Invalid email or password.";
+    }
+    if (msg.includes("user already registered") || msg.includes("user_already_exists") || (msg.includes("422") && msg.includes("signup"))) {
+      return "This email is already registered. Please sign in with your password.";
+    }
+    if (msg.includes("password should be at least 6 characters") || msg.includes("password must be")) {
+      return "Password must be at least 6 characters.";
+    }
+    if (msg.includes("email not confirmed") || msg.includes("email_not_confirmed")) {
+      return "Please verify your email address before signing in.";
+    }
+    if (msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("network request failed")) {
+      return "Network connection failed. Please check your internet connection.";
+    }
+    if (msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("over_email_send_rate_limit")) {
+      return "Too many requests. Please wait a moment and try again.";
+    }
+    if (msg.includes("jwt expired") || msg.includes("session expired") || msg.includes("token is expired")) {
+      return "Your session has expired. Please sign in again.";
+    }
+    if (msg.includes("pgrst") || msg.includes("schema cache") || msg.includes("column") || msg.includes("syntax error") || msg.includes("database")) {
+      return "Unable to save data. Please try again.";
+    }
+    if (msg.includes("is not a function") || msg.includes("typeerror") || msg.includes("cannot read properties")) {
+      return "An unexpected processing error occurred. Please refresh the page.";
+    }
+    if (msg.includes("category name is required")) {
+      return "Category name is required.";
+    }
+    if (msg.includes("category already exists")) {
+      return "Category already exists.";
+    }
+    return rawMsg;
+  }
+}
+
 export const alerts = {
   success(title, text = "") {
     const isDark = store.settings.isDarkMode;
@@ -17,27 +102,40 @@ export const alerts = {
 
   error(title, text = "") {
     const isDark = store.settings.isDarkMode;
+    const lang = store.settings.language || "th";
+    
+    // Sanitize technical messages
+    let cleanTitle = title;
+    let cleanText = text;
+
+    if (text) {
+      cleanText = formatFriendlyError(text, lang);
+    } else if (title) {
+      cleanTitle = formatFriendlyError(title, lang);
+    }
+
     return Swal.fire({
-      title: title,
-      text: text,
+      title: cleanTitle,
+      text: cleanText,
       icon: "error",
       background: isDark ? "#1C2128" : "#FFFFFF",
       color: isDark ? "#FFFFFF" : "#1F2937",
       confirmButtonColor: "#FFB800",
-      confirmButtonText: store.settings.language === "en" ? "OK" : "ตกลง",
+      confirmButtonText: lang === "en" ? "OK" : "ตกลง",
     });
   },
 
   warning(title, text = "") {
     const isDark = store.settings.isDarkMode;
+    const lang = store.settings.language || "th";
     return Swal.fire({
       title: title,
-      text: text,
+      text: text ? formatFriendlyError(text, lang) : "",
       icon: "warning",
       background: isDark ? "#1C2128" : "#FFFFFF",
       color: isDark ? "#FFFFFF" : "#1F2937",
       confirmButtonColor: "#FFB800",
-      confirmButtonText: store.settings.language === "en" ? "OK" : "ตกลง",
+      confirmButtonText: lang === "en" ? "OK" : "ตกลง",
     });
   },
 

@@ -1,7 +1,7 @@
 import generatePayload from "promptpay-qr";
 import QRCode from "qrcode";
 
-export const DEFAULT_PROMPTPAY_ID = import.meta.env.VITE_PROMPTPAY_ID || "0832173858";
+export const DEFAULT_PROMPTPAY_ID = import.meta.env.VITE_PROMPTPAY_ID || "";
 
 /**
  * Formats PromptPay ID (Phone or Tax ID) for payload generator.

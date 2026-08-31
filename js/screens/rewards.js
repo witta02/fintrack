@@ -16,7 +16,7 @@ export function renderRewards(container) {
     {
       id: "midnight",
       type: "theme",
-      icon: "🌙",
+      icon: `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
       title: lang === 'en' ? "Midnight Theme" : "ธีมมิดไนท์",
       desc: lang === 'en' ? "Sleek and dark blue aesthetic." : "ธีมมืดสบายตา",
       price: 500,
@@ -24,31 +24,31 @@ export function renderRewards(container) {
     {
       id: "cyberpunk",
       type: "theme",
-      icon: "🤖",
+      icon: `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 8h6M9 12h6M9 16h6"/></svg>`,
       title: lang === 'en' ? "Cyberpunk Theme" : "ธีมไซเบอร์พังค์",
-      desc: lang === 'en' ? "Neon lights and futuristic vibes." : "มีความเล่นสีแบบตัวแม่ตัวมัม",
+      desc: lang === 'en' ? "Neon lights and futuristic vibes." : "สไตล์นีออนล้ำสมัย",
       price: 1000,
     },
     {
       id: "gold",
       type: "theme",
-      icon: "✨",
+      icon: `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
       title: lang === 'en' ? "Golden Theme" : "ธีมทองคำ",
-      desc: lang === 'en' ? "The ultimate flex. Pure luxury." : "ความหรูหราแบบตัวแม่",
+      desc: lang === 'en' ? "Pure luxury gold accents." : "ความหรูหราสีทอง",
       price: 2500,
     },
     {
       id: "forgiveness",
       type: "item",
-      icon: "🕊️",
+      icon: `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
       title: lang === 'en' ? "Forgiveness Pass" : "บัตรไถ่บาป",
-      desc: lang === 'en' ? "Forgives one bad habit penalty and restores lost XP!" : "ลบบทลงโทษจากใช้จ่ายฟุ่มเฟูอย 1 ครั้งและคืน XP ที่เสียไป!",
+      desc: lang === 'en' ? "Forgives one bad habit penalty and restores lost XP!" : "ลบบทลงโทษจากใช้จ่ายฟุ่มเฟือย 1 ครั้งและคืน XP!",
       price: 300,
     }
   ];
 
   let html = `
-    <div class="screen screen-enter" style="padding: 0 16px 24px;">
+    <div class="screen screen-enter" style="padding: 0 16px 100px;">
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0 16px;">
         <div style="display: flex; align-items: center; gap: 12px;">
           <button class="back-btn" style="background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px;">
@@ -57,26 +57,27 @@ export function renderRewards(container) {
           <h1 style="font-size: 22px; font-weight: 900; color: var(--text-primary); margin: 0;">${lang === 'en' ? 'Rewards Shop' : 'ร้านค้าของรางวัล'}</h1>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; background: rgba(245,200,66,0.15); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(245,200,66,0.25);">
-          <span style="font-size: 15px;">🪙</span>
-          <span style="font-weight: 800; color: var(--gold); font-size: 13px;">${coins}</span>
+          <span style="font-weight: 800; color: var(--gold); font-size: 13px;">${coins} Coins</span>
         </div>
       </div>
 
     <div style="margin-bottom: 20px; text-align: center; color: var(--text-secondary); font-size: 14px;">
-      ${lang === 'en' ? 'Spend your FinCoins to unlock exclusive app features!' : 'ใช้ FinCoins ของคุณเพื่อปลดล็อกฟีเจอร์พิเศษ!'}
+      ${lang === 'en' ? 'Spend your FinCoins to unlock exclusive app features!' : 'ใช้ FinCoins ของคุณเพื่อปลดล็อกฟีเจอร์พิเศษ'}
     </div>
 
     <!-- Gacha Machine -->
-    <div style="margin: 0 20px 24px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(52, 211, 153, 0.15)); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.2);">
-      <div style="font-size: 64px; margin-bottom: 12px; animation: float 3s ease-in-out infinite;">🎰</div>
-      <h2 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">
-        ${lang === 'en' ? 'Gacha Machine' : 'ตู้สุ่มกาชาปอง'}
+    <div style="margin: 0 0 24px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 22px; text-align: center; position: relative; overflow: hidden; box-shadow: var(--card-shadow);">
+      <div style="width: 56px; height: 56px; margin: 0 auto 12px; border-radius: 16px; background: var(--surface); display: flex; align-items: center; justify-content: center; color: var(--gold); border: 1px solid var(--border);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/></svg>
+      </div>
+      <h2 style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin-bottom: 6px;">
+        ${lang === 'en' ? 'Gacha Vault' : 'ตู้สุ่มของสะสม'}
       </h2>
-      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; max-width: 250px; margin-inline: auto; line-height: 1.4;">
-        ${lang === 'en' ? 'Roll for random pets and collectibles! Can you find a Legendary item?' : 'สุ่มสัตว์เลี้ยงและของสะสม! คุณจะหาไอเทมระดับตำนานเจอไหม?'}
+      <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px; max-width: 280px; margin-inline: auto; line-height: 1.4;">
+        ${lang === 'en' ? 'Roll for financial badges and rare collectibles!' : 'สุ่มเหรียญตราและของสะสมพิเศษ'}
       </p>
-      <button id="roll-gacha-btn" style="background: ${coins >= 100 ? 'linear-gradient(90deg, #a855f7, #3b82f6)' : 'var(--surface)'}; color: ${coins >= 100 ? '#FFF' : 'var(--text-muted)'}; border: none; border-radius: 12px; padding: 12px 24px; font-size: 16px; font-weight: 800; cursor: ${coins >= 100 ? 'pointer' : 'not-allowed'}; box-shadow: ${coins >= 100 ? '0 4px 15px rgba(168,85,247,0.4)' : 'none'}; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
-        ${lang === 'en' ? 'Roll Gacha' : 'สุ่มกาชา'} • 100 🪙
+      <button id="roll-gacha-btn" style="background: ${coins >= 100 ? 'var(--gold)' : 'var(--surface)'}; color: ${coins >= 100 ? 'var(--btn-text-primary)' : 'var(--text-secondary)'}; border: 1px solid ${coins >= 100 ? 'var(--gold)' : 'var(--border)'}; border-radius: 12px; padding: 11px 22px; font-size: 14px; font-weight: 800; cursor: ${coins >= 100 ? 'pointer' : 'not-allowed'}; display: inline-flex; align-items: center; gap: 8px; transition: all var(--transition-fast);">
+        ${lang === 'en' ? 'Roll Gacha' : 'สุ่มกาชา'} (100 Coins)
       </button>
     </div>
 
@@ -97,7 +98,7 @@ export function renderRewards(container) {
     } else {
       btnHTML = `
         <button class="buy-btn" data-id="${item.id}" data-type="${item.type}" data-price="${item.price}" style="margin-top: auto; width: 100%; padding: 10px; background: ${canAfford ? 'var(--gold)' : 'rgba(245,200,66,0.15)'}; color: ${canAfford ? '#000' : 'var(--gold)'}; border: 1px solid var(--gold); border-radius: 8px; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all var(--transition);">
-          ${item.price} 🪙 ${canAfford ? '' : '(Get Coins)'}
+          ${item.price} Coins ${canAfford ? '' : '(Need Coins)'}
         </button>
       `;
     }
@@ -221,14 +222,18 @@ function showBuyCoinsModal(container, lang) {
         <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Support FinTrack and unlock premium items!</p>
         
         <div style="display: flex; gap: 12px; margin-bottom: 24px; justify-content: center;">
-          <div class="coin-pack" data-coins="500" data-price="29" style="flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: 0.2s;">
-            <div style="font-size: 24px; margin-bottom: 8px;">🪙</div>
+          <div class="coin-pack" data-coins="500" data-price="29" style="flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: 0.2s; text-align: center;">
+            <div style="width: 32px; height: 32px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; color: var(--gold);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/></svg>
+            </div>
             <div style="font-weight: 800; font-size: 16px;">500 Coins</div>
             <div style="color: var(--gold); font-weight: 700; margin-top: 4px;">฿29</div>
           </div>
-          <div class="coin-pack" data-coins="2000" data-price="99" style="flex: 1; background: var(--card); border: 2px solid var(--gold); border-radius: 12px; padding: 16px; cursor: pointer; transition: 0.2s; position: relative;">
+          <div class="coin-pack" data-coins="2000" data-price="99" style="flex: 1; background: var(--card); border: 2px solid var(--gold); border-radius: 12px; padding: 16px; cursor: pointer; transition: 0.2s; position: relative; text-align: center;">
             <div style="position: absolute; top: -10px; right: -10px; background: var(--expense); color: white; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 12px;">BEST DEAL</div>
-            <div style="font-size: 24px; margin-bottom: 8px;">👑</div>
+            <div style="width: 32px; height: 32px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; color: var(--gold);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+            </div>
             <div style="font-weight: 800; font-size: 16px;">2000 Coins</div>
             <div style="color: var(--gold); font-weight: 700; margin-top: 4px;">฿99</div>
           </div>
@@ -332,7 +337,7 @@ function showBuyCoinsModal(container, lang) {
     if (!validation.isValid) {
       uploadBtn.disabled = false;
       uploadBtn.innerHTML = lang === 'en' ? 'Upload Slip' : 'อัปโหลดสลิป';
-      uploadStatus.textContent = "❌ " + validation.reason;
+      uploadStatus.textContent = validation.reason;
       uploadStatus.style.color = "var(--expense)";
       alerts.error(
         lang === 'en' ? "Invalid Transfer Slip!" : "สลิปไม่ถูกต้อง!",
@@ -355,7 +360,7 @@ function showBuyCoinsModal(container, lang) {
     if (isDuplicate) {
       uploadBtn.disabled = false;
       uploadBtn.innerHTML = lang === 'en' ? 'Upload Slip' : 'อัปโหลดสลิป';
-      uploadStatus.textContent = "❌ Duplicate slip! This slip has already been used. / สลิปนี้ถูกใช้งานไปแล้ว!";
+      uploadStatus.textContent = "Duplicate slip! This slip has already been used. / สลิปนี้ถูกใช้งานไปแล้ว!";
       uploadStatus.style.color = "var(--expense)";
       alerts.error(
         "Duplicate Slip! / สลิปซ้ำ!",
@@ -367,7 +372,7 @@ function showBuyCoinsModal(container, lang) {
     uploadBtn.innerHTML = '<div class="spinner" style="display:inline-block; vertical-align:middle; width:16px; height:16px; border-width:2px; border-color: #fff transparent #fff transparent;"></div> Granting Coins...';
     
     setTimeout(() => {
-      uploadStatus.textContent = `✅ Success! ${selectedCoins} Coins added.`;
+      uploadStatus.textContent = `Success! ${selectedCoins} Coins added.`;
       uploadStatus.style.color = "var(--income)";
       
       slipIdentifiers.forEach(id => {
@@ -381,7 +386,7 @@ function showBuyCoinsModal(container, lang) {
       setTimeout(() => {
         close();
         renderRewards(container); // Refresh UI
-        alerts.success(`Purchased ${selectedCoins} FinCoins! 🎉`);
+        alerts.success(`Purchased ${selectedCoins} FinCoins!`);
       }, 1500);
       
     }, 1200);

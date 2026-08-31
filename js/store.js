@@ -17,12 +17,11 @@ export const store = {
   recurringRules: [],
   downPayments: [],
   wallets: [],
-  portfolio: { holdings: [], cashUSD: 0, cashTHB: 0 },
+  savingsGoals: [],
   settings: {
     selectedCurrency: "THB",
     isDarkMode: true,
     isPremium: true,
-    isTraderMode: false,
     language: "th",
     hasCompletedOnboarding: false,
     taxDeduction: 60000,
@@ -41,6 +40,7 @@ export const store = {
     forgivenTransactions: [],
     collectibles: [],
     showNetWorthCard: true,
+    categoryBudgets: {},
     questsState: { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
   },
 
@@ -67,8 +67,6 @@ export const store = {
     const savedSettings = localStorage.getItem("fintrack_settings");
     const savedNetWorth = localStorage.getItem("fintrack_net_worth");
     const savedWallets = localStorage.getItem("fintrack_wallets");
-    const savedPortfolio = localStorage.getItem("fintrack_portfolio");
-
     if (savedSettings) {
       this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
     }
@@ -77,16 +75,10 @@ export const store = {
       this.wallets = JSON.parse(savedWallets);
     } else {
       this.wallets = [
-        { id: "default", name: "เงินสด (Cash)", type: "cash", color: "#F5C842", icon: "💵", balance: 0, isDefault: true, currency: "THB" },
-        { id: "bank_main", name: "บัญชีธนาคาร (Bank)", type: "bank", color: "#3B82F6", icon: "🏦", balance: 0, isDefault: false, currency: "THB" },
-        { id: "invest_main", name: "พอร์ตลงทุน (Invest)", type: "investment", color: "#6366F1", icon: "📈", balance: 0, isDefault: false, currency: "THB" },
+        { id: "default", name: "เงินสด (Cash)", type: "cash", color: "#F5C842", icon: "cash", balance: 0, isDefault: true, currency: "THB" },
+        { id: "bank_main", name: "บัญชีธนาคาร (Bank)", type: "bank", color: "#3B82F6", icon: "bank", balance: 0, isDefault: false, currency: "THB" },
+        { id: "invest_main", name: "พอร์ตลงทุน (Invest)", type: "investment", color: "#6366F1", icon: "investment", balance: 0, isDefault: false, currency: "THB" },
       ];
-    }
-
-    if (savedPortfolio) {
-      this.portfolio = JSON.parse(savedPortfolio);
-    } else {
-      this.portfolio = { holdings: [], cashUSD: 0, cashTHB: 0 };
     }
 
     if (savedNetWorth) {
@@ -117,6 +109,13 @@ export const store = {
       }));
     } else {
       this.recurringRules = [];
+    }
+
+    const savedSavingsGoals = localStorage.getItem("fintrack_savings_goals");
+    if (savedSavingsGoals) {
+      this.savingsGoals = JSON.parse(savedSavingsGoals);
+    } else {
+      this.savingsGoals = [];
     }
 
     this.downPayments = savedDownPayments
@@ -214,8 +213,8 @@ export const store = {
       JSON.stringify(this.recurringRules),
     );
     localStorage.setItem("fintrack_down_payments", JSON.stringify(this.downPayments));
+    localStorage.setItem("fintrack_savings_goals", JSON.stringify(this.savingsGoals || []));
     localStorage.setItem("fintrack_wallets", JSON.stringify(this.wallets));
-    localStorage.setItem("fintrack_portfolio", JSON.stringify(this.portfolio));
     localStorage.setItem("fintrack_settings", JSON.stringify(this.settings));
     if (this.user) {
       this.saveSettingsToCloud().catch((err) =>
@@ -920,16 +919,44 @@ export const store = {
     return this.wallets.find((w) => w.id === id) || null;
   },
 
+  getTotalBalance() {
+    let startingSum = 0;
+    this.wallets.forEach((w) => {
+      startingSum += parseFloat(w.balance) || 0;
+    });
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+    this.transactions.forEach((t) => {
+      const amt = parseFloat(t.amount) || 0;
+      if (t.isIncome) totalIncome += amt;
+      else totalExpense += amt;
+    });
+
+    return startingSum + totalIncome - totalExpense;
+  },
+
   getWalletBalance(walletId) {
     const wallet = this.getWallet(walletId);
     if (!wallet) return 0;
     const startingBalance = parseFloat(wallet.balance) || 0;
-    const txs = this.transactions.filter((t) => (t.walletId || 'default') === walletId);
+    const primaryWallet = this.getPrimaryWallet();
+    const isPrimary = primaryWallet ? (wallet.id === primaryWallet.id) : false;
+    const allKnownIds = new Set(this.wallets.map((w) => w.id));
+
+    const txs = this.transactions.filter((t) => {
+      const wId = t.walletId || "default";
+      if (wId === walletId) return true;
+      if (isPrimary && (!allKnownIds.has(wId) || wId === "default")) return true;
+      return false;
+    });
+
     let totalIncome = 0;
     let totalExpense = 0;
     txs.forEach((t) => {
-      if (t.isIncome) totalIncome += t.amount;
-      else totalExpense += t.amount;
+      const amt = parseFloat(t.amount) || 0;
+      if (t.isIncome) totalIncome += amt;
+      else totalExpense += amt;
     });
     return startingBalance + totalIncome - totalExpense;
   },
@@ -940,7 +967,7 @@ export const store = {
       name: wallet.name || "กระเป๋าใหม่",
       type: wallet.type || "cash",
       color: wallet.color || "#F5C842",
-      icon: wallet.icon || "💵",
+      icon: wallet.icon || "cash",
       balance: parseFloat(wallet.balance) || 0,
       isDefault: !!wallet.isDefault,
       currency: wallet.currency || "THB",
@@ -957,18 +984,62 @@ export const store = {
       this.wallets[idx] = {
         ...this.wallets[idx],
         ...updated,
-        balance: parseFloat(updated.balance !== undefined ? updated.balance : this.wallets[idx].balance) || 0,
+        balance: updated.balance !== undefined ? parseFloat(updated.balance) || 0 : (this.wallets[idx].balance || 0),
       };
       this.save();
     }
   },
 
+  setWalletBalance(walletId, targetBalance) {
+    const wallet = this.getWallet(walletId);
+    if (!wallet) return;
+
+    const target = parseFloat(targetBalance);
+    const targetValid = !isNaN(target) ? target : 0;
+    const isPrimary = wallet.isDefault || wallet.id === 'default';
+    const allKnownIds = new Set(this.wallets.map((w) => w.id));
+
+    const txs = this.transactions.filter((t) => {
+      const wId = t.walletId || 'default';
+      if (wId === walletId) return true;
+      if (isPrimary && (wId === 'default' || !allKnownIds.has(wId))) return true;
+      return false;
+    });
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+    txs.forEach((t) => {
+      if (t.isIncome) totalIncome += t.amount;
+      else totalExpense += t.amount;
+    });
+    const netTransactions = totalIncome - totalExpense;
+
+    // Direct base balance adjustment: setting to 0 or any target value
+    wallet.balance = targetValid - netTransactions;
+    this.save();
+  },
+
+  setPrimaryWallet(walletId) {
+    this.wallets.forEach((w) => {
+      w.isDefault = (w.id === walletId);
+    });
+    this.save();
+  },
+
+  getPrimaryWallet() {
+    return this.wallets.find((w) => w.isDefault) || this.wallets[0] || { id: "default", name: "เงินสด (Cash)" };
+  },
+
   deleteWallet(id) {
     if (this.wallets.length <= 1) return false; // keep at least 1 wallet
+    const wasPrimary = this.getWallet(id)?.isDefault;
     this.wallets = this.wallets.filter((w) => w.id !== id);
+    if (wasPrimary && this.wallets.length > 0) {
+      this.wallets[0].isDefault = true;
+    }
     // Unassign transactions
     this.transactions.forEach((t) => {
-      if (t.walletId === id) t.walletId = "default";
+      if (t.walletId === id) t.walletId = this.wallets[0].id;
     });
     this.save();
     return true;
@@ -1009,81 +1080,322 @@ export const store = {
     return true;
   },
 
-  // --- Portfolio & Stock Tracker API (Trader Mode) ---
-  getPortfolio() {
-    return this.portfolio || { holdings: [], cashUSD: 0, cashTHB: 0 };
+  // --- Category Budgets API ---
+  getCategoryBudgets() {
+    return this.settings.categoryBudgets || {};
   },
 
-  addStockHolding(item) {
-    if (!this.portfolio) this.portfolio = { holdings: [] };
-    if (!this.portfolio.holdings) this.portfolio.holdings = [];
+  getCategoryBudget(category) {
+    if (!this.settings.categoryBudgets) return 0;
+    return parseFloat(this.settings.categoryBudgets[category]) || 0;
+  },
 
-    const holding = {
-      id: item.id || Math.random().toString(36).substring(2, 11),
-      symbol: (item.symbol || "UNKNOWN").toUpperCase().trim(),
-      name: item.name || item.symbol || "",
-      shares: parseFloat(item.shares) || 0,
-      avgPrice: parseFloat(item.avgPrice) || 0,
-      currency: item.currency || "USD",
-      type: item.type || "stock", // stock, etf, crypto, mutual_fund
-      note: item.note || "",
+  setCategoryBudget(category, amount) {
+    if (!this.settings.categoryBudgets) this.settings.categoryBudgets = {};
+    const val = parseFloat(amount);
+    if (!isNaN(val) && val > 0) {
+      this.settings.categoryBudgets[category] = val;
+    } else {
+      delete this.settings.categoryBudgets[category];
+    }
+    this.save();
+    this.saveSettingsToCloud();
+  },
+
+  // --- Savings Goals & Virtual Vaults API ---
+  getSavingsGoals() {
+    return this.savingsGoals || [];
+  },
+
+  addSavingsGoal(goal) {
+    if (!this.savingsGoals) this.savingsGoals = [];
+    const newGoal = {
+      id: goal.id || Math.random().toString(36).substring(2, 11),
+      title: goal.title || "เป้าหมายใหม่",
+      targetAmount: parseFloat(goal.targetAmount) || 0,
+      currentAmount: parseFloat(goal.currentAmount) || 0,
+      emoji: goal.emoji || "",
+      color: goal.color || "#F5C842",
+      deadline: goal.deadline ? (goal.deadline instanceof Date ? goal.deadline : new Date(goal.deadline)) : null,
       createdAt: new Date(),
     };
-
-    // If symbol already exists, update position with weighted average price
-    const existingIdx = this.portfolio.holdings.findIndex(
-      (h) => h.symbol === holding.symbol && h.currency === holding.currency
-    );
-
-    if (existingIdx !== -1) {
-      const existing = this.portfolio.holdings[existingIdx];
-      const totalShares = existing.shares + holding.shares;
-      const totalCost = (existing.shares * existing.avgPrice) + (holding.shares * holding.avgPrice);
-      existing.shares = totalShares;
-      existing.avgPrice = totalShares > 0 ? totalCost / totalShares : existing.avgPrice;
-    } else {
-      this.portfolio.holdings.push(holding);
-    }
-
+    this.savingsGoals.push(newGoal);
     this.save();
-    return holding;
+    return newGoal;
   },
 
-  updateStockHolding(updated) {
-    if (!this.portfolio || !this.portfolio.holdings) return;
-    const idx = this.portfolio.holdings.findIndex((h) => h.id === updated.id);
-    if (idx !== -1) {
-      this.portfolio.holdings[idx] = {
-        ...this.portfolio.holdings[idx],
-        ...updated,
-        shares: parseFloat(updated.shares) || 0,
-        avgPrice: parseFloat(updated.avgPrice) || 0,
-      };
-      this.save();
-    }
-  },
+  depositToGoal(goalId, amount, walletId = "default") {
+    const goal = (this.savingsGoals || []).find((g) => g.id === goalId);
+    const amt = parseFloat(amount);
+    if (!goal || !amt || amt <= 0) return false;
 
-  deleteStockHolding(id) {
-    if (!this.portfolio || !this.portfolio.holdings) return;
-    this.portfolio.holdings = this.portfolio.holdings.filter((h) => h.id !== id);
-    this.save();
-  },
-
-  importPortfolio(items) {
-    if (!Array.isArray(items)) return 0;
-    let addedCount = 0;
-    items.forEach((item) => {
-      if (item.symbol && item.shares > 0) {
-        this.addStockHolding(item);
-        addedCount++;
-      }
+    this.addTransaction({
+      title: `ออมเงินเข้า: ${goal.title}`,
+      amount: amt,
+      isIncome: false,
+      category: "Savings",
+      walletId: walletId,
+      date: new Date(),
     });
-    return addedCount;
+
+    goal.currentAmount = (goal.currentAmount || 0) + amt;
+    this.save();
+    return true;
   },
 
-  setTraderMode(enabled) {
-    this.settings.isTraderMode = !!enabled;
+  withdrawFromGoal(goalId, amount, walletId = "default") {
+    const goal = (this.savingsGoals || []).find((g) => g.id === goalId);
+    const amt = parseFloat(amount);
+    if (!goal || !amt || amt <= 0 || (goal.currentAmount || 0) < amt) return false;
+
+    this.addTransaction({
+      title: `ถอนเงินจากเป้าหมาย: ${goal.title}`,
+      amount: amt,
+      isIncome: true,
+      category: "Savings",
+      walletId: walletId,
+      date: new Date(),
+    });
+
+    goal.currentAmount = Math.max(0, (goal.currentAmount || 0) - amt);
     this.save();
+    return true;
+  },
+
+  deleteSavingsGoal(goalId) {
+    this.savingsGoals = (this.savingsGoals || []).filter((g) => g.id !== goalId);
+    this.save();
+    return true;
+  },
+
+  // --- Financial Health & Daily Safe-to-Spend API ---
+  getDailySafeToSpend() {
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const remainingDays = Math.max(1, daysInMonth - now.getDate() + 1);
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const monthTxs = this.transactions.filter((t) => new Date(t.date) >= startOfMonth);
+    let monthIncome = 0;
+    let monthExpense = 0;
+    monthTxs.forEach((t) => {
+      if (t.isIncome) monthIncome += t.amount;
+      else monthExpense += t.amount;
+    });
+
+    let totalBudget = 0;
+    Object.values(this.settings.categoryBudgets || {}).forEach((b) => {
+      totalBudget += parseFloat(b) || 0;
+    });
+
+    let pool = 0;
+    if (totalBudget > 0) {
+      pool = Math.max(0, totalBudget - monthExpense);
+    } else if (monthIncome > 0) {
+      pool = Math.max(0, monthIncome - monthExpense);
+    } else {
+      pool = Math.max(0, this.getTotalBalance());
+    }
+
+    const safeDaily = pool / remainingDays;
+    return {
+      safeDaily,
+      remainingDays,
+      pool,
+      monthIncome,
+      monthExpense,
+      totalBudget,
+    };
+  },
+
+  getFinancialHealthScore() {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const monthTxs = this.transactions.filter((t) => new Date(t.date) >= startOfMonth);
+
+    let income = 0;
+    let expense = 0;
+    monthTxs.forEach((t) => {
+      if (t.isIncome) income += t.amount;
+      else expense += t.amount;
+    });
+
+    let score = 50; // base score
+
+    // 1. Savings Rate Factor (+0 to +30)
+    if (income > 0) {
+      const savingsRate = (income - expense) / income;
+      if (savingsRate >= 0.3) score += 30;
+      else if (savingsRate >= 0.15) score += 20;
+      else if (savingsRate >= 0.05) score += 10;
+      else if (savingsRate < 0) score -= 15;
+    }
+
+    // 2. Budget Adherence Factor (+0 to +20)
+    const budgets = this.settings.categoryBudgets || {};
+    const budgetKeys = Object.keys(budgets);
+    if (budgetKeys.length > 0) {
+      let exceeded = 0;
+      budgetKeys.forEach((cat) => {
+        const limit = parseFloat(budgets[cat]) || 0;
+        const catSpent = monthTxs
+          .filter((t) => !t.isIncome && t.category === cat)
+          .reduce((s, t) => s + t.amount, 0);
+        if (limit > 0 && catSpent > limit) exceeded++;
+      });
+      if (exceeded === 0) score += 20;
+      else score -= exceeded * 8;
+    } else {
+      score += 10;
+    }
+
+    score = Math.max(10, Math.min(100, Math.round(score)));
+
+    let grade = "A";
+    let statusText = "ยอดเยี่ยม (Excellent)";
+    let color = "#10B981";
+
+    if (score >= 85) {
+      grade = "A+";
+      statusText = "ยอดเยี่ยม (Excellent)";
+      color = "#10B981";
+    } else if (score >= 70) {
+      grade = "A";
+      statusText = "สุขภาพดี (Healthy)";
+      color = "var(--gold)";
+    } else if (score >= 50) {
+      grade = "B";
+      statusText = "ปานกลาง (Fair)";
+      color = "#F59E0B";
+    } else {
+      grade = "C";
+      statusText = "ควรระวัง (Needs Care)";
+      color = "var(--expense)";
+    }
+
+    return { score, grade, statusText, color };
+  },
+
+  // --- Enhanced Gamification & Quests API ---
+  getGamificationProfile() {
+    const xp = this.settings.xp || 0;
+    const level = this.settings.level || 1;
+    const coins = this.settings.coins || 0;
+    const streak = this.calculateStreak();
+    const reqXp = level * 100;
+    const pct = Math.min(100, Math.round((xp / reqXp) * 100));
+
+    const isEn = this.settings.language === "en";
+    const titlesEn = [
+      "Novice Saver", "Budget Explorer", "Financial Apprentice",
+      "Smart Investor", "Cashflow Master", "Wealth Builder",
+      "Financial Strategist", "Capital Captain", "Money Mogul", "Financial Grandmaster"
+    ];
+    const titlesTh = [
+      "นักออมมือใหม่", "ผู้สำรวจงบ", "ผู้ฝึกตนทางการเงิน",
+      "นักจัดสรรกระเป๋า", "เซียนกระแสเงินสด", "ผู้สร้างความมั่งคั่ง",
+      "นักยุทธศาสตร์การเงิน", "กัปตันเงินทุน", "มหาเศรษฐีตัวจริง", "ปรมาจารย์ทางการเงิน"
+    ];
+    const titles = isEn ? titlesEn : titlesTh;
+    const levelTitle = titles[Math.min(level - 1, titles.length - 1)];
+
+    return {
+      level,
+      xp,
+      reqXp,
+      progressPct: pct,
+      title: levelTitle,
+      coins,
+      streak,
+    };
+  },
+
+  calculateStreak() {
+    const txs = this.getAllTransactions();
+    if (txs.length === 0) return 0;
+    const dateSet = new Set(txs.map((t) => new Date(t.date).toISOString().split("T")[0]));
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      if (dateSet.has(key)) {
+        streak++;
+      } else if (i === 0) {
+        continue;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  },
+
+  getDailyQuests() {
+    const isEn = this.settings.language === "en";
+    const todayStr = new Date().toISOString().split("T")[0];
+    const todayTxs = this.getAllTransactions().filter((t) => t.date && t.date.startsWith(todayStr));
+    const hasLoggedToday = todayTxs.length > 0;
+    const hasSaved = (this.savingsGoals || []).some((g) => (g.currentAmount || 0) > 0);
+    const safeSpend = this.getDailySafeToSpend();
+    const todayExpense = todayTxs.filter((t) => !t.isIncome).reduce((s, t) => s + Number(t.amount || 0), 0);
+    const stayedUnderSafe = todayExpense <= (safeSpend.safeDaily || 1000);
+
+    const claimed = this.settings.questsState?.claimed || [];
+
+    return [
+      {
+        id: "log_today",
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`,
+        title: isEn ? "Log Today's Spending" : "บันทึกรายการประจำวัน",
+        desc: isEn ? "Record at least 1 transaction today" : "บันทึกอย่างน้อย 1 รายการวันนี้",
+        rewardXP: 30,
+        rewardCoins: 10,
+        completed: hasLoggedToday,
+        claimed: claimed.includes(`log_today_${todayStr}`),
+      },
+      {
+        id: "stay_safe",
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        title: isEn ? "Stay Under Daily Safe Limit" : "ใช้จ่ายไม่เกินงบปลอดภัย",
+        desc: isEn ? `Spent ${this.getCurrencySymbol()} ${todayExpense.toLocaleString()} / safe limit` : `ใช้ไป ${this.getCurrencySymbol()} ${todayExpense.toLocaleString()} / งบปลอดภัย`,
+        rewardXP: 40,
+        rewardCoins: 15,
+        completed: stayedUnderSafe,
+        claimed: claimed.includes(`stay_safe_${todayStr}`),
+      },
+      {
+        id: "stash_goal",
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+        title: isEn ? "Stash Funds in Savings Vault" : "เก็บเงินเข้ากระปุกเป้าหมาย",
+        desc: isEn ? "Have active deposits in savings goals" : "มีเงินออมสะสมในกระปุกเป้าหมาย",
+        rewardXP: 50,
+        rewardCoins: 20,
+        completed: hasSaved,
+        claimed: claimed.includes(`stash_goal_${todayStr}`),
+      },
+    ];
+  },
+
+  claimDailyQuest(questId) {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const key = `${questId}_${todayStr}`;
+    if (!this.settings.questsState) this.settings.questsState = { claimed: [] };
+    if (!this.settings.questsState.claimed) this.settings.questsState.claimed = [];
+
+    if (this.settings.questsState.claimed.includes(key)) {
+      return false;
+    }
+
+    const quests = this.getDailyQuests();
+    const quest = quests.find((q) => q.id === questId);
+    if (!quest || !quest.completed) return false;
+
+    this.settings.questsState.claimed.push(key);
+    this.settings.coins = (this.settings.coins || 0) + quest.rewardCoins;
+    this.recalculateXP();
+    this.save();
+    return quest;
   },
 
   // --- Transactions API ---
@@ -1103,6 +1415,9 @@ export const store = {
       finalTitle = catInfo ? catInfo.label : (category || i18n("categoryOther"));
     }
 
+    const primaryWallet = this.getPrimaryWallet();
+    const targetWalletId = (t.walletId && this.getWallet(t.walletId)) ? t.walletId : (primaryWallet ? primaryWallet.id : "default");
+
     const transaction = {
       id: t.id || Math.random().toString(36).substring(2, 11),
       title: finalTitle,
@@ -1111,7 +1426,7 @@ export const store = {
       category: category,
       date: t.date ? new Date(t.date) : new Date(),
       recurringId: t.recurringId || null,
-      walletId: t.walletId || "default",
+      walletId: targetWalletId,
       isTransfer: !!t.isTransfer,
       transferToWalletId: t.transferToWalletId || null,
     };
@@ -1128,7 +1443,9 @@ export const store = {
         is_income: transaction.isIncome,
         category: transaction.category,
         date: transaction.date.toISOString(),
-        recurring_id: transaction.recurringId
+        recurring_id: transaction.recurringId,
+        wallet_id: transaction.walletId || "default",
+        notes: transaction.notes || ""
       }).then(({ error }) => { if (error) console.error('Supabase addTransaction error:', error); });
     }
 
@@ -1167,7 +1484,9 @@ export const store = {
           is_income: !!updated.isIncome,
           category: category,
           date: new Date(updated.date).toISOString(),
-          recurring_id: updated.recurringId || null
+          recurring_id: updated.recurringId || null,
+          wallet_id: updated.walletId || "default",
+          notes: updated.notes || ""
         }).then(({ error }) => { if (error) console.error('Supabase updateTransaction error:', error); });
       }
     }
@@ -1388,6 +1707,19 @@ export const store = {
     await this.saveSettingsToCloud();
   },
 
+  setSelectedCurrency(code) {
+    return this.setCurrency(code);
+  },
+
+  setTheme(themeId) {
+    if (!themeId) return;
+    this.settings.theme = themeId;
+    this.settings.isDarkMode = themeId !== "light";
+    document.documentElement.setAttribute("data-theme", themeId);
+    this.save();
+    this.saveSettingsToCloud();
+  },
+
   toggleTheme() {
     const level = this.settings.level || 1;
     const availableThemes = ["light", "dark"];
@@ -1399,12 +1731,7 @@ export const store = {
     let nextIndex = availableThemes.indexOf(currentTheme) + 1;
     if (nextIndex >= availableThemes.length) nextIndex = 0;
 
-    this.settings.theme = availableThemes[nextIndex];
-    this.settings.isDarkMode = this.settings.theme !== "light"; // for backward compatibility
-    
-    document.documentElement.setAttribute("data-theme", this.settings.theme);
-    this.save();
-    this.saveSettingsToCloud();
+    this.setTheme(availableThemes[nextIndex]);
   },
 
   setPremium(val) {
@@ -1432,6 +1759,10 @@ export const store = {
 
   toBase(amountInDisplayCurrency) {
     return convertToTHB(amountInDisplayCurrency, this.settings.selectedCurrency);
+  },
+
+  fromDisplay(amountInDisplayCurrency) {
+    return this.toBase(amountInDisplayCurrency);
   },
 
   // --- Computed Finance metrics ---
