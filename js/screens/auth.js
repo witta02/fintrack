@@ -88,6 +88,11 @@ export function renderAuth(container, params) {
               <span id="auth-btn-text">${authMode === 'signin' ? (isEn ? 'Sign In' : 'เข้าสู่ระบบ') : (isEn ? 'Create Account' : 'สร้างบัญชีผู้ใช้')}</span>
               <div id="auth-spinner" class="spinner hidden" style="width: 16px; height: 16px; border-width: 2px; border-color: #000 transparent #000 transparent;"></div>
             </button>
+
+            <button type="button" id="auth-guest-btn" style="width: 100%; margin-top: 10px; padding: 11px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); color: var(--text-primary); font-size: 12.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.15s ease;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+              <span>${isEn ? 'Continue in Offline Mode' : 'เข้าใช้งานแบบออฟไลน์ (โหมดออฟไลน์)'}</span>
+            </button>
           </form>
 
           <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 18px; padding: 10px; background: rgba(52, 211, 153, 0.08); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 12px; color: var(--income); font-size: 11.5px; font-weight: 600; text-align: center; line-height: 1.3;">
@@ -114,6 +119,15 @@ function translateAuthError(errMessage, lang = "th") {
   const msg = errMessage ? errMessage.toLowerCase() : "";
 
   if (lang === "th") {
+    if (
+      msg.includes("failed to fetch") ||
+      msg.includes("networkerror") ||
+      msg.includes("network request failed") ||
+      msg.includes("enotfound") ||
+      msg.includes("load failed")
+    ) {
+      return "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Supabase ได้ (อาจเกิดจากเครือข่าย หรือโปรเจกต์ Supabase ถูกพักการใช้งาน) คุณสามารถกด 'เข้าใช้งานแบบออฟไลน์' เพื่อใช้งานต่อได้ทันที";
+    }
     if (
       msg.includes("invalid login credentials") ||
       msg.includes("invalid credentials")
@@ -155,6 +169,15 @@ function translateAuthError(errMessage, lang = "th") {
   } else {
     // English
     if (
+      msg.includes("failed to fetch") ||
+      msg.includes("networkerror") ||
+      msg.includes("network request failed") ||
+      msg.includes("enotfound") ||
+      msg.includes("load failed")
+    ) {
+      return "Unable to connect to Supabase server (network offline or project paused). You can tap 'Continue in Offline Mode' to use FinTrack immediately.";
+    }
+    if (
       msg.includes("invalid login credentials") ||
       msg.includes("invalid credentials")
     ) {
@@ -194,6 +217,7 @@ function setupEventListeners(container) {
   const btnText = container.querySelector("#auth-btn-text");
   const spinner = container.querySelector("#auth-spinner");
   const backBtn = container.querySelector("#auth-back-btn");
+  const guestBtn = container.querySelector("#auth-guest-btn");
   const forgotBtn = container.querySelector("#auth-forgot-btn");
   const tabSignIn = container.querySelector("#tab-signin");
   const tabSignUp = container.querySelector("#tab-signup");
@@ -202,6 +226,15 @@ function setupEventListeners(container) {
 
   const isEn = store.settings.language === "en";
   const lang = isEn ? "en" : "th";
+
+  // Guest / Offline Mode
+  guestBtn?.addEventListener("click", () => {
+    alerts.success(
+      isEn ? "Offline Mode Enabled" : "เข้าสู่โหมดออฟไลน์",
+      isEn ? "You can track your finances locally without signing in." : "คุณสามารถบันทึกการเงินในเครื่องได้โดยไม่ต้องเข้าสู่ระบบ"
+    );
+    router.navigate("dashboard");
+  });
 
   // Tab Switching
   tabSignIn?.addEventListener("click", () => {
@@ -310,7 +343,7 @@ function setupEventListeners(container) {
       }
     } catch (err) {
       console.error("Auth submit error:", err);
-      alerts.error(isEn ? "Authentication Failed" : "เข้าสู่ระบบไม่สำเร็จ", err.message);
+      alerts.error(isEn ? "Authentication Notice" : "แจ้งเตือนการเข้าสู่ระบบ", err.message);
       submitBtn.disabled = false;
       btnText.textContent = authMode === "signin" ? (isEn ? "Sign In" : "เข้าสู่ระบบ") : (isEn ? "Create Account" : "สร้างบัญชีผู้ใช้");
       spinner.classList.add("hidden");

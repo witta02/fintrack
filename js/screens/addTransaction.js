@@ -148,7 +148,8 @@ export function renderAddTransaction(container, params) {
             <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">${store.settings.language === 'en' ? 'Wallet' : 'กระเป๋าเงิน'}</label>
             <select id="transaction-wallet-select" style="width: 100%; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; color: var(--text-primary);">
               ${store.getWallets().map(w => {
-                const isSelected = transaction ? (transaction.walletId === w.id) : (w.id === store.getPrimaryWallet().id);
+                const targetId = transaction?.walletId || store.getPrimaryWallet().id;
+                const isSelected = w.id === targetId;
                 return `<option value="${w.id}" ${isSelected ? 'selected' : ''}>${w.name}${w.isDefault ? ' (Primary)' : ''}</option>`;
               }).join('')}
             </select>

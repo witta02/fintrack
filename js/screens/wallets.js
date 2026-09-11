@@ -278,10 +278,14 @@ function showAddWalletModal(container) {
     const typeObj = types.find(t => t.type === data.get("type")) || types[0];
     const isPrimary = data.get("isPrimary") === "on";
 
+    const rawBal = data.get("balance");
+    const parsedBal = parseFloat(rawBal);
+    const startBal = isNaN(parsedBal) ? 0 : parsedBal;
+
     const newW = store.addWallet({
       name: data.get("name"),
       type: data.get("type"),
-      balance: parseFloat(data.get("balance")) || 0,
+      balance: startBal,
       icon: typeObj.type,
       color: typeObj.color,
     });
@@ -352,7 +356,9 @@ function showEditWalletModal(container, wallet) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const typeObj = WALLET_TYPES.find(t => t.type === data.get("type")) || WALLET_TYPES[0];
-    const targetBal = parseFloat(data.get("balance")) || 0;
+    const rawBal = data.get("balance");
+    const parsedBal = parseFloat(rawBal);
+    const targetBal = isNaN(parsedBal) ? 0 : parsedBal;
     const isPrimary = data.get("isPrimary") === "on";
 
     store.updateWallet({

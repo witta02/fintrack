@@ -11,6 +11,22 @@ import { getCategoryInfo } from "./categories.js";
 // Simple pub/sub system for store updates
 const listeners = new Set();
 
+export function isValidUUID(str) {
+  return typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+}
+
+export function safeUUID(id) {
+  if (isValidUUID(id)) return id;
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    try { return crypto.randomUUID(); } catch (e) {}
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export const store = {
   user: null,
   transactions: [],
@@ -506,6 +522,10 @@ export const store = {
           category: cloudTx.category,
           date: new Date(cloudTx.date),
           recurringId: cloudTx.recurring_id,
+          walletId: cloudTx.wallet_id || null,
+          isTransfer: !!cloudTx.is_transfer,
+          transferToWalletId: cloudTx.transfer_to_wallet_id || null,
+          note: cloudTx.note || cloudTx.notes || "",
         }));
 
         this.recurringRules = (dbRules || []).map((cloudRule) => ({
@@ -530,8 +550,10 @@ export const store = {
         // Check which local transactions need to be uploaded
         for (const [id, localTx] of localTxsMap) {
           if (!cloudTxsMap.has(id)) {
+            const txId = safeUUID(localTx.id);
+            localTx.id = txId; // Normalize to valid UUID locally
             txsToUpload.push({
-              id: localTx.id,
+              id: txId,
               user_id: user.id,
               title: localTx.title,
               amount: localTx.amount,
@@ -541,7 +563,9 @@ export const store = {
                 localTx.date instanceof Date
                   ? localTx.date.toISOString()
                   : new Date(localTx.date).toISOString(),
-              recurring_id: localTx.recurringId || null,
+              recurring_id: isValidUUID(localTx.recurringId) ? localTx.recurringId : null,
+              wallet_id: isValidUUID(localTx.walletId) ? localTx.walletId : null,
+              note: localTx.note || localTx.notes || null,
             });
           }
         }
@@ -557,6 +581,10 @@ export const store = {
               category: cloudTx.category,
               date: new Date(cloudTx.date),
               recurringId: cloudTx.recurring_id,
+              walletId: cloudTx.wallet_id || null,
+              isTransfer: !!cloudTx.is_transfer,
+              transferToWalletId: cloudTx.transfer_to_wallet_id || null,
+              note: cloudTx.note || cloudTx.notes || "",
             });
           }
         }
@@ -1010,13 +1038,15 @@ export const store = {
     const startingBalance = parseFloat(wallet.balance) || 0;
     const primaryWallet = this.getPrimaryWallet();
     const isPrimary = primaryWallet ? (wallet.id === primaryWallet.id) : false;
-    const allKnownIds = new Set(this.wallets.map((w) => w.id));
 
     const txs = this.transactions.filter((t) => {
-      const wId = t.walletId || "default";
-      if (wId === walletId) return true;
-      if (isPrimary && (!allKnownIds.has(wId) || wId === "default")) return true;
-      return false;
+      // If transaction has an explicit walletId:
+      if (t.walletId) {
+        return t.walletId === walletId;
+      }
+      // If transaction has NO walletId (legacy/unassigned):
+      // Only count in primary wallet so it's not double-counted
+      return isPrimary;
     });
 
     let totalIncome = 0;
@@ -1032,7 +1062,7 @@ export const store = {
   addWallet(wallet) {
     const startingAmount = parseFloat(wallet.balance ?? wallet.initialBalance) || 0;
     const newWallet = {
-      id: wallet.id || Math.random().toString(36).substring(2, 11),
+      id: wallet.id || safeUUID(),
       name: wallet.name || (this.settings.language === 'en' ? "New Wallet" : "กระเป๋าใหม่"),
       type: wallet.type || "cash",
       color: wallet.color || "#F5C842",
@@ -1050,10 +1080,13 @@ export const store = {
   updateWallet(updated) {
     const idx = this.wallets.findIndex((w) => w.id === updated.id);
     if (idx !== -1) {
+      const existing = this.wallets[idx];
       this.wallets[idx] = {
-        ...this.wallets[idx],
+        ...existing,
         ...updated,
-        balance: updated.balance !== undefined ? parseFloat(updated.balance) || 0 : (this.wallets[idx].balance || 0),
+        balance: updated.balance !== undefined
+          ? (isNaN(parseFloat(updated.balance)) ? 0 : parseFloat(updated.balance))
+          : existing.balance,
       };
       this.save();
     }
@@ -1065,21 +1098,22 @@ export const store = {
 
     const target = parseFloat(targetBalance);
     const targetValid = !isNaN(target) ? target : 0;
-    const isPrimary = wallet.isDefault || wallet.id === 'default';
-    const allKnownIds = new Set(this.wallets.map((w) => w.id));
+    const primaryWallet = this.getPrimaryWallet();
+    const isPrimary = primaryWallet ? (wallet.id === primaryWallet.id) : false;
 
     const txs = this.transactions.filter((t) => {
-      const wId = t.walletId || 'default';
-      if (wId === walletId) return true;
-      if (isPrimary && (wId === 'default' || !allKnownIds.has(wId))) return true;
-      return false;
+      if (t.walletId) {
+        return t.walletId === walletId;
+      }
+      return isPrimary;
     });
 
     let totalIncome = 0;
     let totalExpense = 0;
     txs.forEach((t) => {
-      if (t.isIncome) totalIncome += t.amount;
-      else totalExpense += t.amount;
+      const amt = parseFloat(t.amount) || 0;
+      if (t.isIncome) totalIncome += amt;
+      else totalExpense += amt;
     });
     const netTransactions = totalIncome - totalExpense;
 
@@ -1598,7 +1632,12 @@ export const store = {
   getAllTransactions(walletId = null) {
     let list = [...this.transactions];
     if (walletId && walletId !== 'all') {
-      list = list.filter((t) => (t.walletId || 'default') === walletId);
+      const primaryW = this.getPrimaryWallet();
+      const isPrimary = primaryW ? (walletId === primaryW.id) : false;
+      list = list.filter((t) => {
+        if (t.walletId) return t.walletId === walletId;
+        return isPrimary;
+      });
     }
     return list.sort((a, b) => b.date - a.date);
   },
@@ -1615,7 +1654,7 @@ export const store = {
     const targetWalletId = (t.walletId && this.getWallet(t.walletId)) ? t.walletId : (primaryWallet ? primaryWallet.id : "default");
 
     const transaction = {
-      id: t.id || Math.random().toString(36).substring(2, 11),
+      id: safeUUID(t.id),
       title: finalTitle,
       amount: parseFloat(t.amount) || 0,
       isIncome: !!t.isIncome,
@@ -1625,6 +1664,7 @@ export const store = {
       walletId: targetWalletId,
       isTransfer: !!t.isTransfer,
       transferToWalletId: t.transferToWalletId || null,
+      note: t.note || t.notes || "",
     };
     this.transactions.push(transaction);
     this.checkQuests();
@@ -1639,9 +1679,9 @@ export const store = {
         is_income: transaction.isIncome,
         category: transaction.category,
         date: transaction.date.toISOString(),
-        recurring_id: transaction.recurringId,
-        wallet_id: transaction.walletId || "default",
-        notes: transaction.notes || ""
+        recurring_id: isValidUUID(transaction.recurringId) ? transaction.recurringId : null,
+        wallet_id: isValidUUID(transaction.walletId) ? transaction.walletId : null,
+        note: transaction.note || null
       }).then(({ error }) => { if (error) console.error('Supabase addTransaction error:', error); });
     }
 
@@ -1669,21 +1709,22 @@ export const store = {
         category: category,
         amount: parseFloat(updated.amount),
         date: new Date(updated.date),
+        note: updated.note || updated.notes || this.transactions[idx].note || "",
       };
       this.save();
 
       if (this.user) {
         supabase.from('transactions').upsert({
-          id: updated.id,
+          id: safeUUID(updated.id),
           user_id: this.user.id,
           title: finalTitle,
           amount: parseFloat(updated.amount),
           is_income: !!updated.isIncome,
           category: category,
           date: new Date(updated.date).toISOString(),
-          recurring_id: updated.recurringId || null,
-          wallet_id: updated.walletId || "default",
-          notes: updated.notes || ""
+          recurring_id: isValidUUID(updated.recurringId) ? updated.recurringId : null,
+          wallet_id: isValidUUID(updated.walletId) ? updated.walletId : null,
+          note: updated.note || updated.notes || null
         }).then(({ error }) => { if (error) console.error('Supabase updateTransaction error:', error); });
       }
     }
@@ -1874,14 +1915,16 @@ export const store = {
 
       while (nextDue <= today) {
         // Create transaction
+        const primaryWallet = this.getPrimaryWallet();
         const transaction = {
-          id: Math.random().toString(36).substring(2, 11),
+          id: safeUUID(),
           title: rule.title,
           amount: rule.amount,
           isIncome: rule.isIncome,
           category: rule.category,
           date: new Date(nextDue),
           recurringId: rule.id,
+          walletId: (rule.walletId && this.getWallet(rule.walletId)) ? rule.walletId : (primaryWallet ? primaryWallet.id : "default"),
         };
         this.transactions.push(transaction);
         addedCount++;
