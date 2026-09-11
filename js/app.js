@@ -52,20 +52,43 @@ document.addEventListener("DOMContentLoaded", () => {
         router.navigate('dashboard');
       }
     } else if (event === 'PASSWORD_RECOVERY') {
-      setTimeout(async () => {
-        const newPassword = await alerts.promptPasswordChange();
-        if (newPassword) {
-          const { error } = await supabase.auth.updateUser({ password: newPassword });
-          if (error) {
-            alerts.error(t('updateFailed'), error.message);
-          } else {
-            alerts.success(t('successTitle'), t('passwordUpdated'));
-            router.navigate('dashboard');
-          }
-        }
-      }, 500);
+      triggerPasswordRecovery();
     }
   });
+
+  let hasPromptedRecovery = false;
+  async function triggerPasswordRecovery() {
+    if (hasPromptedRecovery) return;
+    hasPromptedRecovery = true;
+    setTimeout(async () => {
+      const newPassword = await alerts.promptPasswordChange();
+      if (newPassword) {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) {
+          alerts.error(t('updateFailed'), error.message);
+          hasPromptedRecovery = false;
+        } else {
+          alerts.success(t('successTitle'), t('passwordUpdated'));
+          if (window.history?.replaceState) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+          router.navigate('dashboard');
+        }
+      } else {
+        hasPromptedRecovery = false;
+        if (window.history?.replaceState) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      }
+    }, 600);
+  }
+
+  // Also check if opened directly with recovery tokens in hash or query
+  const initHash = window.location.hash || '';
+  const initSearch = window.location.search || '';
+  if (initHash.includes('type=recovery') || initSearch.includes('type=recovery')) {
+    triggerPasswordRecovery();
+  }
 
   const splash = document.getElementById("splash-screen");
   const app = document.getElementById("app");
