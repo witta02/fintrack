@@ -83,6 +83,12 @@ export const store = {
     const savedSettings = localStorage.getItem("fintrack_settings");
     const savedNetWorth = localStorage.getItem("fintrack_net_worth");
     const savedWallets = localStorage.getItem("fintrack_wallets");
+    const savedLocalUser = localStorage.getItem("fintrack_local_user");
+    if (savedLocalUser && !this.user) {
+      try {
+        this.user = JSON.parse(savedLocalUser);
+      } catch (e) {}
+    }
     if (savedSettings) {
       this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
     }
@@ -729,6 +735,16 @@ export const store = {
         console.error("Exception in saveSettingsToCloud:", err);
       }
     }
+  },
+
+  setUser(user) {
+    this.user = user;
+    if (user) {
+      localStorage.setItem("fintrack_local_user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("fintrack_local_user");
+    }
+    this.notify();
   },
 
   clearUserData() {

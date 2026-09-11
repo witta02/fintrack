@@ -19,8 +19,8 @@ export function formatFriendlyError(error, lang = store.settings.language || "th
     if (msg.includes("email not confirmed") || msg.includes("email_not_confirmed")) {
       return "กรุณายืนยันอีเมลในกล่องจดหมายของคุณก่อนเข้าสู่ระบบ";
     }
-    if (msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("network request failed")) {
-      return "ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง";
+    if (msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("network request failed") || msg.includes("load failed") || msg.includes("enotfound")) {
+      return "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ (โปรเจกต์ Supabase อาจถูกพักการใช้งาน หรือการเชื่อมต่อมีปัญหา)";
     }
     if (msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("over_email_send_rate_limit")) {
       return "ส่งคำขอบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง";
@@ -43,7 +43,8 @@ export function formatFriendlyError(error, lang = store.settings.language || "th
     if (msg.includes("no qr") || msg.includes("no receipt")) {
       return "ไม่พบ QR Code หรือใบเสร็จที่อ่านได้ กรุณาใช้ภาพที่ชัดเจนขึ้น";
     }
-    if (rawMsg.startsWith("ข้อผิดพลาด") || rawMsg.startsWith("เกิดข้อผิดพลาด") || rawMsg.startsWith("กรุณา") || rawMsg.startsWith("ไม่พบ") || rawMsg.startsWith("จำนวน") || rawMsg.startsWith("ยอดเงิน") || rawMsg.startsWith("ไม่รองรับ") || rawMsg.startsWith("อีเมล")) {
+    // If the message already contains Thai characters, it is already formatted/translated — don't overwrite!
+    if (/[\u0E00-\u0E7F]/.test(rawMsg)) {
       return rawMsg;
     }
     return "เกิดข้อผิดพลาดในการทำรายการ กรุณาลองใหม่อีกครั้ง";
@@ -150,6 +151,23 @@ export const alerts = {
       confirmButtonColor: "#FFB800",
       confirmButtonText: store.settings.language === "en" ? "OK" : "ตกลง",
     });
+  },
+
+  async confirm(title, text = "", confirmText = "ตกลง", cancelText = "ยกเลิก") {
+    const isDark = store.settings.isDarkMode;
+    const result = await Swal.fire({
+      title: title,
+      text: text,
+      icon: "question",
+      showCancelButton: true,
+      background: isDark ? "#1C2128" : "#FFFFFF",
+      color: isDark ? "#FFFFFF" : "#1F2937",
+      confirmButtonColor: "#FFB800",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: confirmText,
+      cancelButtonText: cancelText,
+    });
+    return result.isConfirmed;
   },
 
   async confirmDelete(title, text = "") {

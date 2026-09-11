@@ -229,9 +229,18 @@ function setupEventListeners(container) {
 
   // Guest / Offline Mode
   guestBtn?.addEventListener("click", () => {
+    const guestUser = {
+      id: "local_guest",
+      email: "offline@fintrack.local",
+      user_metadata: { full_name: isEn ? "Offline User" : "ผู้ใช้งานออฟไลน์" },
+      app_metadata: { provider: "local" },
+      aud: "authenticated",
+      created_at: new Date().toISOString(),
+    };
+    store.setUser(guestUser);
     alerts.success(
-      isEn ? "Offline Mode Enabled" : "เข้าสู่โหมดออฟไลน์",
-      isEn ? "You can track your finances locally without signing in." : "คุณสามารถบันทึกการเงินในเครื่องได้โดยไม่ต้องเข้าสู่ระบบ"
+      isEn ? "Offline Mode Enabled" : "เข้าสู่โหมดออฟไลน์แล้ว",
+      isEn ? "You can track your finances locally without cloud sync." : "คุณสามารถบันทึกการเงินในเครื่องได้เต็มรูปแบบ",
     );
     router.navigate("dashboard");
   });
@@ -303,6 +312,36 @@ function setupEventListeners(container) {
         });
 
         if (error) {
+          const rawErrStr = (error.message || String(error) || "").toLowerCase();
+          const isConnErr = rawErrStr.includes("failed to fetch") || rawErrStr.includes("load failed") || rawErrStr.includes("network") || rawErrStr.includes("enotfound");
+          
+          if (isConnErr) {
+            const proceedOffline = await alerts.confirm(
+              isEn ? "Cloud Server Unreachable" : "ไม่สามารถเชื่อมต่อ Cloud ได้",
+              isEn 
+                ? `The cloud database is currently unreachable (project may be paused or offline). Would you like to sign in as "${email}" in Offline Mode?`
+                : `ไม่สามารถเชื่อมต่อฐานข้อมูล Cloud ได้ (โปรเจกต์อาจถูกพักชั่วคราว) ต้องการเข้าใช้งานเป็น "${email}" ในโหมดออฟไลน์เลยหรือไม่?`,
+              isEn ? "Continue in Offline Mode" : "เข้าใช้งานแบบออฟไลน์",
+              isEn ? "Try Again" : "ลองใหม่"
+            );
+            if (proceedOffline) {
+              const localUser = {
+                id: "user_" + Math.random().toString(36).substring(2, 9),
+                email: email,
+                user_metadata: { full_name: email.split('@')[0] },
+                app_metadata: { provider: "local" },
+                aud: "authenticated",
+                created_at: new Date().toISOString()
+              };
+              store.setUser(localUser);
+              alerts.success(
+                isEn ? "Signed in (Offline Mode)" : "เข้าสู่ระบบแล้ว (โหมดออฟไลน์)",
+                isEn ? `Welcome! You can record transactions and use all features.` : `ยินดีต้อนรับ! สามารถบันทึกรายรับ-รายจ่ายและใช้งานได้ตามปกติ`
+              );
+              router.navigate("dashboard");
+              return;
+            }
+          }
           throw new Error(translateAuthError(error.message, lang));
         }
 
@@ -318,6 +357,36 @@ function setupEventListeners(container) {
         });
 
         if (error) {
+          const rawErrStr = (error.message || String(error) || "").toLowerCase();
+          const isConnErr = rawErrStr.includes("failed to fetch") || rawErrStr.includes("load failed") || rawErrStr.includes("network") || rawErrStr.includes("enotfound");
+          
+          if (isConnErr) {
+            const proceedOffline = await alerts.confirm(
+              isEn ? "Cloud Server Unreachable" : "ไม่สามารถเชื่อมต่อ Cloud ได้",
+              isEn 
+                ? `The cloud database is currently unreachable. Would you like to create and use "${email}" in Offline Mode?`
+                : `ไม่สามารถเชื่อมต่อฐานข้อมูล Cloud ได้ ต้องการสร้างและใช้งานบัญชี "${email}" ในโหมดออฟไลน์เลยหรือไม่?`,
+              isEn ? "Create Offline Account" : "สร้างบัญชีออฟไลน์",
+              isEn ? "Try Again" : "ลองใหม่"
+            );
+            if (proceedOffline) {
+              const localUser = {
+                id: "user_" + Math.random().toString(36).substring(2, 9),
+                email: email,
+                user_metadata: { full_name: email.split('@')[0] },
+                app_metadata: { provider: "local" },
+                aud: "authenticated",
+                created_at: new Date().toISOString()
+              };
+              store.setUser(localUser);
+              alerts.success(
+                isEn ? "Account Created (Offline Mode)" : "สร้างบัญชีเรียบร้อยแล้ว (โหมดออฟไลน์)",
+                isEn ? `Welcome! Your data will be stored securely on this device.` : `ยินดีต้อนรับ! ข้อมูลของคุณจะถูกจัดเก็บบนอุปกรณ์นี้`
+              );
+              router.navigate("dashboard");
+              return;
+            }
+          }
           throw new Error(translateAuthError(error.message, lang));
         }
 
