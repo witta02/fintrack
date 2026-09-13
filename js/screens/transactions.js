@@ -101,13 +101,12 @@ export function renderTransactions(container, params) {
       activePeriod = "daily";
     }
   } else {
-    activePeriod = params?.period || activePeriod || "all";
+    activePeriod = params?.period || "all";
     periodDate = new Date();
   }
 
-  // Default: primary wallet (if exists)
-  const primaryWallet = store.getPrimaryWallet();
-  selectedWalletId = primaryWallet ? primaryWallet.id : "all";
+  // Default to 'all' (all wallets) so all transactions show unless explicitly filtered
+  selectedWalletId = params?.walletId || "all";
 
   const allCategories = [...getExpenseCategories(), ...getIncomeCategories()];
   const uniqueCategories = [];

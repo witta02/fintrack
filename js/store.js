@@ -1942,7 +1942,8 @@ export const store = {
       if (walletId === 'none' || walletId === 'unassigned') {
         list = list.filter((t) => !t.walletId);
       } else {
-        list = list.filter((t) => t.walletId === walletId);
+        const targetId = safeUUID(walletId);
+        list = list.filter((t) => t.walletId === walletId || t.walletId === targetId || (t.walletId && safeUUID(t.walletId) === targetId));
       }
     }
     return list.sort((a, b) => b.date - a.date);

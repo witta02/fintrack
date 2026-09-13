@@ -1,5 +1,6 @@
 import { getCategoryInfo } from "../categories.js";
 import { t, locale } from "../i18n.js";
+import { store } from "../store.js";
 
 export function createTransactionTile(
   transaction,
@@ -12,6 +13,7 @@ export function createTransactionTile(
   onToggleSelect = null,
 ) {
   const cat = getCategoryInfo(transaction.category);
+  const wallet = transaction.walletId ? store.getWallet(transaction.walletId) : null;
 
   // Format Date dynamically using locale() from i18n.js
   const dateObj = new Date(transaction.date);
@@ -65,6 +67,7 @@ export function createTransactionTile(
         <span style="color: ${cat.color}; font-weight: 700; font-size: 11px;">${cat.label}</span>
         <span style="opacity: 0.35;">•</span>
         <span style="color: var(--text-secondary); font-size: 11px;">${dateStr}</span>
+        ${wallet ? `<span style="opacity: 0.35;">•</span><span style="color: var(--text-secondary); font-size: 11px; font-weight: 700;">${escapeHTML(wallet.name)}</span>` : ""}
       </div>
     </div>
     <div class="tile-amount ${transaction.isIncome ? "income" : "expense"}" style="font-size: 15px; font-weight: 900; letter-spacing: -0.3px;">
