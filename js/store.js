@@ -11,11 +11,18 @@ import { getCategoryInfo } from "./categories.js";
 // Simple pub/sub system for store updates
 const listeners = new Set();
 
+export const DETERMINISTIC_UUIDS = {
+  default: '00000000-0000-4000-8000-000000000001',
+  bank_main: '00000000-0000-4000-8000-000000000002',
+  invest_main: '00000000-0000-4000-8000-000000000003',
+};
+
 export function isValidUUID(str) {
   return typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
 }
 
 export function safeUUID(id) {
+  if (id && DETERMINISTIC_UUIDS[id]) return DETERMINISTIC_UUIDS[id];
   if (isValidUUID(id)) return id;
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     try { return crypto.randomUUID(); } catch (e) {}
@@ -94,13 +101,26 @@ export const store = {
     }
 
     if (savedWallets) {
-      this.wallets = JSON.parse(savedWallets);
-    } else {
+      try {
+        this.wallets = JSON.parse(savedWallets);
+      } catch (e) {
+        this.wallets = [];
+      }
+    }
+    if (!this.wallets || this.wallets.length === 0) {
       this.wallets = [
-        { id: "default", name: "เงินสด", type: "cash", color: "#F5C842", icon: "cash", balance: 0, isDefault: true, currency: "THB" },
-        { id: "bank_main", name: "บัญชีธนาคาร", type: "bank", color: "#3B82F6", icon: "bank", balance: 0, isDefault: false, currency: "THB" },
-        { id: "invest_main", name: "พอร์ตลงทุน", type: "investment", color: "#6366F1", icon: "investment", balance: 0, isDefault: false, currency: "THB" },
+        { id: DETERMINISTIC_UUIDS.default, name: "เงินสด", type: "cash", color: "#F5C842", icon: "cash", balance: 0, isDefault: true, currency: "THB", walletGroup: "liquid" },
+        { id: DETERMINISTIC_UUIDS.bank_main, name: "บัญชีธนาคาร", type: "bank", color: "#3B82F6", icon: "bank", balance: 0, isDefault: false, currency: "THB", walletGroup: "liquid" },
+        { id: DETERMINISTIC_UUIDS.invest_main, name: "พอร์ตลงทุน", type: "investment", color: "#6366F1", icon: "investment", balance: 0, isDefault: false, currency: "THB", walletGroup: "investment" },
       ];
+    } else {
+      // Normalize wallet IDs to deterministic UUIDs or valid UUIDs
+      this.wallets.forEach((w) => {
+        w.id = safeUUID(w.id);
+        if (!w.walletGroup) {
+          w.walletGroup = w.wallet_group || (w.type === 'investment' ? 'investment' : (w.type === 'savings' ? 'savings' : 'liquid'));
+        }
+      });
     }
 
     if (savedNetWorth) {
@@ -115,8 +135,11 @@ export const store = {
     if (savedTransactions) {
       this.transactions = JSON.parse(savedTransactions).map((t) => ({
         ...t,
+        id: safeUUID(t.id),
         date: new Date(t.date),
-        amount: parseFloat(t.amount),
+        amount: parseFloat(t.amount) || 0,
+        walletId: t.walletId ? safeUUID(t.walletId) : (this.wallets[0]?.id || DETERMINISTIC_UUIDS.default),
+        transferToWalletId: t.transferToWalletId ? safeUUID(t.transferToWalletId) : null,
       }));
     } else {
       this.transactions = [];
@@ -125,7 +148,9 @@ export const store = {
     if (savedRules) {
       this.recurringRules = JSON.parse(savedRules).map((r) => ({
         ...r,
-        amount: parseFloat(r.amount),
+        id: safeUUID(r.id),
+        amount: parseFloat(r.amount) || 0,
+        walletId: r.walletId ? safeUUID(r.walletId) : null,
         nextDueDate: new Date(r.nextDueDate),
         createdAt: new Date(r.createdAt),
       }));
@@ -135,7 +160,13 @@ export const store = {
 
     const savedSavingsGoals = localStorage.getItem("fintrack_savings_goals");
     if (savedSavingsGoals) {
-      this.savingsGoals = JSON.parse(savedSavingsGoals);
+      this.savingsGoals = JSON.parse(savedSavingsGoals).map((g) => ({
+        ...g,
+        id: safeUUID(g.id),
+        targetAmount: parseFloat(g.targetAmount) || 0,
+        currentAmount: parseFloat(g.currentAmount) || 0,
+        walletId: g.walletId ? safeUUID(g.walletId) : null,
+      }));
     } else {
       this.savingsGoals = [];
     }
@@ -143,6 +174,7 @@ export const store = {
     this.downPayments = savedDownPayments
       ? JSON.parse(savedDownPayments).map((plan) => ({
           ...plan,
+          id: safeUUID(plan.id),
           totalAmount: parseFloat(plan.totalAmount) || 0,
           paidAmount: parseFloat(plan.paidAmount) || 0,
           dueDate: plan.dueDate ? new Date(plan.dueDate) : null,
@@ -370,40 +402,205 @@ export const store = {
     this.user = user;
 
     try {
-      // 1. Fetch settings from Supabase (user_profiles or legacy user table)
-      let { data: dbSettings, error: settingsError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // 1. Concurrently fetch all entities from dedicated Supabase tables
+      const [
+        settingsRes,
+        txsRes,
+        rulesRes,
+        walletsRes,
+        goalsRes,
+        dpRes,
+      ] = await Promise.all([
+        supabase.from('user_profiles').select('*').eq('user_id', user.id).maybeSingle(),
+        supabase.from('transactions').select('*').eq('user_id', user.id),
+        supabase.from('recurring_rules').select('*').eq('user_id', user.id),
+        supabase.from('wallets').select('*').eq('user_id', user.id).order('sort_order', { ascending: true }),
+        supabase.from('savings_goals').select('*').eq('user_id', user.id).order('sort_order', { ascending: true }),
+        supabase.from('down_payments').select('*').eq('user_id', user.id),
+      ]);
 
-      if (settingsError && settingsError.code === '42P01') {
-        // Fallback to legacy 'user' table if user_profiles doesn't exist
-        const legacy = await supabase
-          .from('user')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
+      let dbSettings = settingsRes.data;
+      if (!dbSettings && settingsRes.error?.code === '42P01') {
+        const legacy = await supabase.from('user').select('*').eq('user_id', user.id).maybeSingle();
         dbSettings = legacy.data;
-      } else if (settingsError) {
-        console.warn("Error fetching user_profiles:", settingsError);
       }
+      const dbTransactions = txsRes.data || [];
+      const dbRules = rulesRes.data || [];
+      const dbWallets = walletsRes.data || [];
+      const dbGoals = goalsRes.data || [];
+      const dbDownPayments = dpRes.data || [];
 
-      // 2. Fetch transactions
-      const { data: dbTransactions, error: txError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id);
+      // --- WALLETS SYNC ---
+      if (dbWallets.length > 0) {
+        this.wallets = dbWallets.map((w) => ({
+          id: safeUUID(w.id),
+          name: w.name,
+          type: w.type || 'cash',
+          color: w.color || '#F5C842',
+          icon: w.icon || 'cash',
+          currency: w.currency || 'THB',
+          balance: parseFloat(w.balance) || 0,
+          isDefault: !!w.is_default,
+          walletGroup: w.wallet_group || (w.type === 'investment' ? 'investment' : (w.type === 'savings' ? 'savings' : 'liquid')),
+          bankCode: w.bank_code || '',
+          accountNumber: w.account_number || '',
+          excludeFromTotal: !!w.exclude_from_total,
+          isArchived: !!w.is_archived,
+          sortOrder: w.sort_order || 0,
+          createdAt: w.created_at ? new Date(w.created_at) : new Date(),
+        }));
+      } else {
+        // Fallback to legacy bundle or local wallets, and backfill to Supabase
+        const legacyBundleWallets = dbSettings?.quests_state?.cloud_vault_bundle?.wallets;
+        const sourceWallets = (legacyBundleWallets && legacyBundleWallets.length > 0)
+          ? legacyBundleWallets
+          : this.wallets;
+        if (sourceWallets && sourceWallets.length > 0) {
+          this.wallets = sourceWallets.map((w, idx) => ({
+            id: safeUUID(w.id),
+            name: w.name || 'Wallet',
+            type: w.type || 'cash',
+            color: w.color || '#F5C842',
+            icon: w.icon || 'cash',
+            currency: w.currency || 'THB',
+            balance: parseFloat(w.balance) || 0,
+            isDefault: !!w.isDefault || !!w.is_default || idx === 0,
+            walletGroup: w.walletGroup || w.wallet_group || 'liquid',
+            bankCode: w.bankCode || w.bank_code || '',
+            accountNumber: w.accountNumber || w.account_number || '',
+            excludeFromTotal: !!w.excludeFromTotal || !!w.exclude_from_total,
+            isArchived: !!w.isArchived || !!w.is_archived,
+            sortOrder: w.sortOrder ?? idx,
+            createdAt: new Date(),
+          }));
+          const walletsUpload = this.wallets.map((w) => ({
+            id: w.id,
+            user_id: user.id,
+            name: w.name,
+            type: w.type,
+            color: w.color,
+            icon: w.icon,
+            currency: w.currency,
+            balance: w.balance,
+            is_default: w.isDefault,
+            wallet_group: w.walletGroup,
+            bank_code: w.bankCode || null,
+            account_number: w.accountNumber || null,
+            exclude_from_total: w.excludeFromTotal,
+            is_archived: w.isArchived,
+            sort_order: w.sortOrder,
+          }));
+          supabase.from('wallets').upsert(walletsUpload).then();
+        }
+      }
+      localStorage.setItem('fintrack_wallets', JSON.stringify(this.wallets));
 
-      if (txError) throw txError;
+      // --- SAVINGS GOALS SYNC ---
+      if (dbGoals.length > 0) {
+        this.savingsGoals = dbGoals.map((g) => ({
+          id: safeUUID(g.id),
+          title: g.title,
+          targetAmount: parseFloat(g.target_amount) || 0,
+          currentAmount: parseFloat(g.current_amount) || 0,
+          category: g.category || 'general',
+          color: g.color || '#F5C842',
+          emoji: g.emoji || '🎯',
+          deadline: g.deadline ? new Date(g.deadline) : null,
+          isCompleted: !!g.is_completed,
+          note: g.note || '',
+          walletId: g.wallet_id ? safeUUID(g.wallet_id) : null,
+          sortOrder: g.sort_order || 0,
+          createdAt: g.created_at ? new Date(g.created_at) : new Date(),
+        }));
+      } else {
+        const legacyBundleGoals = dbSettings?.quests_state?.cloud_vault_bundle?.savings_goals;
+        const sourceGoals = (legacyBundleGoals && legacyBundleGoals.length > 0)
+          ? legacyBundleGoals
+          : this.savingsGoals;
+        if (sourceGoals && sourceGoals.length > 0) {
+          this.savingsGoals = sourceGoals.map((g) => ({
+            id: safeUUID(g.id),
+            title: g.title || 'Savings Goal',
+            targetAmount: parseFloat(g.targetAmount || g.target_amount) || 0,
+            currentAmount: parseFloat(g.currentAmount || g.current_amount) || 0,
+            category: g.category || 'general',
+            color: g.color || '#F5C842',
+            emoji: g.emoji || '🎯',
+            deadline: g.deadline ? new Date(g.deadline) : null,
+            isCompleted: !!g.isCompleted || !!g.is_completed,
+            note: g.note || '',
+            walletId: g.walletId ? safeUUID(g.walletId) : null,
+            sortOrder: g.sortOrder || 0,
+            createdAt: new Date(),
+          }));
+          const goalsUpload = this.savingsGoals.map((g) => ({
+            id: g.id,
+            user_id: user.id,
+            title: g.title,
+            target_amount: g.targetAmount,
+            current_amount: g.currentAmount,
+            category: g.category,
+            color: g.color,
+            emoji: g.emoji,
+            deadline: g.deadline ? g.deadline.toISOString() : null,
+            is_completed: g.isCompleted,
+            note: g.note || null,
+            wallet_id: isValidUUID(g.walletId) ? g.walletId : null,
+            sort_order: g.sortOrder,
+          }));
+          supabase.from('savings_goals').upsert(goalsUpload).then();
+        }
+      }
+      localStorage.setItem('fintrack_savings_goals', JSON.stringify(this.savingsGoals));
 
-      // 3. Fetch recurring rules
-      const { data: dbRules, error: rulesError } = await supabase
-        .from('recurring_rules')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (rulesError) throw rulesError;
+      // --- DOWN PAYMENTS SYNC ---
+      if (dbDownPayments.length > 0) {
+        this.downPayments = dbDownPayments.map((dp) => ({
+          id: safeUUID(dp.id),
+          title: dp.title || dp.name || 'Down Payment',
+          name: dp.name || dp.title || 'Down Payment',
+          totalAmount: parseFloat(dp.total_amount) || 0,
+          paidAmount: parseFloat(dp.paid_amount) || 0,
+          monthlyPayment: parseFloat(dp.monthly_amount) || 0,
+          dueDate: dp.due_date ? new Date(dp.due_date) : null,
+          isComplete: !!dp.is_complete,
+          note: dp.note || '',
+          createdAt: dp.created_at ? new Date(dp.created_at) : new Date(),
+        }));
+      } else {
+        const legacyBundleDp = dbSettings?.quests_state?.cloud_vault_bundle?.down_payments;
+        const sourceDp = (legacyBundleDp && legacyBundleDp.length > 0)
+          ? legacyBundleDp
+          : this.downPayments;
+        if (sourceDp && sourceDp.length > 0) {
+          this.downPayments = sourceDp.map((dp) => ({
+            id: safeUUID(dp.id),
+            title: dp.title || dp.name || 'Down Payment',
+            name: dp.name || dp.title || 'Down Payment',
+            totalAmount: parseFloat(dp.totalAmount || dp.total_amount) || 0,
+            paidAmount: parseFloat(dp.paidAmount || dp.paid_amount) || 0,
+            monthlyPayment: parseFloat(dp.monthlyPayment || dp.monthly_amount) || 0,
+            dueDate: dp.dueDate ? new Date(dp.dueDate) : null,
+            isComplete: !!dp.isComplete || !!dp.is_complete,
+            note: dp.note || '',
+            createdAt: new Date(),
+          }));
+          const dpUpload = this.downPayments.map((dp) => ({
+            id: dp.id,
+            user_id: user.id,
+            title: dp.title,
+            name: dp.name,
+            total_amount: dp.totalAmount,
+            paid_amount: dp.paidAmount,
+            monthly_amount: dp.monthlyPayment,
+            due_date: dp.dueDate ? dp.dueDate.toISOString() : null,
+            is_complete: dp.isComplete,
+            note: dp.note || null,
+          }));
+          supabase.from('down_payments').upsert(dpUpload).then();
+        }
+      }
+      localStorage.setItem('fintrack_down_payments', JSON.stringify(this.downPayments));
 
       // --- SETTINGS SYNC ---
       if (dbSettings) {
@@ -465,53 +662,14 @@ export const store = {
           collectibles: mergedCollectibles,
           questsState: dbSettings.quests_state || this.settings.questsState,
           usedSlips: mergedUsedSlips,
+          promptPayId: dbSettings.promptpay_id || this.settings.promptPayId || '',
+          categoryBudgets: dbSettings.category_budgets || this.settings.categoryBudgets || {},
+          savingsMilestones: dbSettings.savings_milestones || this.settings.savingsMilestones || {},
+          savingsClaimedMilestones: dbSettings.savings_claimed_milestones || this.settings.savingsClaimedMilestones || {},
+          totalSavingsCoins: dbSettings.total_savings_coins || this.settings.totalSavingsCoins || 0,
         };
 
-        // Restore Wallets, Savings Goals, Down Payments, and Category Limits from Cloud
-        const cloudBundle = dbSettings.quests_state?.cloud_vault_bundle;
-        const cloudWallets = (dbSettings.wallets && Array.isArray(dbSettings.wallets) && dbSettings.wallets.length > 0)
-          ? dbSettings.wallets
-          : (cloudBundle?.wallets && Array.isArray(cloudBundle.wallets) && cloudBundle.wallets.length > 0 ? cloudBundle.wallets : null);
-        
-        if (cloudWallets) {
-          this.wallets = cloudWallets;
-          localStorage.setItem("fintrack_wallets", JSON.stringify(this.wallets));
-        }
-
-        const cloudGoals = (dbSettings.savings_goals && Array.isArray(dbSettings.savings_goals))
-          ? dbSettings.savings_goals
-          : (cloudBundle?.savings_goals && Array.isArray(cloudBundle.savings_goals) ? cloudBundle.savings_goals : null);
-        
-        if (cloudGoals) {
-          this.savingsGoals = cloudGoals;
-          localStorage.setItem("fintrack_savings_goals", JSON.stringify(this.savingsGoals));
-        }
-
-        const cloudDownPayments = (dbSettings.down_payments && Array.isArray(dbSettings.down_payments))
-          ? dbSettings.down_payments
-          : (cloudBundle?.down_payments && Array.isArray(cloudBundle.down_payments) ? cloudBundle.down_payments : null);
-        
-        if (cloudDownPayments) {
-          this.downPayments = cloudDownPayments;
-          localStorage.setItem("fintrack_down_payments", JSON.stringify(this.downPayments));
-        }
-
-        if (cloudBundle?.category_limits) {
-          this.categoryLimits = cloudBundle.category_limits;
-          localStorage.setItem("fintrack_category_limits", JSON.stringify(this.categoryLimits));
-        }
-
-        if (cloudBundle?.savings_milestones) {
-          this.settings.savingsMilestones = cloudBundle.savings_milestones;
-        }
-        if (cloudBundle?.savings_claimed_milestones) {
-          this.settings.savingsClaimedMilestones = cloudBundle.savings_claimed_milestones;
-        }
-        if (cloudBundle?.total_savings_coins) {
-          this.settings.totalSavingsCoins = cloudBundle.total_savings_coins;
-        }
-
-        // Immediately sync back merged state to cloud database
+        // Immediately sync back merged settings
         await this.saveSettingsToCloud();
       } else {
         // No cloud settings, upload local settings
@@ -687,21 +845,6 @@ export const store = {
   async saveSettingsToCloud() {
     if (this.user) {
       try {
-        const cloudVaultBundle = {
-          wallets: this.wallets || [],
-          savings_goals: this.savingsGoals || [],
-          down_payments: this.downPayments || [],
-          category_limits: this.categoryLimits || {},
-          savings_milestones: this.settings.savingsMilestones || {},
-          savings_claimed_milestones: this.settings.savingsClaimedMilestones || {},
-          total_savings_coins: this.settings.totalSavingsCoins || 0
-        };
-
-        const questsState = {
-          ...(this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] }),
-          cloud_vault_bundle: cloudVaultBundle
-        };
-
         const payload = {
           user_id: this.user.id,
           selected_currency: this.settings.selectedCurrency || 'THB',
@@ -721,8 +864,13 @@ export const store = {
           unlocked_themes: this.settings.unlockedThemes || ["light", "dark"],
           forgiven_transactions: this.settings.forgivenTransactions || [],
           collectibles: this.settings.collectibles || [],
-          quests_state: questsState,
-          used_slips: this.settings.usedSlips || []
+          quests_state: this.settings.questsState || { date: null, firstIncome: false, stayClean: true, checkIn: false, claimed: [] },
+          used_slips: this.settings.usedSlips || [],
+          promptpay_id: this.settings.promptPayId || null,
+          category_budgets: this.settings.categoryBudgets || {},
+          savings_milestones: this.settings.savingsMilestones || {},
+          savings_claimed_milestones: this.settings.savingsClaimedMilestones || {},
+          total_savings_coins: this.settings.totalSavingsCoins || 0,
         };
         let { error } = await supabase.from('user_profiles').upsert(payload, { onConflict: 'user_id' });
         if (error && error.code === '42P01') {
@@ -778,22 +926,35 @@ export const store = {
     localStorage.removeItem("fintrack_settings");
     localStorage.removeItem("fintrack_net_worth");
     localStorage.removeItem("fintrack_down_payments");
+    localStorage.removeItem("fintrack_savings_goals");
+    localStorage.removeItem("fintrack_wallets");
   },
 
   async deleteCloudData() {
     if (!this.user) return;
     try {
       const userId = this.user.id;
-      await supabase.from('transactions').delete().eq('user_id', userId);
-      await supabase.from('recurring_rules').delete().eq('user_id', userId);
-      await supabase.from('user_profiles').delete().eq('user_id', userId);
-      await supabase.from('user').delete().eq('user_id', userId);
+      await Promise.allSettled([
+        supabase.from('transactions').delete().eq('user_id', userId),
+        supabase.from('recurring_rules').delete().eq('user_id', userId),
+        supabase.from('savings_goals').delete().eq('user_id', userId),
+        supabase.from('down_payments').delete().eq('user_id', userId),
+        supabase.from('budgets').delete().eq('user_id', userId),
+        supabase.from('net_worth_snapshots').delete().eq('user_id', userId),
+        supabase.from('wallets').delete().eq('user_id', userId),
+        supabase.from('user_profiles').delete().eq('user_id', userId),
+        supabase.from('user').delete().eq('user_id', userId),
+      ]);
       
       // Clear local data as well
       this.transactions = [];
       this.recurringRules = [];
+      this.savingsGoals = [];
+      this.downPayments = [];
       localStorage.removeItem("fintrack_transactions");
       localStorage.removeItem("fintrack_recurring_rules");
+      localStorage.removeItem("fintrack_savings_goals");
+      localStorage.removeItem("fintrack_down_payments");
       
       console.log('Cloud and local data deleted successfully for user:', userId);
       this.notify();
@@ -806,6 +967,16 @@ export const store = {
   saveNetWorth(assets, liabilities) {
     this.netWorth = { assets, liabilities };
     localStorage.setItem("fintrack_net_worth", JSON.stringify(this.netWorth));
+    if (this.user) {
+      supabase.from('net_worth_snapshots').insert({
+        user_id: this.user.id,
+        assets: assets,
+        liabilities: liabilities,
+        recorded_at: new Date().toISOString(),
+      }).then(({ error }) => {
+        if (error) console.error("Supabase saveNetWorth error:", error);
+      });
+    }
     this.notify();
   },
 
@@ -1070,7 +1241,7 @@ export const store = {
   addWallet(wallet) {
     const startingAmount = parseFloat(wallet.balance ?? wallet.initialBalance) || 0;
     const newWallet = {
-      id: wallet.id || safeUUID(),
+      id: safeUUID(wallet.id),
       name: wallet.name || (this.settings.language === 'en' ? "New Wallet" : "กระเป๋าใหม่"),
       type: wallet.type || "cash",
       color: wallet.color || "#F5C842",
@@ -1078,37 +1249,90 @@ export const store = {
       balance: startingAmount,
       isDefault: !!wallet.isDefault,
       currency: wallet.currency || "THB",
+      walletGroup: wallet.walletGroup || (wallet.type === 'investment' ? 'investment' : (wallet.type === 'savings' ? 'savings' : 'liquid')),
+      bankCode: wallet.bankCode || "",
+      accountNumber: wallet.accountNumber || "",
+      excludeFromTotal: !!wallet.excludeFromTotal,
+      isArchived: !!wallet.isArchived,
+      sortOrder: wallet.sortOrder ?? this.wallets.length,
       createdAt: new Date(),
     };
     this.wallets.push(newWallet);
     this.save();
+
+    if (this.user) {
+      supabase.from('wallets').insert({
+        id: newWallet.id,
+        user_id: this.user.id,
+        name: newWallet.name,
+        type: newWallet.type,
+        color: newWallet.color,
+        icon: newWallet.icon,
+        currency: newWallet.currency,
+        balance: newWallet.balance,
+        is_default: newWallet.isDefault,
+        wallet_group: newWallet.walletGroup,
+        bank_code: newWallet.bankCode || null,
+        account_number: newWallet.accountNumber || null,
+        exclude_from_total: newWallet.excludeFromTotal,
+        is_archived: newWallet.isArchived,
+        sort_order: newWallet.sortOrder,
+      }).then(({ error }) => {
+        if (error) console.error("Supabase addWallet error:", error);
+      });
+    }
+
     return newWallet;
   },
 
   updateWallet(updated) {
-    const idx = this.wallets.findIndex((w) => w.id === updated.id);
+    const targetId = safeUUID(updated.id);
+    const idx = this.wallets.findIndex((w) => w.id === targetId || w.id === updated.id);
     if (idx !== -1) {
       const existing = this.wallets[idx];
       this.wallets[idx] = {
         ...existing,
         ...updated,
+        id: targetId,
         balance: updated.balance !== undefined
           ? (isNaN(parseFloat(updated.balance)) ? 0 : parseFloat(updated.balance))
           : existing.balance,
       };
       this.save();
+
+      if (this.user) {
+        const w = this.wallets[idx];
+        supabase.from('wallets').update({
+          name: w.name,
+          type: w.type,
+          color: w.color,
+          icon: w.icon,
+          currency: w.currency,
+          balance: w.balance,
+          is_default: w.isDefault,
+          wallet_group: w.walletGroup || 'liquid',
+          bank_code: w.bankCode || null,
+          account_number: w.accountNumber || null,
+          exclude_from_total: !!w.excludeFromTotal,
+          is_archived: !!w.isArchived,
+          sort_order: w.sortOrder || 0,
+        }).eq('id', targetId).then(({ error }) => {
+          if (error) console.error("Supabase updateWallet error:", error);
+        });
+      }
     }
   },
 
   setWalletBalance(walletId, targetBalance) {
-    const wallet = this.getWallet(walletId);
+    const targetId = safeUUID(walletId);
+    const wallet = this.getWallet(targetId) || this.getWallet(walletId);
     if (!wallet) return;
 
     const target = parseFloat(targetBalance);
     const targetValid = !isNaN(target) ? target : 0;
 
     const txs = this.transactions.filter((t) => {
-      return t.walletId === walletId;
+      return t.walletId === targetId || t.walletId === walletId;
     });
 
     let totalIncome = 0;
@@ -1123,13 +1347,26 @@ export const store = {
     // Direct base balance adjustment: setting to 0 or any target value
     wallet.balance = targetValid - netTransactions;
     this.save();
+
+    if (this.user) {
+      supabase.from('wallets').update({ balance: wallet.balance }).eq('id', wallet.id).then(({ error }) => {
+        if (error) console.error("Supabase setWalletBalance error:", error);
+      });
+    }
   },
 
   setPrimaryWallet(walletId) {
+    const targetId = walletId && walletId !== 'none' ? safeUUID(walletId) : null;
     this.wallets.forEach((w) => {
-      w.isDefault = Boolean(walletId && walletId !== 'none' && w.id === walletId);
+      w.isDefault = Boolean(targetId && w.id === targetId);
     });
     this.save();
+
+    if (this.user) {
+      this.wallets.forEach((w) => {
+        supabase.from('wallets').update({ is_default: w.isDefault }).eq('id', w.id).then();
+      });
+    }
   },
 
   getPrimaryWallet() {
@@ -1137,17 +1374,24 @@ export const store = {
   },
 
   deleteWallet(id) {
+    const targetId = safeUUID(id);
     if (this.wallets.length <= 1) return false; // keep at least 1 wallet
-    const wasPrimary = this.getWallet(id)?.isDefault;
-    this.wallets = this.wallets.filter((w) => w.id !== id);
+    const wasPrimary = this.getWallet(targetId)?.isDefault || this.getWallet(id)?.isDefault;
+    this.wallets = this.wallets.filter((w) => w.id !== targetId && w.id !== id);
     if (wasPrimary && this.wallets.length > 0) {
       this.wallets[0].isDefault = true;
     }
     // Unassign transactions
     this.transactions.forEach((t) => {
-      if (t.walletId === id) t.walletId = this.wallets[0].id;
+      if (t.walletId === targetId || t.walletId === id) t.walletId = this.wallets[0].id;
     });
     this.save();
+
+    if (this.user) {
+      supabase.from('wallets').delete().eq('id', targetId).then(({ error }) => {
+        if (error) console.error("Supabase deleteWallet error:", error);
+      });
+    }
     return true;
   },
 
@@ -1216,26 +1460,53 @@ export const store = {
   addSavingsGoal(goal) {
     if (!this.savingsGoals) this.savingsGoals = [];
     const newGoal = {
-      id: goal.id || Math.random().toString(36).substring(2, 11),
+      id: safeUUID(goal.id),
       title: goal.title || "เป้าหมายใหม่",
       targetAmount: parseFloat(goal.targetAmount) || 0,
       currentAmount: parseFloat(goal.currentAmount) || 0,
-      emoji: goal.emoji || "",
+      category: goal.category || "general",
+      emoji: goal.emoji || "🎯",
       color: goal.color || "#F5C842",
       deadline: goal.deadline ? (goal.deadline instanceof Date ? goal.deadline : new Date(goal.deadline)) : null,
+      isCompleted: !!goal.isCompleted,
+      note: goal.note || "",
+      walletId: goal.walletId ? safeUUID(goal.walletId) : null,
+      sortOrder: goal.sortOrder ?? this.savingsGoals.length,
       createdAt: new Date(),
     };
     this.savingsGoals.push(newGoal);
     this.save();
+
+    if (this.user) {
+      supabase.from('savings_goals').insert({
+        id: newGoal.id,
+        user_id: this.user.id,
+        title: newGoal.title,
+        target_amount: newGoal.targetAmount,
+        current_amount: newGoal.currentAmount,
+        category: newGoal.category,
+        color: newGoal.color,
+        emoji: newGoal.emoji,
+        deadline: newGoal.deadline ? newGoal.deadline.toISOString() : null,
+        is_completed: newGoal.isCompleted,
+        note: newGoal.note || null,
+        wallet_id: isValidUUID(newGoal.walletId) ? newGoal.walletId : null,
+        sort_order: newGoal.sortOrder,
+      }).then(({ error }) => {
+        if (error) console.error("Supabase addSavingsGoal error:", error);
+      });
+    }
+
     return newGoal;
   },
 
   depositToGoal(goalId, amount, walletId = "default") {
     if (!this.savingsGoals) this.savingsGoals = [];
-    let goal = this.savingsGoals.find((g) => String(g.id) === String(goalId));
+    const targetId = safeUUID(goalId);
+    let goal = this.savingsGoals.find((g) => String(g.id) === String(goalId) || String(g.id) === targetId);
     if (!goal && (goalId === "default" || this.savingsGoals.length === 0)) {
       goal = this.addSavingsGoal({
-        id: "default",
+        id: DETERMINISTIC_UUIDS.default,
         title: this.settings?.language === "en" ? "General Savings" : "เงินออมทั่วไป",
         targetAmount: 50000,
         currentAmount: 0,
@@ -1253,15 +1524,15 @@ export const store = {
       amount: amt,
       isIncome: false,
       category: "Savings",
-      walletId: walletId,
+      walletId: safeUUID(walletId),
       date: new Date(),
     });
 
     goal.currentAmount = prevAmount + amt;
+    goal.isCompleted = goal.currentAmount >= targetAmount;
     const newPct = Math.min(100, Math.floor((goal.currentAmount / targetAmount) * 100));
 
     // Dynamic Coins & XP Reward
-    // 1 FinCoin per ฿100 saved, 2 XP per ฿50 saved
     const earnedCoins = Math.max(1, Math.floor(amt / 100));
     const earnedXP = Math.max(5, Math.floor(amt / 50) * 2);
 
@@ -1271,21 +1542,29 @@ export const store = {
 
     // Check Milestone Crossings (25%, 50%, 75%, 100%)
     if (!this.settings.savingsMilestones) this.settings.savingsMilestones = {};
-    if (!this.settings.savingsMilestones[goalId]) this.settings.savingsMilestones[goalId] = [];
+    if (!this.settings.savingsMilestones[goal.id]) this.settings.savingsMilestones[goal.id] = [];
 
     const milestones = [25, 50, 75, 100];
     const unlockedMilestones = [];
 
     milestones.forEach((m) => {
-      if (newPct >= m && !this.settings.savingsMilestones[goalId].includes(m)) {
-        this.settings.savingsMilestones[goalId].push(m);
+      if (newPct >= m && !this.settings.savingsMilestones[goal.id].includes(m)) {
+        this.settings.savingsMilestones[goal.id].push(m);
         unlockedMilestones.push(m);
       }
     });
 
     this.recalculateXP();
     this.save();
-    this.saveSettingsToCloud();
+
+    if (this.user) {
+      supabase.from('savings_goals').update({
+        current_amount: goal.currentAmount,
+        is_completed: goal.isCompleted,
+      }).eq('id', goal.id).then(({ error }) => {
+        if (error) console.error("Supabase depositToGoal error:", error);
+      });
+    }
 
     return {
       success: true,
@@ -1368,7 +1647,8 @@ export const store = {
   },
 
   withdrawFromGoal(goalId, amount, walletId = "default") {
-    const goal = (this.savingsGoals || []).find((g) => String(g.id) === String(goalId));
+    const targetId = safeUUID(goalId);
+    const goal = (this.savingsGoals || []).find((g) => String(g.id) === String(goalId) || String(g.id) === targetId);
     const amt = parseFloat(amount);
     if (!goal || !amt || amt <= 0 || (goal.currentAmount || 0) < amt) return false;
 
@@ -1377,20 +1657,37 @@ export const store = {
       amount: amt,
       isIncome: true,
       category: "Savings",
-      walletId: walletId,
+      walletId: safeUUID(walletId),
       date: new Date(),
     });
 
     goal.currentAmount = Math.max(0, (goal.currentAmount || 0) - amt);
+    goal.isCompleted = goal.currentAmount >= (goal.targetAmount || 1);
     this.save();
-    this.saveSettingsToCloud();
+
+    if (this.user) {
+      supabase.from('savings_goals').update({
+        current_amount: goal.currentAmount,
+        is_completed: goal.isCompleted,
+      }).eq('id', goal.id).then(({ error }) => {
+        if (error) console.error("Supabase withdrawFromGoal error:", error);
+      });
+    }
+
     return true;
   },
 
   deleteSavingsGoal(goalId) {
-    this.savingsGoals = (this.savingsGoals || []).filter((g) => String(g.id) !== String(goalId));
+    const targetId = safeUUID(goalId);
+    this.savingsGoals = (this.savingsGoals || []).filter((g) => String(g.id) !== String(goalId) && String(g.id) !== targetId);
     this.save();
-    this.saveSettingsToCloud();
+
+    if (this.user) {
+      supabase.from('savings_goals').delete().eq('id', targetId).then(({ error }) => {
+        if (error) console.error("Supabase deleteSavingsGoal error:", error);
+      });
+    }
+
     return true;
   },
 
@@ -1660,7 +1957,8 @@ export const store = {
     }
 
     const primaryWallet = this.getPrimaryWallet();
-    const targetWalletId = (t.walletId && this.getWallet(t.walletId)) ? t.walletId : (primaryWallet ? primaryWallet.id : "default");
+    const rawWalletId = t.walletId || (primaryWallet ? primaryWallet.id : DETERMINISTIC_UUIDS.default);
+    const targetWalletId = safeUUID(rawWalletId);
 
     const transaction = {
       id: safeUUID(t.id),
@@ -1669,10 +1967,10 @@ export const store = {
       isIncome: !!t.isIncome,
       category: category,
       date: t.date ? new Date(t.date) : new Date(),
-      recurringId: t.recurringId || null,
+      recurringId: t.recurringId ? safeUUID(t.recurringId) : null,
       walletId: targetWalletId,
       isTransfer: !!t.isTransfer,
-      transferToWalletId: t.transferToWalletId || null,
+      transferToWalletId: t.transferToWalletId ? safeUUID(t.transferToWalletId) : null,
       note: t.note || t.notes || "",
     };
     this.transactions.push(transaction);
@@ -1690,7 +1988,9 @@ export const store = {
         date: transaction.date.toISOString(),
         recurring_id: isValidUUID(transaction.recurringId) ? transaction.recurringId : null,
         wallet_id: isValidUUID(transaction.walletId) ? transaction.walletId : null,
-        note: transaction.note || null
+        transfer_to_wallet_id: isValidUUID(transaction.transferToWalletId) ? transaction.transferToWalletId : null,
+        is_transfer: transaction.isTransfer,
+        note: transaction.note || null,
       }).then(({ error }) => { if (error) console.error('Supabase addTransaction error:', error); });
     }
 
@@ -1703,7 +2003,8 @@ export const store = {
   },
 
   updateTransaction(updated) {
-    const idx = this.transactions.findIndex((t) => t.id === updated.id);
+    const targetId = safeUUID(updated.id);
+    const idx = this.transactions.findIndex((t) => t.id === targetId || t.id === updated.id);
     if (idx !== -1) {
       const category = updated.category || this.transactions[idx].category || "Other";
       let finalTitle = (updated.title && updated.title.trim()) ? updated.title.trim() : null;
@@ -1712,28 +2013,37 @@ export const store = {
         finalTitle = catInfo ? catInfo.label : (category || i18n("categoryOther"));
       }
 
+      const walletId = updated.walletId ? safeUUID(updated.walletId) : this.transactions[idx].walletId;
+      const transferToWalletId = updated.transferToWalletId ? safeUUID(updated.transferToWalletId) : (this.transactions[idx].transferToWalletId || null);
+
       this.transactions[idx] = {
+        ...this.transactions[idx],
         ...updated,
+        id: targetId,
         title: finalTitle,
         category: category,
         amount: parseFloat(updated.amount),
         date: new Date(updated.date),
+        walletId,
+        transferToWalletId,
         note: updated.note || updated.notes || this.transactions[idx].note || "",
       };
       this.save();
 
       if (this.user) {
         supabase.from('transactions').upsert({
-          id: safeUUID(updated.id),
+          id: targetId,
           user_id: this.user.id,
           title: finalTitle,
           amount: parseFloat(updated.amount),
           is_income: !!updated.isIncome,
           category: category,
           date: new Date(updated.date).toISOString(),
-          recurring_id: isValidUUID(updated.recurringId) ? updated.recurringId : null,
-          wallet_id: isValidUUID(updated.walletId) ? updated.walletId : null,
-          note: updated.note || updated.notes || null
+          recurring_id: isValidUUID(updated.recurringId) ? safeUUID(updated.recurringId) : null,
+          wallet_id: isValidUUID(walletId) ? walletId : null,
+          transfer_to_wallet_id: isValidUUID(transferToWalletId) ? transferToWalletId : null,
+          is_transfer: !!updated.isTransfer || !!this.transactions[idx].isTransfer,
+          note: updated.note || updated.notes || null,
         }).then(({ error }) => { if (error) console.error('Supabase updateTransaction error:', error); });
       }
     }
@@ -1783,34 +2093,72 @@ export const store = {
       else parsedDueDate = new Date(plan.dueDate);
     }
     const newPlan = {
-      id: plan.id || Math.random().toString(36).substring(2, 11),
-      title: plan.title?.trim() || i18n("untitledDownPayment"),
+      id: safeUUID(plan.id),
+      title: plan.title?.trim() || plan.name?.trim() || i18n("untitledDownPayment"),
+      name: plan.title?.trim() || plan.name?.trim() || i18n("untitledDownPayment"),
       totalAmount,
       paidAmount,
-      monthlyPayment: parseFloat(plan.monthlyPayment) || 0,
+      monthlyPayment: parseFloat(plan.monthlyPayment || plan.monthly_amount) || 0,
       dueDate: parsedDueDate,
+      isComplete: paidAmount >= totalAmount,
+      note: plan.note || "",
       createdAt: new Date(),
     };
     this.downPayments.push(newPlan);
     this.save();
-    this.saveSettingsToCloud();
+
+    if (this.user) {
+      supabase.from('down_payments').insert({
+        id: newPlan.id,
+        user_id: this.user.id,
+        name: newPlan.title,
+        title: newPlan.title,
+        total_amount: newPlan.totalAmount,
+        paid_amount: newPlan.paidAmount,
+        monthly_amount: newPlan.monthlyPayment,
+        due_date: newPlan.dueDate ? newPlan.dueDate.toISOString() : null,
+        is_complete: newPlan.isComplete,
+        note: newPlan.note || null,
+      }).then(({ error }) => {
+        if (error) console.error("Supabase addDownPayment error:", error);
+      });
+    }
+
     return newPlan;
   },
 
   recordDownPayment(id, amount, walletId = "default") {
-    const plan = (this.downPayments || []).find((item) => String(item.id) === String(id));
+    const targetId = safeUUID(id);
+    const plan = (this.downPayments || []).find((item) => String(item.id) === String(id) || String(item.id) === targetId);
     if (!plan) return false;
     const payAmt = parseFloat(amount) || 0;
     plan.paidAmount = Math.min(plan.totalAmount, (plan.paidAmount || 0) + payAmt);
+    plan.isComplete = plan.paidAmount >= plan.totalAmount;
     this.save();
-    this.saveSettingsToCloud();
+
+    if (this.user) {
+      supabase.from('down_payments').update({
+        paid_amount: plan.paidAmount,
+        is_complete: plan.isComplete,
+      }).eq('id', targetId).then(({ error }) => {
+        if (error) console.error("Supabase recordDownPayment error:", error);
+      });
+    }
+
     return true;
   },
 
   deleteDownPayment(id) {
-    this.downPayments = (this.downPayments || []).filter((plan) => String(plan.id) !== String(id));
+    const targetId = safeUUID(id);
+    this.downPayments = (this.downPayments || []).filter((plan) => String(plan.id) !== String(id) && String(plan.id) !== targetId);
     this.save();
-    this.saveSettingsToCloud();
+
+    if (this.user) {
+      supabase.from('down_payments').delete().eq('id', targetId).then(({ error }) => {
+        if (error) console.error("Supabase deleteDownPayment error:", error);
+      });
+    }
+
     return true;
   },
 
@@ -1824,7 +2172,7 @@ export const store = {
   addRecurringRule(rule) {
     if (!this.recurringRules) this.recurringRules = [];
     const newRule = {
-      id: rule.id || Math.random().toString(36).substring(2, 11),
+      id: safeUUID(rule.id),
       title: rule.title || i18n("untitledRecurring"),
       amount: parseFloat(rule.amount) || 0,
       isIncome: !!rule.isIncome,
@@ -1832,6 +2180,7 @@ export const store = {
       type: rule.type || "monthly", // 'monthly', 'yearly', 'custom'
       customDays: parseInt(rule.customDays) || 30,
       nextDueDate: rule.nextDueDate ? (rule.nextDueDate instanceof Date ? rule.nextDueDate : new Date(rule.nextDueDate)) : new Date(),
+      walletId: rule.walletId ? safeUUID(rule.walletId) : null,
       createdAt: new Date(),
       isActive: true,
     };
@@ -1850,6 +2199,7 @@ export const store = {
         custom_days: newRule.customDays,
         next_due_date: newRule.nextDueDate.toISOString(),
         is_active: newRule.isActive,
+        wallet_id: isValidUUID(newRule.walletId) ? newRule.walletId : null,
         created_at: newRule.createdAt.toISOString()
       }).then(({ error }) => { if (error) console.error('Supabase addRecurringRule error:', error); });
     }
@@ -1863,11 +2213,15 @@ export const store = {
   },
 
   updateRecurringRule(rule) {
-    const idx = this.recurringRules.findIndex((r) => r.id === rule.id);
+    const targetId = safeUUID(rule.id);
+    const idx = this.recurringRules.findIndex((r) => r.id === targetId || r.id === rule.id);
     if (idx !== -1) {
+      const walletId = rule.walletId ? safeUUID(rule.walletId) : (this.recurringRules[idx].walletId || null);
       this.recurringRules[idx] = {
         ...rule,
+        id: targetId,
         amount: parseFloat(rule.amount),
+        walletId,
         nextDueDate: new Date(rule.nextDueDate),
         createdAt: new Date(rule.createdAt),
       };
@@ -1875,7 +2229,7 @@ export const store = {
 
       if (this.user) {
         supabase.from('recurring_rules').upsert({
-          id: rule.id,
+          id: targetId,
           user_id: this.user.id,
           title: rule.title,
           amount: parseFloat(rule.amount),
@@ -1885,6 +2239,7 @@ export const store = {
           custom_days: parseInt(rule.customDays) || 30,
           next_due_date: new Date(rule.nextDueDate).toISOString(),
           is_active: !!rule.isActive,
+          wallet_id: isValidUUID(walletId) ? walletId : null,
           created_at: new Date(rule.createdAt).toISOString()
         }).then(({ error }) => { if (error) console.error('Supabase updateRecurringRule error:', error); });
       }
@@ -1938,6 +2293,7 @@ export const store = {
       while (nextDue <= today) {
         // Create transaction
         const primaryWallet = this.getPrimaryWallet();
+        const rawWid = (rule.walletId && this.getWallet(rule.walletId)) ? rule.walletId : (primaryWallet ? primaryWallet.id : DETERMINISTIC_UUIDS.default);
         const transaction = {
           id: safeUUID(),
           title: rule.title,
@@ -1945,8 +2301,8 @@ export const store = {
           isIncome: rule.isIncome,
           category: rule.category,
           date: new Date(nextDue),
-          recurringId: rule.id,
-          walletId: (rule.walletId && this.getWallet(rule.walletId)) ? rule.walletId : (primaryWallet ? primaryWallet.id : "default"),
+          recurringId: safeUUID(rule.id),
+          walletId: safeUUID(rawWid),
         };
         this.transactions.push(transaction);
         addedCount++;
