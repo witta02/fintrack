@@ -13,14 +13,11 @@ let searchQuery = "";
 let activeFilterType = "all"; // 'all', 'income', 'expense'
 let selectedCategoryFilter = "all";
 
-// Date filter state
-let datePeriodMode = "day";   // 'day' | 'month' | 'year'
-let selectedYear = null;
-let selectedMonth = null;     // 0-11
-let selectedDay = null;       // 1-31
-let calendarDisplayYear = new Date().getFullYear();
-let calendarDisplayMonth = new Date().getMonth();
-let isDatePickerOpen = false; // Collapsed by default so it doesn't show all the time!
+// Period filter: 'all' | 'daily' | 'monthly' | 'yearly'
+let activePeriod = "all";
+
+// Current period cursor date
+let periodDate = new Date();
 
 // Wallet filter — defaults to primary wallet (or 'all' if none)
 let selectedWalletId = null;
@@ -29,34 +26,65 @@ let selectedWalletId = null;
 let isSelectMode = false;
 let selectedIds = new Set();
 
-// Track transactions with dates for calendar dots
-let txDateSet = new Set(); // "YYYY-M-D" strings
+const thaiMonthsFull = [
+  "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+  "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+];
+const thaiMonthsShort = [
+  "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+  "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
+];
+const enMonthsFull = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+const enMonthsShort = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
 
-function getDateFilterLabel() {
+function getPeriodNavTitle() {
   const isEn = store.settings.language === "en";
-  if (selectedYear == null) {
-    return isEn ? "All Dates (Filter ▾)" : "ทุกช่วงเวลา (เลือกวันที่ ▾)";
-  }
-  const thaiMonths = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-  const enMonths = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const months = isEn ? enMonths : thaiMonths;
+  const y = periodDate.getFullYear();
+  const m = periodDate.getMonth();
+  const d = periodDate.getDate();
 
-  if (datePeriodMode === "year") {
-    return isEn ? `Year ${selectedYear}` : `ปี ${selectedYear}`;
+  if (activePeriod === "daily") {
+    const monthStr = isEn ? enMonthsShort[m] : thaiMonthsShort[m];
+    return `${d} ${monthStr} ${y}`;
   }
-  if (datePeriodMode === "month") {
-    return isEn ? `${months[selectedMonth]} ${selectedYear}` : `เดือน ${months[selectedMonth]} ${selectedYear}`;
+  if (activePeriod === "monthly") {
+    const monthStr = isEn ? enMonthsFull[m] : thaiMonthsFull[m];
+    return `${monthStr} ${y}`;
   }
-  // day
-  return `${selectedDay} ${months[selectedMonth]} ${selectedYear}`;
+  if (activePeriod === "yearly") {
+    return isEn ? `${y}` : `ปี ${y}`;
+  }
+  return isEn ? "All Records" : "ทั้งหมด";
 }
 
-function isFilteringToday() {
+function isCurrentPeriod() {
   const now = new Date();
-  return datePeriodMode === "day" &&
-         selectedYear === now.getFullYear() &&
-         selectedMonth === now.getMonth() &&
-         selectedDay === now.getDate();
+  if (activePeriod === "daily") {
+    return periodDate.getFullYear() === now.getFullYear() &&
+           periodDate.getMonth() === now.getMonth() &&
+           periodDate.getDate() === now.getDate();
+  }
+  if (activePeriod === "monthly") {
+    return periodDate.getFullYear() === now.getFullYear() &&
+           periodDate.getMonth() === now.getMonth();
+  }
+  if (activePeriod === "yearly") {
+    return periodDate.getFullYear() === now.getFullYear();
+  }
+  return true;
+}
+
+function getCurrentJumpLabel() {
+  if (activePeriod === "daily") return t("filterToday");
+  if (activePeriod === "monthly") return t("thisMonth");
+  if (activePeriod === "yearly") return t("thisYear");
+  return "";
 }
 
 export function renderTransactions(container, params) {
@@ -65,20 +93,21 @@ export function renderTransactions(container, params) {
   activeFilterType = params?.type || "all";
   isSelectMode = false;
   selectedIds = new Set();
-  isDatePickerOpen = false; // Don't show calendar all the time
+
+  if (params?.date) {
+    const parsed = new Date(params.date);
+    if (!isNaN(parsed.getTime())) {
+      periodDate = parsed;
+      activePeriod = "daily";
+    }
+  } else {
+    activePeriod = params?.period || activePeriod || "all";
+    periodDate = new Date();
+  }
 
   // Default: primary wallet (if exists)
   const primaryWallet = store.getPrimaryWallet();
   selectedWalletId = primaryWallet ? primaryWallet.id : "all";
-
-  // Reset date filter
-  datePeriodMode = "day";
-  selectedYear = null;
-  selectedMonth = null;
-  selectedDay = null;
-  const now = new Date();
-  calendarDisplayYear = now.getFullYear();
-  calendarDisplayMonth = now.getMonth();
 
   const allCategories = [...getExpenseCategories(), ...getIncomeCategories()];
   const uniqueCategories = [];
@@ -165,34 +194,26 @@ export function renderTransactions(container, params) {
         </div>
       </div>
 
-      <!-- Sleek Collapsible Date Filter Bar (Hidden by default!) -->
-      <div style="margin-bottom: 12px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <!-- Toggle Button -->
-          <button id="date-picker-toggle-btn" style="flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; border-radius: var(--radius); background: var(--surface); border: 1px solid ${selectedYear != null ? 'var(--gold)' : 'var(--border)'}; color: ${selectedYear != null ? 'var(--gold)' : 'var(--text-primary)'}; font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast);">
-            <div style="display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-              <span id="date-filter-label" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${getDateFilterLabel()}</span>
-            </div>
-            <svg id="date-toggle-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; transition: transform 200ms ease; transform: ${isDatePickerOpen ? 'rotate(180deg)' : 'rotate(0deg)'};"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-
-          <!-- Quick Today Button -->
-          <button id="today-btn" style="padding: 9px 13px; font-size: 12.5px; font-weight: 700; border-radius: var(--radius); border: 1px solid ${isFilteringToday() ? 'var(--gold)' : 'var(--border)'}; background: ${isFilteringToday() ? 'var(--gold)' : 'var(--surface)'}; color: ${isFilteringToday() ? '#000' : 'var(--text-primary)'}; cursor: pointer; white-space: nowrap; transition: all var(--transition-fast);">
-            ${t("filterToday")}
-          </button>
-
-          <!-- Clear Button (visible when filter active) -->
-          <button id="clear-date-btn" title="${t("filterClear")}" style="width: 38px; height: 38px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; display: ${selectedYear != null ? 'flex' : 'none'}; align-items: center; justify-content: center; flex-shrink: 0;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-
-        <!-- Collapsible Calendar / Month / Year Drawer -->
-        <div id="date-picker-panel" style="display: ${isDatePickerOpen ? 'block' : 'none'};"></div>
+      <!-- 4 Segmented Period Switcher Tabs: Daily / Monthly / Yearly / All -->
+      <div style="display: flex; background: var(--surface); border: 1px solid var(--border); padding: 3px; border-radius: var(--radius-lg); margin-bottom: 10px; gap: 4px;">
+        <button class="period-seg-btn ${activePeriod === 'all' ? 'active' : ''}" data-period="all" style="flex: 1; padding: 8px 4px; font-size: 12px; font-weight: 800; border-radius: var(--radius-md); border: none; cursor: pointer; text-align: center; transition: all 0.2s ease; background: ${activePeriod === 'all' ? 'var(--gold)' : 'transparent'}; color: ${activePeriod === 'all' ? '#000' : 'var(--text-secondary)'};">
+          ${t("filterAll")}
+        </button>
+        <button class="period-seg-btn ${activePeriod === 'daily' ? 'active' : ''}" data-period="daily" style="flex: 1; padding: 8px 4px; font-size: 12px; font-weight: 800; border-radius: var(--radius-md); border: none; cursor: pointer; text-align: center; transition: all 0.2s ease; background: ${activePeriod === 'daily' ? 'var(--gold)' : 'transparent'}; color: ${activePeriod === 'daily' ? '#000' : 'var(--text-secondary)'};">
+          ${t("filterDaily")}
+        </button>
+        <button class="period-seg-btn ${activePeriod === 'monthly' ? 'active' : ''}" data-period="monthly" style="flex: 1; padding: 8px 4px; font-size: 12px; font-weight: 800; border-radius: var(--radius-md); border: none; cursor: pointer; text-align: center; transition: all 0.2s ease; background: ${activePeriod === 'monthly' ? 'var(--gold)' : 'transparent'}; color: ${activePeriod === 'monthly' ? '#000' : 'var(--text-secondary)'};">
+          ${t("filterMonthly")}
+        </button>
+        <button class="period-seg-btn ${activePeriod === 'yearly' ? 'active' : ''}" data-period="yearly" style="flex: 1; padding: 8px 4px; font-size: 12px; font-weight: 800; border-radius: var(--radius-md); border: none; cursor: pointer; text-align: center; transition: all 0.2s ease; background: ${activePeriod === 'yearly' ? 'var(--gold)' : 'transparent'}; color: ${activePeriod === 'yearly' ? '#000' : 'var(--text-secondary)'};">
+          ${t("filterYearly")}
+        </button>
       </div>
 
-      <!-- Type Switcher Tabs -->
+      <!-- Compact Period Navigator (only displayed when daily/monthly/yearly is chosen) -->
+      <div id="period-nav-container" style="display: ${activePeriod === 'all' ? 'none' : 'block'}; margin-bottom: 12px;"></div>
+
+      <!-- Type Switcher Tabs (All / Income / Expense) -->
       <div class="add-tx-type-tabs" style="margin-bottom: 14px;">
         <button class="add-tx-tab ${activeFilterType === "all" ? "active" : ""}" data-type="all">${t("dashboardAll")}</button>
         <button class="add-tx-tab ${activeFilterType === "income" ? "active income" : ""}" data-type="income">${t("income")}</button>
@@ -216,15 +237,13 @@ export function renderTransactions(container, params) {
     </div>
   `;
 
-  buildTxDateSet();
-  renderDatePanel(container);
+  renderPeriodNavigator(container);
   setupEventListeners(container);
   updateUI(container);
 
   const unsubscribe = store.subscribe(() => {
     if (document.getElementById("transactions-full-list")) {
-      buildTxDateSet();
-      renderDatePanel(container);
+      renderPeriodNavigator(container);
       updateUI(container);
     } else {
       unsubscribe();
@@ -232,319 +251,105 @@ export function renderTransactions(container, params) {
   });
 }
 
-// ─── Build set of dates that have transactions ────────────────────────────
-function buildTxDateSet() {
-  txDateSet.clear();
-  store.getAllTransactions(selectedWalletId === "all" ? null : selectedWalletId).forEach(tx => {
-    const d = new Date(tx.date);
-    if (!isNaN(d.getTime())) {
-      txDateSet.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
-    }
-  });
-}
+// ─── Render Period Navigator Bar ──────────────────────────────────────────
+function renderPeriodNavigator(container) {
+  const navContainer = container.querySelector("#period-nav-container");
+  if (!navContainer) return;
 
-// ─── Update the Trigger Button (Label, Gold highlight, Chevron, Clear btn) ─
-function updateDateTriggerUI(container) {
-  const labelEl = container.querySelector("#date-filter-label");
-  const toggleBtn = container.querySelector("#date-picker-toggle-btn");
-  const chevron = container.querySelector("#date-toggle-chevron");
-  const clearBtn = container.querySelector("#clear-date-btn");
-  const todayBtn = container.querySelector("#today-btn");
-
-  if (labelEl) labelEl.textContent = getDateFilterLabel();
-  if (toggleBtn) {
-    toggleBtn.style.borderColor = selectedYear != null ? "var(--gold)" : "var(--border)";
-    toggleBtn.style.color = selectedYear != null ? "var(--gold)" : "var(--text-primary)";
-  }
-  if (chevron) {
-    chevron.style.transform = isDatePickerOpen ? "rotate(180deg)" : "rotate(0deg)";
-  }
-  if (clearBtn) {
-    clearBtn.style.display = selectedYear != null ? "flex" : "none";
-  }
-  if (todayBtn) {
-    const isToday = isFilteringToday();
-    todayBtn.style.border = `1px solid ${isToday ? "var(--gold)" : "var(--border)"}`;
-    todayBtn.style.background = isToday ? "var(--gold)" : "var(--surface)";
-    todayBtn.style.color = isToday ? "#000" : "var(--text-primary)";
-  }
-}
-
-// ─── Render the date picker panel (calendar / month / year) ───────────────
-function renderDatePanel(container) {
-  const panel = container.querySelector("#date-picker-panel");
-  if (!panel) return;
-
-  panel.style.display = isDatePickerOpen ? "block" : "none";
-  if (!isDatePickerOpen) return;
-
-  const isEn = store.settings.language === "en";
-
-  let bodyHtml = "";
-  if (datePeriodMode === "day") {
-    bodyHtml = buildCalendarHTML(calendarDisplayYear, calendarDisplayMonth);
-  } else if (datePeriodMode === "month") {
-    bodyHtml = buildMonthPickerHTML(calendarDisplayYear);
-  } else {
-    bodyHtml = buildYearPickerHTML();
+  if (activePeriod === "all") {
+    navContainer.style.display = "none";
+    navContainer.innerHTML = "";
+    return;
   }
 
-  panel.innerHTML = `
-    <div class="cal-container" style="margin-top: 8px;">
-      <!-- Panel Header: Period Mode Tabs + Done/Close -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px;">
-        <div style="display: flex; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; flex: 1;">
-          <button class="panel-period-tab ${datePeriodMode === 'day' ? 'active' : ''}" data-period="day" style="flex: 1; padding: 7px 4px; font-size: 11.5px; font-weight: 700; border: none; cursor: pointer; background: ${datePeriodMode === 'day' ? 'var(--gold)' : 'transparent'}; color: ${datePeriodMode === 'day' ? '#000' : 'var(--text-secondary)'}; transition: all 130ms ease;">${t("filterByDay")}</button>
-          <button class="panel-period-tab ${datePeriodMode === 'month' ? 'active' : ''}" data-period="month" style="flex: 1; padding: 7px 4px; font-size: 11.5px; font-weight: 700; border: none; cursor: pointer; background: ${datePeriodMode === 'month' ? 'var(--gold)' : 'transparent'}; color: ${datePeriodMode === 'month' ? '#000' : 'var(--text-secondary)'}; transition: all 130ms ease;">${t("filterByMonth")}</button>
-          <button class="panel-period-tab ${datePeriodMode === 'year' ? 'active' : ''}" data-period="year" style="flex: 1; padding: 7px 4px; font-size: 11.5px; font-weight: 700; border: none; cursor: pointer; background: ${datePeriodMode === 'year' ? 'var(--gold)' : 'transparent'}; color: ${datePeriodMode === 'year' ? '#000' : 'var(--text-secondary)'}; transition: all 130ms ease;">${t("filterByYear")}</button>
-        </div>
-        <button id="close-date-panel-btn" style="background: var(--card); border: 1px solid var(--border); color: var(--text-primary); border-radius: var(--radius); padding: 7px 12px; font-size: 11.5px; font-weight: 800; cursor: pointer; white-space: nowrap;">
-          ${isEn ? 'Done ✕' : 'เสร็จสิ้น ✕'}
+  navContainer.style.display = "block";
+  const isCurrent = isCurrentPeriod();
+  const jumpLabel = getCurrentJumpLabel();
+
+  navContainer.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 6px 8px; gap: 8px;">
+      <!-- Prev Button -->
+      <button id="period-nav-prev" style="width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--card); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; line-height: 1; transition: all var(--transition-fast);">
+        &#8249;
+      </button>
+
+      <!-- Center Title -->
+      <div id="period-nav-center" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 10px; border-radius: var(--radius-sm); transition: background 0.15s ease; position: relative;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        <span style="font-size: 13.5px; font-weight: 800; color: var(--text-primary); font-family: var(--font-heading);">${getPeriodNavTitle()}</span>
+        ${activePeriod === "daily" ? `
+          <input type="date" id="period-native-date-input" style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;" />
+        ` : ''}
+      </div>
+
+      <!-- Right Action: Jump to Today/Month/Year or Next Button -->
+      <div style="display: flex; align-items: center; gap: 6px;">
+        ${!isCurrent ? `
+          <button id="period-jump-btn" style="padding: 5px 10px; font-size: 11px; font-weight: 800; border-radius: var(--radius-sm); border: 1px solid var(--gold); background: var(--gold-soft); color: var(--gold); cursor: pointer; white-space: nowrap; transition: all var(--transition-fast);">
+            ${jumpLabel}
+          </button>
+        ` : ''}
+        <button id="period-nav-next" style="width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--card); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; line-height: 1; transition: all var(--transition-fast);">
+          &#8250;
         </button>
       </div>
-
-      <!-- Calendar / Month / Year Body -->
-      <div id="picker-body-wrap">
-        ${bodyHtml}
-      </div>
-
-      <!-- Panel Footer: Reset to All Time -->
-      ${selectedYear != null ? `
-        <div style="display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);">
-          <button id="panel-clear-filter-btn" style="background: none; border: none; font-size: 11.5px; font-weight: 700; color: var(--expense); cursor: pointer; padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            <span>${isEn ? 'Reset to All Dates' : 'แสดงทุกช่วงเวลา'}</span>
-          </button>
-        </div>
-      ` : ''}
     </div>
   `;
 
-  // Attach tab switch events inside panel
-  panel.querySelectorAll(".panel-period-tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      datePeriodMode = tab.dataset.period;
-      selectedYear = null; selectedMonth = null; selectedDay = null;
-      const now = new Date();
-      calendarDisplayYear = now.getFullYear();
-      calendarDisplayMonth = now.getMonth();
-      renderDatePanel(container);
-      updateDateTriggerUI(container);
-      updateUI(container);
-    });
-  });
-
-  // Attach close button
-  panel.querySelector("#close-date-panel-btn")?.addEventListener("click", () => {
-    isDatePickerOpen = false;
-    renderDatePanel(container);
-    updateDateTriggerUI(container);
-  });
-
-  // Attach reset filter button inside panel
-  panel.querySelector("#panel-clear-filter-btn")?.addEventListener("click", () => {
-    selectedYear = null; selectedMonth = null; selectedDay = null;
-    renderDatePanel(container);
-    updateDateTriggerUI(container);
+  // Attach nav events
+  navContainer.querySelector("#period-nav-prev")?.addEventListener("click", () => {
+    shiftPeriod(-1);
+    renderPeriodNavigator(container);
     updateUI(container);
   });
 
-  // Attach grid-specific navigation & cell events
-  if (datePeriodMode === "day") {
-    attachCalendarEvents(container, panel);
-  } else if (datePeriodMode === "month") {
-    attachMonthPickerEvents(container, panel);
-  } else {
-    attachYearPickerEvents(container, panel);
+  navContainer.querySelector("#period-nav-next")?.addEventListener("click", () => {
+    shiftPeriod(1);
+    renderPeriodNavigator(container);
+    updateUI(container);
+  });
+
+  navContainer.querySelector("#period-jump-btn")?.addEventListener("click", () => {
+    periodDate = new Date();
+    renderPeriodNavigator(container);
+    updateUI(container);
+  });
+
+  if (activePeriod === "daily") {
+    const centerEl = navContainer.querySelector("#period-nav-center");
+    const dateInput = navContainer.querySelector("#period-native-date-input");
+    if (centerEl && dateInput) {
+      centerEl.addEventListener("click", () => {
+        const y = periodDate.getFullYear();
+        const m = String(periodDate.getMonth() + 1).padStart(2, "0");
+        const d = String(periodDate.getDate()).padStart(2, "0");
+        dateInput.value = `${y}-${m}-${d}`;
+        if (typeof dateInput.showPicker === "function") {
+          try { dateInput.showPicker(); } catch (e) { dateInput.focus(); }
+        } else {
+          dateInput.focus();
+        }
+      });
+      dateInput.addEventListener("change", (e) => {
+        if (e.target.value) {
+          const parts = e.target.value.split("-").map(Number);
+          periodDate = new Date(parts[0], parts[1] - 1, parts[2]);
+          renderPeriodNavigator(container);
+          updateUI(container);
+        }
+      });
+    }
   }
 }
 
-// ─── Calendar (Day mode) ────────────────────────────────────────────────
-function buildCalendarHTML(year, month) {
-  const isEn = store.settings.language === "en";
-  const thaiMonths = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
-  const monthName = isEn
-    ? new Date(year, month, 1).toLocaleDateString("en-GB", { month: "long" })
-    : thaiMonths[month];
-  const dayHeaders = isEn
-    ? ["Mo","Tu","We","Th","Fr","Sa","Su"]
-    : ["จ","อ","พ","พฤ","ศ","ส","อา"];
-
-  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
-  const startOffset = (firstDay + 6) % 7; // Monday = 0
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  let cells = "";
-  const prevMonthDays = new Date(year, month, 0).getDate();
-  for (let i = 0; i < startOffset; i++) {
-    cells += `<div class="cal-day other-month">${prevMonthDays - startOffset + 1 + i}</div>`;
+function shiftPeriod(delta) {
+  if (activePeriod === "daily") {
+    periodDate = new Date(periodDate.getFullYear(), periodDate.getMonth(), periodDate.getDate() + delta);
+  } else if (activePeriod === "monthly") {
+    periodDate = new Date(periodDate.getFullYear(), periodDate.getMonth() + delta, 1);
+  } else if (activePeriod === "yearly") {
+    periodDate = new Date(periodDate.getFullYear() + delta, periodDate.getMonth(), 1);
   }
-  const today = new Date();
-  for (let d = 1; d <= daysInMonth; d++) {
-    const hasTx = txDateSet.has(`${year}-${month}-${d}`);
-    const isSelected = selectedYear === year && selectedMonth === month && selectedDay === d;
-    const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
-    cells += `<div class="cal-day${isSelected ? ' selected' : ''}${isToday ? ' today' : ''}" data-year="${year}" data-month="${month}" data-day="${d}">
-      ${d}
-      ${hasTx ? '<span class="tx-dot"></span>' : ''}
-    </div>`;
-  }
-  const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
-  let next = 1;
-  for (let i = startOffset + daysInMonth; i < totalCells; i++, next++) {
-    cells += `<div class="cal-day other-month">${next}</div>`;
-  }
-
-  return `
-    <div>
-      <div class="cal-header">
-        <button class="cal-nav" id="cal-prev">&#8249;</button>
-        <span class="cal-title">${monthName} ${year}</span>
-        <button class="cal-nav" id="cal-next">&#8250;</button>
-      </div>
-      <div class="cal-grid">
-        ${dayHeaders.map(h => `<div class="cal-weekday">${h}</div>`).join("")}
-        ${cells}
-      </div>
-    </div>
-  `;
-}
-
-function attachCalendarEvents(container, panel) {
-  panel.querySelector("#cal-prev")?.addEventListener("click", () => {
-    calendarDisplayMonth--;
-    if (calendarDisplayMonth < 0) { calendarDisplayMonth = 11; calendarDisplayYear--; }
-    renderDatePanel(container);
-  });
-  panel.querySelector("#cal-next")?.addEventListener("click", () => {
-    calendarDisplayMonth++;
-    if (calendarDisplayMonth > 11) { calendarDisplayMonth = 0; calendarDisplayYear++; }
-    renderDatePanel(container);
-  });
-  panel.querySelectorAll(".cal-day[data-day]").forEach(el => {
-    el.addEventListener("click", () => {
-      const y = parseInt(el.dataset.year);
-      const m = parseInt(el.dataset.month);
-      const d = parseInt(el.dataset.day);
-      if (selectedYear === y && selectedMonth === m && selectedDay === d) {
-        selectedYear = null; selectedMonth = null; selectedDay = null;
-      } else {
-        selectedYear = y; selectedMonth = m; selectedDay = d;
-        calendarDisplayYear = y; calendarDisplayMonth = m;
-      }
-      renderDatePanel(container);
-      updateDateTriggerUI(container);
-      updateUI(container);
-    });
-  });
-}
-
-// ─── Month Picker ────────────────────────────────────────────────────────
-function buildMonthPickerHTML(year) {
-  const isEn = store.settings.language === "en";
-  const thaiMonths = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-  const enMonths = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const months = isEn ? enMonths : thaiMonths;
-
-  const cells = months.map((name, i) => {
-    const hasTx = [...txDateSet].some(key => {
-      const [ky, km] = key.split("-").map(Number);
-      return ky === year && km === i;
-    });
-    const isSelected = selectedYear === year && selectedMonth === i && selectedDay == null;
-    return `<div class="month-cell${isSelected ? ' selected' : ''}" data-year="${year}" data-month="${i}">
-      ${name}
-      ${hasTx ? '<span class="tx-dot"></span>' : ''}
-    </div>`;
-  }).join("");
-
-  return `
-    <div>
-      <div class="cal-header">
-        <button class="cal-nav" id="cal-prev">&#8249;</button>
-        <span class="cal-title">${year}</span>
-        <button class="cal-nav" id="cal-next">&#8250;</button>
-      </div>
-      <div class="month-grid">${cells}</div>
-    </div>
-  `;
-}
-
-function attachMonthPickerEvents(container, panel) {
-  panel.querySelector("#cal-prev")?.addEventListener("click", () => {
-    calendarDisplayYear--;
-    renderDatePanel(container);
-  });
-  panel.querySelector("#cal-next")?.addEventListener("click", () => {
-    calendarDisplayYear++;
-    renderDatePanel(container);
-  });
-  panel.querySelectorAll(".month-cell").forEach(el => {
-    el.addEventListener("click", () => {
-      const y = parseInt(el.dataset.year);
-      const m = parseInt(el.dataset.month);
-      if (selectedYear === y && selectedMonth === m && selectedDay == null) {
-        selectedYear = null; selectedMonth = null;
-      } else {
-        selectedYear = y; selectedMonth = m; selectedDay = null;
-        calendarDisplayYear = y; calendarDisplayMonth = m;
-      }
-      renderDatePanel(container);
-      updateDateTriggerUI(container);
-      updateUI(container);
-    });
-  });
-}
-
-// ─── Year Picker ─────────────────────────────────────────────────────────
-function buildYearPickerHTML() {
-  const startYear = calendarDisplayYear - 4;
-  const years = Array.from({ length: 9 }, (_, i) => startYear + i);
-
-  const cells = years.map(y => {
-    const hasTx = [...txDateSet].some(key => parseInt(key.split("-")[0]) === y);
-    const isSelected = selectedYear === y && selectedMonth == null;
-    return `<div class="year-cell${isSelected ? ' selected' : ''}" data-year="${y}">
-      ${y}
-      ${hasTx ? '<span class="tx-dot"></span>' : ''}
-    </div>`;
-  }).join("");
-
-  return `
-    <div>
-      <div class="cal-header">
-        <button class="cal-nav" id="cal-prev">&#8249;</button>
-        <span class="cal-title">${startYear} – ${startYear + 8}</span>
-        <button class="cal-nav" id="cal-next">&#8250;</button>
-      </div>
-      <div class="year-grid">${cells}</div>
-    </div>
-  `;
-}
-
-function attachYearPickerEvents(container, panel) {
-  panel.querySelector("#cal-prev")?.addEventListener("click", () => {
-    calendarDisplayYear -= 9;
-    renderDatePanel(container);
-  });
-  panel.querySelector("#cal-next")?.addEventListener("click", () => {
-    calendarDisplayYear += 9;
-    renderDatePanel(container);
-  });
-  panel.querySelectorAll(".year-cell").forEach(el => {
-    el.addEventListener("click", () => {
-      const y = parseInt(el.dataset.year);
-      if (selectedYear === y && selectedMonth == null) {
-        selectedYear = null;
-      } else {
-        selectedYear = y; selectedMonth = null; selectedDay = null;
-        calendarDisplayYear = y;
-      }
-      renderDatePanel(container);
-      updateDateTriggerUI(container);
-      updateUI(container);
-    });
-  });
 }
 
 // ─── Select mode helpers ──────────────────────────────────────────────────
@@ -587,8 +392,6 @@ function setupEventListeners(container) {
   // Wallet filter
   container.querySelector("#wallet-filter-select")?.addEventListener("change", e => {
     selectedWalletId = e.target.value;
-    buildTxDateSet();
-    renderDatePanel(container);
     updateUI(container);
   });
 
@@ -598,33 +401,24 @@ function setupEventListeners(container) {
     updateUI(container);
   });
 
-  // Date picker toggle button (open/close the collapsible drawer)
-  container.querySelector("#date-picker-toggle-btn")?.addEventListener("click", () => {
-    isDatePickerOpen = !isDatePickerOpen;
-    renderDatePanel(container);
-    updateDateTriggerUI(container);
-  });
+  // 4 Period switcher buttons: all | daily | monthly | yearly
+  container.querySelectorAll(".period-seg-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const p = btn.dataset.period;
+      if (activePeriod === p) return;
+      activePeriod = p;
+      periodDate = new Date();
 
-  // Today button
-  container.querySelector("#today-btn")?.addEventListener("click", () => {
-    const now = new Date();
-    calendarDisplayYear = now.getFullYear();
-    calendarDisplayMonth = now.getMonth();
-    datePeriodMode = "day";
-    selectedYear = now.getFullYear();
-    selectedMonth = now.getMonth();
-    selectedDay = now.getDate();
-    renderDatePanel(container);
-    updateDateTriggerUI(container);
-    updateUI(container);
-  });
+      // Update button active styling
+      container.querySelectorAll(".period-seg-btn").forEach(b => {
+        const isActive = b.dataset.period === activePeriod;
+        b.style.background = isActive ? "var(--gold)" : "transparent";
+        b.style.color = isActive ? "#000" : "var(--text-secondary)";
+      });
 
-  // Clear date filter
-  container.querySelector("#clear-date-btn")?.addEventListener("click", () => {
-    selectedYear = null; selectedMonth = null; selectedDay = null;
-    renderDatePanel(container);
-    updateDateTriggerUI(container);
-    updateUI(container);
+      renderPeriodNavigator(container);
+      updateUI(container);
+    });
   });
 
   // Type tabs
@@ -705,15 +499,25 @@ function updateUI(container) {
     list = list.filter(tx => tx.category === selectedCategoryFilter);
   }
 
-  // Date filter (day / month / year)
-  if (selectedYear != null) {
+  // Period filter: all | daily | monthly | yearly
+  if (activePeriod !== "all") {
+    const targetY = periodDate.getFullYear();
+    const targetM = periodDate.getMonth();
+    const targetD = periodDate.getDate();
+
     list = list.filter(tx => {
       const d = new Date(tx.date);
       if (isNaN(d.getTime())) return false;
-      if (datePeriodMode === "year") return d.getFullYear() === selectedYear;
-      if (datePeriodMode === "month") return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth;
-      // day
-      return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth && d.getDate() === selectedDay;
+      if (activePeriod === "yearly") {
+        return d.getFullYear() === targetY;
+      }
+      if (activePeriod === "monthly") {
+        return d.getFullYear() === targetY && d.getMonth() === targetM;
+      }
+      if (activePeriod === "daily") {
+        return d.getFullYear() === targetY && d.getMonth() === targetM && d.getDate() === targetD;
+      }
+      return true;
     });
   }
 
@@ -749,7 +553,7 @@ function updateUI(container) {
     if (!groups[key]) {
       groups[key] = {
         dateObj: isNaN(d.getTime()) ? new Date(0) : d,
-        display: isNaN(d.getTime()) ? (store.settings.language === 'en' ? 'Unknown Date' : 'ไม่ระบุวันที่') : d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short", year: datePeriodMode === "year" ? "numeric" : undefined }),
+        display: isNaN(d.getTime()) ? (store.settings.language === 'en' ? 'Unknown Date' : 'ไม่ระบุวันที่') : d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short", year: activePeriod === "yearly" ? "numeric" : undefined }),
         txs: [],
       };
     }
