@@ -130,53 +130,175 @@ document.addEventListener("DOMContentLoaded", () => {
     if (app) app.classList.remove("hidden");
   }, 3000);
 
-  // Gamification Level-Up Listener
-  window.addEventListener("levelup", (e) => {
-    const newLevel = e.detail.level;
-    
-    // Confetti effect
-    const duration = 3000;
+  // Helper: Play celebratory Web Audio fanfare without external audio files
+  function playVictoryFanfare() {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+      const notes = [
+        { freq: 523.25, time: 0.00, dur: 0.12 }, // C5
+        { freq: 659.25, time: 0.10, dur: 0.12 }, // E5
+        { freq: 783.99, time: 0.20, dur: 0.14 }, // G5
+        { freq: 1046.50, time: 0.34, dur: 0.65 }  // C6 (bright triumph sustain)
+      ];
+      notes.forEach(({ freq, time, dur }) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime + time);
+        gain.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime + time + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + time + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + time);
+        osc.stop(ctx.currentTime + time + dur);
+      });
+    } catch (err) {
+      console.warn("Audio autoplay blocked or unsupported:", err);
+    }
+  }
+
+  // Helper: Get milestone title by level
+  function getLevelTitle(level, lang = "en") {
+    const isEn = lang === "en";
+    if (level >= 25) return isEn ? "Grand Financier" : "ปรมาจารย์การเงิน";
+    if (level >= 20) return isEn ? "Apex Investor" : "นักลงทุนระดับตำนาน";
+    if (level >= 15) return isEn ? "Wealth Builder" : "ผู้สร้างความมั่งคั่ง";
+    if (level >= 10) return isEn ? "Financial Strategist" : "นักกลยุทธ์การเงิน";
+    if (level >= 5)  return isEn ? "Budget Apprentice" : "นักวางแผนฝึกหัด";
+    return isEn ? "Novice Tracker" : "นักบันทึกมือใหม่";
+  }
+
+  // Helper: Trigger rich multi-stage confetti celebration
+  function triggerLevelUpCelebration() {
+    const duration = 2800;
     const end = Date.now() + duration;
 
-    (function frame() {
-      confetti({
-        particleCount: 5,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: ['#F5C842', '#FF9A00']
-      });
-      confetti({
-        particleCount: 5,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: ['#F5C842', '#FF9A00']
-      });
+    // Immediate center burst
+    confetti({
+      particleCount: 65,
+      spread: 100,
+      origin: { y: 0.6 },
+      colors: ['#FFE58F', '#F5C842', '#FF9A00', '#FFFFFF', '#38BDF8'],
+      zIndex: 9999999
+    });
 
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
+    const interval = setInterval(() => {
+      const timeLeft = end - Date.now();
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
       }
-    }());
+      const particleCount = 22 * (timeLeft / duration);
+      confetti({
+        particleCount,
+        angle: 60,
+        spread: 65,
+        origin: { x: 0.08, y: 0.7 },
+        colors: ['#F5C842', '#FF9A00', '#FFE58F'],
+        zIndex: 9999999
+      });
+      confetti({
+        particleCount,
+        angle: 120,
+        spread: 65,
+        origin: { x: 0.92, y: 0.7 },
+        colors: ['#F5C842', '#FF9A00', '#38BDF8'],
+        zIndex: 9999999
+      });
+    }, 200);
+  }
 
-    // Show Modal
+  // Gamification Level-Up Listener
+  window.addEventListener("levelup", (e) => {
+    const newLevel = e.detail?.level || 1;
+    const lang = getLanguage();
+    const isEn = lang === "en";
+    const title = getLevelTitle(newLevel, lang);
+    const bonusCoins = Math.max(50, newLevel * 10);
+
+    // Credit bonus coins reward
+    store.settings.coins = (store.settings.coins || 0) + bonusCoins;
+    store.save();
+    if (store.user) store.saveSettingsToCloud();
+    store.notify();
+
+    // Haptics & Fanfare
+    if (navigator.vibrate) {
+      navigator.vibrate([60, 40, 90, 40, 140]);
+    }
+    playVictoryFanfare();
+
+    // Visual confetti
+    triggerLevelUpCelebration();
+
+    // Show Luxury 3D Modal
     Swal.fire({
       html: `
-        <div class="levelup-modal">
-          <div class="levelup-badge-large">${newLevel}</div>
-          <h2 style="margin: 0 0 10px; font-weight: 800; font-size: 24px;">Level Up!</h2>
-          <p style="color: var(--text-secondary); margin: 0;">You've reached level ${newLevel}. Keep tracking your finances!</p>
+        <div class="levelup-card">
+          <div class="levelup-crest-container">
+            <div class="levelup-sunburst"></div>
+            <div class="levelup-stars">
+              <span class="levelup-star levelup-star-1">✦</span>
+              <span class="levelup-star levelup-star-2">★</span>
+              <span class="levelup-star levelup-star-3">✦</span>
+              <span class="levelup-star levelup-star-4">★</span>
+            </div>
+            <div class="levelup-badge-shield">
+              <span class="levelup-lv-tag">LV</span>
+              <span class="levelup-number">${newLevel}</span>
+            </div>
+          </div>
+
+          <h2 class="levelup-title">${isEn ? "LEVEL UP!" : "เลเวลอัปแล้ว!"}</h2>
+          <div class="levelup-rank-badge">
+            <span>✦</span>
+            <span>${title}</span>
+            <span>✦</span>
+          </div>
+
+          <p class="levelup-desc">
+            ${
+              isEn
+                ? `You've ascended to <strong>Level ${newLevel}</strong>! Your financial discipline keeps compounding.`
+                : `คุณก้าวสู่ <strong>เลเวล ${newLevel}</strong> แล้ว! ความมีวินัยทางการเงินของคุณเติบโตขึ้นอย่างยอดเยี่ยม`
+            }
+          </p>
+
+          <div class="levelup-reward-box">
+            <div class="levelup-reward-label">
+              <div class="levelup-reward-title">${isEn ? "Level Reward" : "รางวัลเลเวลอัป"}</div>
+              <div class="levelup-reward-sub">${isEn ? "FinCoins Bonus" : "โบนัส FinCoins"}</div>
+            </div>
+            <div class="levelup-reward-val">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/></svg>
+              <span>+${bonusCoins} Coins</span>
+            </div>
+          </div>
+
+          <button id="levelup-claim-btn" class="levelup-cta-btn" onclick="Swal.close()">
+            <span>${isEn ? "Claim & Continue" : "รับรางวัล & ลุยต่อ"}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </div>
       `,
-      background: 'var(--card)',
-      color: 'var(--text-primary)',
-      confirmButtonText: 'Awesome!',
-      confirmButtonColor: 'var(--gold)',
+      showConfirmButton: false,
+      background: "transparent",
+      backdrop: "rgba(3, 7, 18, 0.85)",
       customClass: {
-        popup: 'custom-swal-popup'
+        popup: "levelup-swal-popup"
       }
     });
   });
+
+  // Expose helper on window for testing or debug
+  window.triggerTestLevelUp = (lvl = 12) => {
+    window.dispatchEvent(new CustomEvent("levelup", { detail: { level: lvl } }));
+  };
 
   // Global Clipboard Image / Slip Paste Listener (Ctrl+V anywhere)
   window.addEventListener("paste", async (e) => {
