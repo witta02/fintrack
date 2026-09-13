@@ -1538,8 +1538,15 @@ export const store = {
 
   calculateStreak() {
     const txs = this.getAllTransactions();
-    if (txs.length === 0) return 0;
-    const dateSet = new Set(txs.map((t) => new Date(t.date).toISOString().split("T")[0]));
+    if (!txs || txs.length === 0) return 0;
+    const dateSet = new Set();
+    txs.forEach((t) => {
+      if (!t || !t.date) return;
+      const d = new Date(t.date);
+      if (!isNaN(d.getTime())) {
+        dateSet.add(d.toISOString().split("T")[0]);
+      }
+    });
     let streak = 0;
     const today = new Date();
     for (let i = 0; i < 365; i++) {

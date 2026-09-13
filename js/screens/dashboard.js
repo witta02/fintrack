@@ -473,7 +473,7 @@ export async function renderDashboard(container, options = {}) {
           ` : feedTxs.slice(0, 5).map(tx => {
             const cat = getCategoryInfo(tx.category);
             const primaryW = store.getPrimaryWallet();
-            const w = wallets.find(wal => wal.id === tx.walletId) || primaryW || { name: 'Main' };
+            const w = (wallets && wallets.find(wal => wal && wal.id === tx.walletId)) || primaryW || { name: isEn ? 'Unassigned' : 'ไม่ระบุ' };
             const txDate = new Date(tx.date);
             const timeStr = !isNaN(txDate) ? txDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
             let displayTitle = tx.title;
@@ -492,7 +492,7 @@ export async function renderDashboard(container, options = {}) {
                     </div>
                     <div style="font-size: 10.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
                       ${timeStr ? `<span>${timeStr}</span><span>•</span>` : ''}
-                      <span style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;">${w.name}</span>
+                      <span style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;">${w?.name || (isEn ? 'Unassigned' : 'ไม่ระบุ')}</span>
                     </div>
                   </div>
                 </div>
