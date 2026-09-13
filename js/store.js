@@ -1052,17 +1052,9 @@ export const store = {
     const wallet = this.getWallet(walletId);
     if (!wallet) return 0;
     const startingBalance = parseFloat(wallet.balance) || 0;
-    const primaryWallet = this.getPrimaryWallet();
-    const isPrimary = primaryWallet ? (wallet.id === primaryWallet.id) : false;
 
     const txs = this.transactions.filter((t) => {
-      // If transaction has an explicit walletId:
-      if (t.walletId) {
-        return t.walletId === walletId;
-      }
-      // If transaction has NO walletId (legacy/unassigned):
-      // Only count in primary wallet so it's not double-counted
-      return isPrimary;
+      return t.walletId === walletId;
     });
 
     let totalIncome = 0;
@@ -1114,14 +1106,9 @@ export const store = {
 
     const target = parseFloat(targetBalance);
     const targetValid = !isNaN(target) ? target : 0;
-    const primaryWallet = this.getPrimaryWallet();
-    const isPrimary = primaryWallet ? (wallet.id === primaryWallet.id) : false;
 
     const txs = this.transactions.filter((t) => {
-      if (t.walletId) {
-        return t.walletId === walletId;
-      }
-      return isPrimary;
+      return t.walletId === walletId;
     });
 
     let totalIncome = 0;
@@ -1140,13 +1127,13 @@ export const store = {
 
   setPrimaryWallet(walletId) {
     this.wallets.forEach((w) => {
-      w.isDefault = (w.id === walletId);
+      w.isDefault = Boolean(walletId && walletId !== 'none' && w.id === walletId);
     });
     this.save();
   },
 
   getPrimaryWallet() {
-    return this.wallets.find((w) => w.isDefault) || this.wallets[0] || { id: "default", name: this.settings.language === "en" ? "Cash" : "เงินสด" };
+    return this.wallets.find((w) => w.isDefault) || null;
   },
 
   deleteWallet(id) {
@@ -1648,12 +1635,11 @@ export const store = {
   getAllTransactions(walletId = null) {
     let list = [...this.transactions];
     if (walletId && walletId !== 'all') {
-      const primaryW = this.getPrimaryWallet();
-      const isPrimary = primaryW ? (walletId === primaryW.id) : false;
-      list = list.filter((t) => {
-        if (t.walletId) return t.walletId === walletId;
-        return isPrimary;
-      });
+      if (walletId === 'none' || walletId === 'unassigned') {
+        list = list.filter((t) => !t.walletId);
+      } else {
+        list = list.filter((t) => t.walletId === walletId);
+      }
     }
     return list.sort((a, b) => b.date - a.date);
   },
@@ -1753,6 +1739,19 @@ export const store = {
     if (this.user) {
       supabase.from('transactions').delete().eq('id', id).then(({ error }) => {
         if (error) console.error('Supabase deleteTransaction error:', error);
+      });
+    }
+  },
+
+  deleteTransactions(ids) {
+    if (!ids || ids.length === 0) return;
+    const idSet = new Set(ids);
+    this.transactions = this.transactions.filter((t) => !idSet.has(t.id));
+    this.save();
+
+    if (this.user) {
+      supabase.from('transactions').delete().in('id', ids).then(({ error }) => {
+        if (error) console.error('Supabase deleteTransactions error:', error);
       });
     }
   },

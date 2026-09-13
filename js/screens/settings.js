@@ -377,16 +377,18 @@ export function renderSettings(container) {
   });
 
   // Reset App Data
-  container.querySelector("#reset-data-row")?.addEventListener("click", () => {
-    alerts.confirm(
+  container.querySelector("#reset-data-row")?.addEventListener("click", async () => {
+    const isConfirmed = await alerts.confirm(
       isEn ? "Reset All Data?" : "ต้องการล้างข้อมูลทั้งหมด?",
       isEn ? "This will erase all local transactions and reset settings. This action cannot be undone." : "การกระทำนี้จะลบรายการทั้งหมดและรีเซ็ตการตั้งค่า และไม่สามารถกู้คืนได้",
-      () => {
-        store.resetAllData();
-        alerts.success(isEn ? "Data reset complete" : "ล้างข้อมูลเรียบร้อยแล้ว");
-        renderSettings(container);
-      }
+      isEn ? "Yes, Reset" : "ใช่, รีเซ็ตข้อมูล",
+      isEn ? "Cancel" : "ยกเลิก"
     );
+    if (isConfirmed) {
+      store.resetAllData();
+      alerts.success(isEn ? "Data reset complete" : "ล้างข้อมูลเรียบร้อยแล้ว");
+      renderSettings(container);
+    }
   });
 }
 

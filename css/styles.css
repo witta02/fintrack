@@ -1778,6 +1778,266 @@ hr, .section-divider {
   transform: scale(1.15) !important;
 }
 
+/* ─── Multi-Select Mode ───────────────────────────────────────────── */
+.select-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 0 14px !important;
+  gap: 8px !important;
+  animation: slideDown 200ms ease-out !important;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.select-toolbar-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 8px 14px !important;
+  border-radius: var(--radius) !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  border: 1px solid var(--border) !important;
+  cursor: pointer !important;
+  transition: all var(--transition-fast) !important;
+  white-space: nowrap !important;
+}
+.select-toolbar-btn.cancel {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+}
+.select-toolbar-btn.cancel:hover {
+  background: var(--surface-hover) !important;
+}
+.select-toolbar-btn.select-all {
+  background: var(--surface) !important;
+  color: var(--gold) !important;
+  border-color: var(--gold) !important;
+}
+.select-toolbar-btn.select-all:hover {
+  background: var(--gold-soft) !important;
+}
+.select-toolbar-btn.delete {
+  background: var(--expense) !important;
+  color: #fff !important;
+  border-color: var(--expense) !important;
+}
+.select-toolbar-btn.delete:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+}
+.select-toolbar-btn.delete:not(:disabled):hover {
+  background: var(--expense-dark) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px var(--expense-soft) !important;
+}
+.select-toolbar-count {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: var(--text-secondary) !important;
+  white-space: nowrap !important;
+}
+
+/* Tile checkbox (circle) */
+.tile-checkbox {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--border-strong, var(--border)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all var(--transition-fast) !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+}
+.tile-checkbox.checked {
+  background: var(--gold) !important;
+  border-color: var(--gold) !important;
+  color: #000 !important;
+}
+
+/* Selected tile highlight */
+.transaction-tile.selected {
+  background: var(--gold-soft, rgba(245, 200, 66, 0.08)) !important;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 1px var(--gold-soft, rgba(245, 200, 66, 0.15)), 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Group checkbox in day headers */
+.group-checkbox {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--border-strong, var(--border)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all var(--transition-fast) !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+}
+.group-checkbox.checked {
+  background: var(--gold) !important;
+  border-color: var(--gold) !important;
+  color: #000 !important;
+}
+.group-checkbox:hover {
+  border-color: var(--gold) !important;
+}
+
+/* ─── Transactions Date Period & Calendar Picker ────────────────── */
+.cal-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 14px 12px;
+  margin-top: 8px;
+  animation: fadeIn 150ms ease-out;
+}
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+.cal-nav {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  transition: all var(--transition-fast);
+}
+.cal-nav:hover {
+  background: var(--surface-hover);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.cal-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+  letter-spacing: -0.2px;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+.cal-weekday {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  padding: 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.cal-day {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+.cal-day:hover:not(.other-month) {
+  background: var(--surface-hover);
+  color: var(--gold);
+}
+.cal-day.other-month {
+  color: var(--text-muted, rgba(255, 255, 255, 0.2));
+  opacity: 0.3;
+  pointer-events: none;
+}
+.cal-day.today {
+  border: 1.5px solid var(--gold);
+  font-weight: 800;
+}
+.cal-day.selected {
+  background: var(--gold) !important;
+  color: #000 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 2px 8px var(--gold-glow);
+}
+.tx-dot {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4.5px;
+  height: 4.5px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 4px var(--gold);
+  pointer-events: none;
+}
+.cal-day.selected .tx-dot {
+  background: #000;
+  box-shadow: none;
+}
+.month-grid, .year-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 4px 0;
+}
+.month-cell, .year-cell {
+  position: relative;
+  padding: 14px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+.month-cell:hover, .year-cell:hover {
+  background: var(--surface-hover);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.month-cell.selected, .year-cell.selected {
+  background: var(--gold) !important;
+  color: #000 !important;
+  border-color: var(--gold) !important;
+  font-weight: 900 !important;
+  box-shadow: 0 2px 8px var(--gold-glow);
+}
+.month-cell.selected .tx-dot, .year-cell.selected .tx-dot {
+  background: #000;
+  box-shadow: none;
+}
+
 /* ─── Sleek Floating Bottom Navigation Dock (Centered) ────────────────── */
 .bottom-nav {
   position: fixed !important;

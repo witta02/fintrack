@@ -144,11 +144,15 @@ function renderWalletCard(wallet, symbol) {
             <span style="font-size: 10.5px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">
               ${wallet.type} · ${wallet.currency || 'THB'}
             </span>
-            ${!wallet.isDefault ? `
+            ${wallet.isDefault ? `
+              <button class="wallet-unset-primary-btn" data-unset-primary-id="${wallet.id}" style="background: none; border: none; font-size: 10.5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline;">
+                ${isEn ? 'Set to None' : 'ยกเลิกกระเป๋าหลัก'}
+              </button>
+            ` : `
               <button class="wallet-make-primary-btn" data-make-primary-id="${wallet.id}" style="background: none; border: none; font-size: 10.5px; color: var(--gold); font-weight: 700; cursor: pointer; padding: 0; text-decoration: underline;">
                 ${isEn ? 'Make Primary' : 'ตั้งเป็นหลัก'}
               </button>
-            ` : ''}
+            `}
           </div>
         </div>
         <div style="text-align: right; flex-shrink: 0;">
@@ -191,7 +195,17 @@ function attachWalletCardListeners(container) {
       e.stopPropagation();
       const id = btn.getAttribute("data-make-primary-id");
       store.setPrimaryWallet(id);
+      renderWallets(container);
       alerts.success(store.settings.language === 'en' ? 'Set as primary wallet!' : 'ตั้งเป็นกระเป๋าหลักเรียบร้อยแล้ว ⭐');
+    };
+  });
+
+  container.querySelectorAll("[data-unset-primary-id]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      store.setPrimaryWallet(null);
+      renderWallets(container);
+      alerts.success(store.settings.language === 'en' ? 'Primary wallet cleared (None)' : 'ยกเลิกกระเป๋าหลักแล้ว (ไม่มีกระเป๋าหลัก)');
     };
   });
 

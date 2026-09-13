@@ -60,10 +60,11 @@ function getWalletCardGradient(w, index = 0) {
   return gradients[index % gradients.length];
 }
 
-export async function renderDashboard(container) {
-  // Reset filter state
-  activeDateFilter = "all";
-  searchQuery = "";
+export async function renderDashboard(container, options = {}) {
+  if (options.resetFilters) {
+    activeDateFilter = "all";
+    searchQuery = "";
+  }
 
   const sym = store.getCurrencySymbol();
   const wallets = store.getWallets();

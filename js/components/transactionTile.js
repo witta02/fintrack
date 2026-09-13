@@ -7,6 +7,9 @@ export function createTransactionTile(
   displayAmount,
   onEdit,
   onDelete,
+  selectMode = false,
+  isSelected = false,
+  onToggleSelect = null,
 ) {
   const cat = getCategoryInfo(transaction.category);
 
@@ -28,13 +31,31 @@ export function createTransactionTile(
   }
 
   const tile = document.createElement("div");
-  tile.className = "transaction-tile";
+  tile.className = `transaction-tile${selectMode && isSelected ? " selected" : ""}`;
   tile.dataset.id = transaction.id;
 
   // Set CSS custom property for the left accent bar color
   tile.style.setProperty("--accent-color", cat.color);
 
+  const checkboxHtml = selectMode
+    ? `<div class="tile-checkbox ${isSelected ? "checked" : ""}" data-select-id="${transaction.id}">
+        ${isSelected
+          ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`
+          : ""}
+      </div>`
+    : "";
+
+  const deleteHtml = !selectMode
+    ? `<button class="tile-delete" title="${t("deleteTransaction")}" aria-label="${t("deleteTransaction")}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+        </svg>
+      </button>`
+    : "";
+
   tile.innerHTML = `
+    ${checkboxHtml}
     <div class="cat-icon" style="background: ${cat.color}22; color: ${cat.color}; border: 1px solid ${cat.color}35;">
       <span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">${cat.svg || cat.emoji}</span>
     </div>
@@ -49,31 +70,34 @@ export function createTransactionTile(
     <div class="tile-amount ${transaction.isIncome ? "income" : "expense"}" style="font-size: 15px; font-weight: 900; letter-spacing: -0.3px;">
       ${amountSign}${symbol}${displayAmount}
     </div>
-    <button class="tile-delete" title="${t("deleteTransaction")}" aria-label="${t("deleteTransaction")}">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-      </svg>
-    </button>
+    ${deleteHtml}
   `;
 
-  // Delete button
-  tile.querySelector(".tile-delete").addEventListener("click", (e) => {
-    e.stopPropagation();
-    onDelete(transaction.id);
-  });
-
-  // Tile click → edit
-  tile.addEventListener("click", () => {
-    onEdit(transaction);
-  });
+  if (selectMode) {
+    // In select mode: tile click toggles selection
+    tile.addEventListener("click", () => {
+      if (onToggleSelect) onToggleSelect(transaction.id);
+    });
+  } else {
+    // Normal mode: delete button + tile click to edit
+    const delBtn = tile.querySelector(".tile-delete");
+    if (delBtn) {
+      delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onDelete(transaction.id);
+      });
+    }
+    tile.addEventListener("click", () => {
+      onEdit(transaction);
+    });
+  }
 
   return tile;
 }
 
 function escapeHTML(str) {
   return str.replace(
-    /[&<>'\"]/g,
+    /[&<>'"]/g,
     (tag) =>
       ({
         "&": "&amp;",
