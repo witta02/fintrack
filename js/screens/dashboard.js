@@ -61,7 +61,8 @@ function getWalletCardGradient(w, index = 0) {
 }
 
 export async function renderDashboard(container, options = {}) {
-  if (options.resetFilters) {
+  const opts = options || {};
+  if (opts.resetFilters) {
     activeDateFilter = "all";
     searchQuery = "";
   }

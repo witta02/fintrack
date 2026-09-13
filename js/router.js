@@ -183,7 +183,7 @@ export const router = {
       container.classList.remove('screen-enter');
       void container.offsetWidth;
       container.classList.add('screen-enter');
-      await renderFn(container, params);
+      await renderFn(container, params || {});
     } catch (error) {
       console.error(`Failed to load screen "${cleanKey}":`, error);
       const isEn = store.settings?.language === "en";
